@@ -1,0 +1,18 @@
+.reservation-placeholder {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: radial-gradient(circle at top, #f4efe9 0%, #ffffff 70%);
+}
+
+.reservation-placeholder .card {
+  padding: 36px 28px;
+}
+
+.reservation-placeholder h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  color: var(--ink-900);
+}

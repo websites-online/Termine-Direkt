@@ -1,0 +1,211 @@
+.hero {
+  position: relative;
+  padding-top: 72px;
+}
+
+.hero-grid {
+  display: grid;
+  gap: 32px;
+}
+
+.hero-title {
+  font-size: clamp(2.1rem, 4.5vw, 3.4rem);
+  line-height: 1.05;
+  color: var(--ink-900);
+}
+
+.hero-subtitle {
+  margin-top: 1rem;
+  font-size: 1.05rem;
+  color: var(--ink-700);
+}
+
+.hero-actions {
+  margin-top: 1.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.hero-note {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: var(--ink-500);
+}
+
+.scroll-arrow {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(53, 104, 89, 0.25);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: bounce 2s ease-in-out infinite, pulse 2.8s ease-in-out infinite;
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 26px rgba(27, 27, 31, 0.12);
+  backdrop-filter: blur(6px);
+  z-index: 10;
+}
+
+.scroll-arrow::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--accent-dark);
+  border-bottom: 2px solid var(--accent-dark);
+  transform: rotate(45deg);
+  margin-top: -2px;
+}
+
+.scroll-arrow::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(53, 104, 89, 0.18);
+}
+
+.hero-visual {
+  display: grid;
+  gap: 16px;
+}
+
+.hero-card {
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--muted-200);
+  padding: 18px;
+  box-shadow: var(--shadow-soft);
+  display: grid;
+  gap: 12px;
+  animation: fadeUp 0.8s ease both;
+}
+
+.hero-card:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.hero-card:nth-child(3) {
+  animation-delay: 0.22s;
+}
+
+.hero-card-title {
+  font-weight: 600;
+  color: var(--ink-900);
+  font-size: 0.95rem;
+}
+
+.hero-card-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--ink-500);
+}
+
+.hero-card-row span:last-child {
+  color: var(--accent-dark);
+  font-weight: 600;
+}
+
+.hero-card.compact {
+  padding: 16px;
+}
+
+.hero-slots {
+  display: flex;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--ink-500);
+}
+
+.hero-slots span {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  border: 1px solid var(--muted-200);
+}
+
+.hero-slots .active {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  border-color: rgba(53, 104, 89, 0.3);
+  font-weight: 600;
+}
+
+.hero-progress {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  border: 1px solid var(--muted-200);
+  overflow: hidden;
+}
+
+.hero-progress span {
+  display: block;
+  height: 100%;
+  width: 70%;
+  background: linear-gradient(90deg, var(--accent) 0%, #7bb09d 100%);
+  animation: fill 2.6s ease-in-out infinite;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 10px 26px rgba(27, 27, 31, 0.12);
+  }
+  50% {
+    box-shadow: 0 14px 32px rgba(27, 27, 31, 0.18);
+  }
+}
+
+@keyframes fill {
+  0%,
+  100% {
+    width: 58%;
+  }
+  50% {
+    width: 82%;
+  }
+}
+
+@media (min-width: 900px) {
+  .hero-grid {
+    grid-template-columns: 1.1fr 0.9fr;
+    align-items: center;
+  }
+
+  .hero {
+    padding-top: 96px;
+  }
+
+  .scroll-arrow {
+    right: 32px;
+    bottom: 28px;
+  }
+}

@@ -1,0 +1,38 @@
+.section-header {
+  margin-bottom: 24px;
+}
+
+.pricing-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.pricing-card {
+  display: grid;
+  gap: 18px;
+  background: var(--surface-muted);
+}
+
+.pricing-header {
+  font-size: 1.4rem;
+  color: var(--ink-900);
+  font-weight: 600;
+  font-family: 'Newsreader', 'Manrope', serif;
+}
+
+.pricing-list {
+  display: grid;
+  gap: 0.6rem;
+  padding-left: 1.1rem;
+}
+
+.pricing-note {
+  font-size: 0.9rem;
+  color: var(--ink-500);
+}
+
+@media (min-width: 900px) {
+  .pricing-card {
+    max-width: 420px;
+  }
+}

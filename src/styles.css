@@ -1,1 +1,156 @@
-/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Newsreader:opsz,wght@6..72,500;600&display=swap');
+
+:root {
+  color-scheme: light;
+  --ink-900: #1b1b1f;
+  --ink-700: #3b3b44;
+  --ink-500: #5c5c66;
+  --muted-300: #d7d7dd;
+  --muted-200: #e9e9ef;
+  --surface: #ffffff;
+  --surface-muted: #f6f4f0;
+  --accent: #356859;
+  --accent-dark: #264a3f;
+  --accent-soft: #e3f0ea;
+  --shadow-soft: 0 10px 30px rgba(27, 27, 31, 0.08);
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+  --page-gutter: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--ink-900);
+  background: radial-gradient(circle at top, #f3efe9 0%, #f8f7f4 40%, #ffffff 100%);
+  min-height: 100dvh;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3 {
+  font-family: 'Newsreader', 'Manrope', serif;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+p {
+  margin: 0;
+  color: var(--ink-700);
+  line-height: 1.6;
+}
+
+ul {
+  padding-left: 1.2rem;
+  margin: 0;
+  color: var(--ink-700);
+}
+
+section {
+  width: 100%;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.container {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 var(--page-gutter);
+}
+
+.section {
+  padding: 56px 0;
+}
+
+.section-title {
+  font-size: clamp(1.6rem, 3.3vw, 2.4rem);
+  color: var(--ink-900);
+}
+
+.section-lead {
+  font-size: 1.05rem;
+  color: var(--ink-500);
+}
+
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--muted-200);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.6rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.button-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.button-primary:hover {
+  background: var(--accent-dark);
+}
+
+.button-secondary {
+  background: transparent;
+  border-color: var(--muted-300);
+  color: var(--ink-900);
+}
+
+.button-secondary:hover {
+  border-color: var(--ink-900);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+@media (min-width: 900px) {
+  :root {
+    --page-gutter: 32px;
+  }
+
+  .section {
+    padding: 80px 0;
+  }
+}

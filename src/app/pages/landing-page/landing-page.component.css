@@ -1,0 +1,33 @@
+.topbar {
+  padding: 18px 0 0;
+}
+
+.topbar-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand {
+  font-family: 'Newsreader', 'Manrope', serif;
+  font-size: 1.4rem;
+  color: var(--ink-900);
+  letter-spacing: -0.01em;
+}
+
+.for-who-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.for-who-list ul {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 900px) {
+  .for-who-grid {
+    grid-template-columns: 1.2fr 0.8fr;
+    align-items: center;
+  }
+}
