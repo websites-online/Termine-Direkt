@@ -13,7 +13,7 @@
   overflow: hidden;
   display: grid;
   gap: 10px;
-  padding-top: 26px;
+  padding: 26px 22px 22px 64px;
   animation: fadeUp 0.7s ease both;
 }
 
@@ -32,7 +32,7 @@
   content: counter(step);
   position: absolute;
   top: 18px;
-  left: 18px;
+  left: 20px;
   width: 34px;
   height: 34px;
   border-radius: 50%;
@@ -54,7 +54,7 @@
 }
 
 .step h3 {
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.45rem;
   font-size: 1.2rem;
   color: var(--ink-900);
 }

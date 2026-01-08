@@ -31,8 +31,23 @@
   color: var(--ink-500);
 }
 
+.pricing-detail {
+  font-size: 0.95rem;
+  color: var(--ink-700);
+}
+
+.pricing-custom {
+  background: linear-gradient(135deg, rgba(53, 104, 89, 0.08), rgba(255, 255, 255, 0.95));
+  border: 1px solid rgba(53, 104, 89, 0.2);
+}
+
 @media (min-width: 900px) {
   .pricing-card {
     max-width: 420px;
+  }
+
+  .pricing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
   }
 }

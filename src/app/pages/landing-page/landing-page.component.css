@@ -20,9 +20,26 @@
   gap: 20px;
 }
 
-.for-who-list ul {
+.for-who-copy {
+  display: grid;
+  gap: 12px;
+}
+
+.for-who-card {
+  background: linear-gradient(135deg, rgba(53, 104, 89, 0.12), rgba(255, 255, 255, 0.9));
+  border: 1px solid rgba(53, 104, 89, 0.18);
+  display: grid;
+  gap: 16px;
+}
+
+.for-who-card ul {
   display: grid;
   gap: 0.75rem;
+}
+
+.for-who-note {
+  font-size: 0.9rem;
+  color: var(--ink-500);
 }
 
 @media (min-width: 900px) {
