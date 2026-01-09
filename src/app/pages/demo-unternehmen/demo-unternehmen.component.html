@@ -1,0 +1,97 @@
+<section class="demo-page">
+  <div class="container demo-layout">
+    <div class="demo-header card">
+      <div class="demo-title">
+        <span class="badge">Demo Reservierung</span>
+        <h1>Demo Unternehmen</h1>
+      </div>
+      <div class="demo-meta">
+        <div>
+          <span class="meta-label">Adresse</span>
+          <p>Musterstraße 12, 12345 Musterstadt</p>
+        </div>
+        <div>
+          <span class="meta-label">Öffnungszeiten</span>
+          <p>Di–So 12:00–20:00 · Montag geschlossen</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card demo-calendar">
+      <div class="calendar-header">
+        <div>
+          <h2>März 2026</h2>
+          <p>Verfügbare Tage</p>
+        </div>
+        <div class="calendar-legend">
+          <span class="legend available"></span> Verfügbar
+          <span class="legend full"></span> Voll
+          <span class="legend closed"></span> Geschlossen
+        </div>
+      </div>
+      <div class="calendar-grid">
+        <span>Mo</span>
+        <span>Di</span>
+        <span>Mi</span>
+        <span>Do</span>
+        <span>Fr</span>
+        <span>Sa</span>
+        <span>So</span>
+        <button class="day muted" type="button">24</button>
+        <button class="day muted" type="button">25</button>
+        <button class="day" type="button">26</button>
+        <button class="day" type="button">27</button>
+        <button class="day" type="button">28</button>
+        <button class="day full" type="button">1</button>
+        <button class="day closed" type="button">2</button>
+        <button class="day" type="button">3</button>
+        <button class="day active" type="button">4</button>
+        <button class="day" type="button">5</button>
+        <button class="day" type="button">6</button>
+        <button class="day" type="button">7</button>
+        <button class="day full" type="button">8</button>
+        <button class="day closed" type="button">9</button>
+        <button class="day" type="button">10</button>
+        <button class="day" type="button">11</button>
+        <button class="day" type="button">12</button>
+        <button class="day" type="button">13</button>
+        <button class="day" type="button">14</button>
+        <button class="day" type="button">15</button>
+        <button class="day closed" type="button">16</button>
+        <button class="day" type="button">17</button>
+        <button class="day" type="button">18</button>
+        <button class="day" type="button">19</button>
+        <button class="day" type="button">20</button>
+        <button class="day" type="button">21</button>
+      </div>
+    </div>
+
+    <form class="card demo-form" [formGroup]="bookingForm" (ngSubmit)="submit()">
+      <div class="form-header">
+        <h2>Reservierung</h2>
+        <p>Zeitslots 12:00–20:00 · 45 Minuten</p>
+      </div>
+      <label>
+        Name
+        <input type="text" formControlName="name" placeholder="Vor- und Nachname" />
+      </label>
+      <label>
+        Telefon
+        <input type="tel" formControlName="phone" placeholder="+49" />
+      </label>
+      <label>
+        Personen
+        <input type="number" min="1" formControlName="people" />
+      </label>
+      <label>
+        Uhrzeit
+        <select formControlName="time">
+          <option *ngFor="let slot of slots" [value]="slot">{{ slot }}</option>
+        </select>
+      </label>
+      <button class="button button-primary" type="submit">Reservieren</button>
+      <p class="demo-success" *ngIf="successMessage">{{ successMessage }}</p>
+      <p class="demo-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    </form>
+  </div>
+</section>

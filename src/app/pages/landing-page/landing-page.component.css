@@ -20,6 +20,22 @@
   gap: 20px;
 }
 
+.section-wrap {
+  width: 100%;
+}
+
+.section-base {
+  background: transparent;
+}
+
+.section-light {
+  background: #fbfaf8;
+}
+
+.section-mid {
+  background: #f4f1ec;
+}
+
 .for-who-copy {
   display: grid;
   gap: 12px;

@@ -1,5 +1,8 @@
 <section class="reservation-placeholder">
   <div class="card">
-    <h1>Reservierungsseite folgt</h1>
+    <h1>{{ company?.name || 'Reservierungsseite' }}</h1>
+    <p class="subtitle">{{ company?.address || 'Adresse folgt' }}</p>
+    <p class="subtitle">{{ company?.hours || 'Öffnungszeiten folgen' }}</p>
+    <p class="slug">/r/{{ slug }}</p>
   </div>
 </section>

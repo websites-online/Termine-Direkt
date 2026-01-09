@@ -5,12 +5,20 @@
 .pricing-grid {
   display: grid;
   gap: 24px;
+  position: relative;
 }
 
 .pricing-card {
   display: grid;
   gap: 18px;
   background: var(--surface-muted);
+  min-height: 360px;
+  animation: fadeUp 0.7s ease both;
+  position: relative;
+}
+
+.pricing-card:nth-child(2) {
+  animation-delay: 0.12s;
 }
 
 .pricing-header {
@@ -31,9 +39,42 @@
   color: var(--ink-500);
 }
 
+.pricing-tag {
+  align-self: flex-start;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
 .pricing-detail {
   font-size: 0.95rem;
   color: var(--ink-700);
+}
+
+.custom-preview {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: rgba(53, 104, 89, 0.08);
+}
+
+.preview-label {
+  display: inline-block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-500);
+  margin-bottom: 4px;
+}
+
+.pricing-card .button {
+  margin-top: auto;
 }
 
 .pricing-custom {
@@ -41,13 +82,47 @@
   border: 1px solid rgba(53, 104, 89, 0.2);
 }
 
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (min-width: 900px) {
   .pricing-card {
-    max-width: 420px;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
   }
 
   .pricing-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
+    align-items: stretch;
+  }
+}
+
+.pricing-divider {
+  text-align: center;
+  font-weight: 600;
+  color: var(--ink-500);
+  letter-spacing: 0.2em;
+}
+
+@media (min-width: 900px) {
+  .pricing-divider {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: #ffffff;
+    padding: 0.5rem 1.2rem;
+    border-radius: 999px;
+    border: 1px solid var(--muted-200);
+    box-shadow: var(--shadow-soft);
   }
 }

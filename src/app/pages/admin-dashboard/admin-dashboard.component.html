@@ -1,0 +1,36 @@
+<section class="admin-page">
+  <div class="container">
+    <div class="card admin-card">
+      <h1>Admin Dashboard</h1>
+      <form class="admin-form" [formGroup]="companyForm" (ngSubmit)="createCompany()">
+        <label>
+          Neues Unternehmen
+          <input type="text" formControlName="name" placeholder="Firmenname" />
+        </label>
+        <button class="button button-primary" type="submit">Unternehmen anlegen</button>
+      </form>
+      <div class="admin-list" *ngIf="companies.length">
+        <h2>Unternehmen</h2>
+        <div class="admin-table">
+          <div class="admin-row admin-head">
+            <span>Name</span>
+            <span>Adresse</span>
+            <span>Öffnungszeiten</span>
+            <span>Kontakt</span>
+            <span>Erstellt</span>
+            <span></span>
+          </div>
+          <div class="admin-row" *ngFor="let company of companies">
+            <span class="strong">{{ company.name }}</span>
+            <span>{{ company.address }}</span>
+            <span>{{ company.hours }}</span>
+            <span>{{ company.email }}</span>
+            <span>{{ formatDate(company.createdAt) }}</span>
+            <a [routerLink]="['/r', company.slug]">Seite öffnen</a>
+          </div>
+        </div>
+      </div>
+      <button class="button button-secondary" type="button" (click)="logout()">Logout</button>
+    </div>
+  </div>
+</section>

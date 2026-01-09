@@ -7,13 +7,13 @@
         Sie erhalten jede Reservierung sofort per E-Mail.
       </p>
       <div class="hero-actions">
-        <button class="button button-primary" type="button">Demo ansehen</button>
-        <button class="button button-secondary" type="button">Kontakt aufnehmen</button>
+        <a class="button button-primary" routerLink="/demo-unternehmen">Demo ansehen</a>
+        <a class="button button-secondary" href="#contact">Kontakt aufnehmen</a>
       </div>
       <p class="hero-note">
         Monatlich kündbar · In wenigen Minuten eingerichtet
       </p>
-      <a class="scroll-arrow" href="#how-it-works">
+      <a class="scroll-arrow" href="#how-it-works" [class.is-hidden]="isFooterVisible">
         <span>So funktionierts</span>
         <span class="scroll-arrow-icon" aria-hidden="true"></span>
       </a>

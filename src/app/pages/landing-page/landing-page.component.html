@@ -6,34 +6,49 @@
   </header>
 
   <main>
-    <app-hero-section></app-hero-section>
-    <app-benefits></app-benefits>
-    <app-how-it-works></app-how-it-works>
+    <div class="section-wrap section-base">
+      <app-hero-section></app-hero-section>
+    </div>
+    <div class="section-wrap section-light">
+      <app-benefits></app-benefits>
+    </div>
+    <div class="section-wrap section-mid">
+      <app-how-it-works></app-how-it-works>
+    </div>
 
-    <section class="section for-who">
-      <div class="container for-who-grid">
-        <div class="for-who-copy">
-          <h2 class="section-title">Für wen ist Termine-Direkt?</h2>
-          <p class="section-lead">
-            Ideal für Restaurants, Cafés und kleine Betriebe,
-            die Reservierungen bisher telefonisch annehmen.
-          </p>
-        </div>
-        <div class="card for-who-card">
-          <ul>
-            <li>Keine App nötig</li>
-            <li>Kein zusätzliches Gerät</li>
-            <li>Kein kompliziertes System</li>
-          </ul>
-          <div class="for-who-note">
-            Ruhig, verständlich, sofort einsatzbereit.
+    <div class="section-wrap section-light">
+      <section class="section for-who">
+        <div class="container for-who-grid">
+          <div class="for-who-copy">
+            <h2 class="section-title">Für wen ist Termine-Direkt?</h2>
+            <p class="section-lead">
+              Ideal für Restaurants, Cafés und kleine Betriebe,
+              die Reservierungen bisher telefonisch annehmen.
+            </p>
+          </div>
+          <div class="card for-who-card">
+            <ul>
+              <li>Keine App nötig</li>
+              <li>Kein zusätzliches Gerät</li>
+              <li>Kein kompliziertes System</li>
+            </ul>
+            <div class="for-who-note">
+              Ruhig, verständlich, sofort einsatzbereit.
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
 
-    <app-pricing></app-pricing>
-    <app-faq></app-faq>
+    <div class="section-wrap section-mid">
+      <app-pricing></app-pricing>
+    </div>
+    <div class="section-wrap section-light">
+      <app-faq></app-faq>
+    </div>
+    <div class="section-wrap section-base">
+      <app-contact-form></app-contact-form>
+    </div>
   </main>
 
   <app-footer></app-footer>

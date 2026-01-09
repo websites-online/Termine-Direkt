@@ -1,0 +1,35 @@
+.admin-page {
+  min-height: 100dvh;
+  padding: 80px 0;
+  background: radial-gradient(circle at top, #f4efe9 0%, #ffffff 70%);
+}
+
+.admin-card {
+  max-width: 420px;
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+}
+
+.admin-card form {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-card label {
+  display: grid;
+  gap: 6px;
+  color: var(--ink-700);
+}
+
+.admin-card input {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--muted-200);
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+}
+
+.admin-error {
+  color: #9c2a2a;
+  font-weight: 600;
+}
