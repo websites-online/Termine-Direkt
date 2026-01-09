@@ -1,6 +1,6 @@
 .demo-page {
   min-height: 100dvh;
-  padding: 80px 0;
+  padding: 16px 0 40px;
   background: radial-gradient(circle at top, #f3efe9 0%, #ffffff 65%);
 }
 
@@ -15,6 +15,14 @@
   animation: fadeUp 0.7s ease both;
   border: 1px solid rgba(53, 104, 89, 0.2);
   background: linear-gradient(135deg, rgba(53, 104, 89, 0.08), rgba(255, 255, 255, 0.95));
+}
+
+.demo-content {
+  display: grid;
+  gap: 24px;
+  animation: fadeUp 0.7s ease both;
+  animation-delay: 0.1s;
+  align-items: stretch;
 }
 
 .demo-title h1 {
@@ -45,6 +53,7 @@
   gap: 12px;
   animation: fadeUp 0.7s ease both;
   animation-delay: 0.12s;
+  height: 100%;
 }
 
 .form-header {
@@ -62,6 +71,7 @@
   display: grid;
   gap: 16px;
   animation: fadeUp 0.7s ease both;
+  height: 100%;
 }
 
 .calendar-header {
@@ -130,7 +140,7 @@
   border-radius: 10px;
   padding: 8px 0;
   font: inherit;
-  cursor: default;
+  cursor: pointer;
   transition: transform 0.2s ease;
 }
 
@@ -188,23 +198,63 @@
 
 @media (min-width: 900px) {
   .demo-layout {
-    grid-template-columns: 0.9fr 1fr;
-    grid-template-areas:
-      "header calendar"
-      "form calendar";
+    grid-template-columns: 1fr;
     align-items: start;
   }
 
+  .demo-content {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+@media (max-width: 480px) {
+  .demo-page {
+    padding: 28px 0 40px;
+  }
+
   .demo-header {
-    grid-area: header;
+    padding: 18px;
+  }
+
+  .demo-title h1 {
+    font-size: 1.7rem;
+  }
+
+  .demo-content {
+    gap: 16px;
   }
 
   .demo-calendar {
-    grid-area: calendar;
+    padding: 16px;
+  }
+
+  .calendar-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .calendar-grid {
+    gap: 6px;
+    font-size: 0.8rem;
+  }
+
+  .day {
+    padding: 6px 0;
   }
 
   .demo-form {
-    grid-area: form;
+    padding: 16px;
+  }
+
+  .demo-form label {
+    font-size: 0.9rem;
+  }
+
+  .demo-form input,
+  .demo-form select {
+    padding: 0.6rem 0.75rem;
   }
 }
 

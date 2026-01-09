@@ -16,6 +16,7 @@ export class DemoUnternehmenComponent {
   private readonly bookings: Record<string, number> = {};
   successMessage = '';
   errorMessage = '';
+  selectedDate = '04. März 2026';
 
   readonly bookingForm = this.formBuilder.group({
     name: ['', Validators.required],
@@ -47,6 +48,10 @@ export class DemoUnternehmenComponent {
       people: 2,
       time: '12:00'
     });
+  }
+
+  selectDate(value: string): void {
+    this.selectedDate = value;
   }
 
   getRemainingSlots(time: string): number {

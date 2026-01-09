@@ -2,7 +2,6 @@
   <div class="container demo-layout">
     <div class="demo-header card">
       <div class="demo-title">
-        <span class="badge">Demo Reservierung</span>
         <h1>Demo Unternehmen</h1>
       </div>
       <div class="demo-meta">
@@ -16,82 +15,84 @@
         </div>
       </div>
     </div>
+    <div class="demo-content">
+      <div class="card demo-calendar">
+        <div class="calendar-header">
+          <div>
+            <h2>März 2026</h2>
+            <p>Verfügbare Tage</p>
+          </div>
+          <div class="calendar-legend">
+            <span class="legend available"></span> Verfügbar
+            <span class="legend full"></span> Voll
+            <span class="legend closed"></span> Geschlossen
+          </div>
+        </div>
+        <div class="calendar-grid">
+          <span>Mo</span>
+          <span>Di</span>
+          <span>Mi</span>
+          <span>Do</span>
+          <span>Fr</span>
+          <span>Sa</span>
+          <span>So</span>
+          <button class="day muted" type="button" (click)="selectDate('24. Feb 2026')" [class.active]="selectedDate === '24. Feb 2026'">24</button>
+          <button class="day muted" type="button" (click)="selectDate('25. Feb 2026')" [class.active]="selectedDate === '25. Feb 2026'">25</button>
+          <button class="day" type="button" (click)="selectDate('26. Feb 2026')" [class.active]="selectedDate === '26. Feb 2026'">26</button>
+          <button class="day" type="button" (click)="selectDate('27. Feb 2026')" [class.active]="selectedDate === '27. Feb 2026'">27</button>
+          <button class="day" type="button" (click)="selectDate('28. Feb 2026')" [class.active]="selectedDate === '28. Feb 2026'">28</button>
+          <button class="day full" type="button" (click)="selectDate('01. März 2026')" [class.active]="selectedDate === '01. März 2026'">1</button>
+          <button class="day closed" type="button" (click)="selectDate('02. März 2026')" [class.active]="selectedDate === '02. März 2026'">2</button>
+          <button class="day" type="button" (click)="selectDate('03. März 2026')" [class.active]="selectedDate === '03. März 2026'">3</button>
+          <button class="day" type="button" (click)="selectDate('04. März 2026')" [class.active]="selectedDate === '04. März 2026'">4</button>
+          <button class="day" type="button" (click)="selectDate('05. März 2026')" [class.active]="selectedDate === '05. März 2026'">5</button>
+          <button class="day" type="button" (click)="selectDate('06. März 2026')" [class.active]="selectedDate === '06. März 2026'">6</button>
+          <button class="day" type="button" (click)="selectDate('07. März 2026')" [class.active]="selectedDate === '07. März 2026'">7</button>
+          <button class="day full" type="button" (click)="selectDate('08. März 2026')" [class.active]="selectedDate === '08. März 2026'">8</button>
+          <button class="day closed" type="button" (click)="selectDate('09. März 2026')" [class.active]="selectedDate === '09. März 2026'">9</button>
+          <button class="day" type="button" (click)="selectDate('10. März 2026')" [class.active]="selectedDate === '10. März 2026'">10</button>
+          <button class="day" type="button" (click)="selectDate('11. März 2026')" [class.active]="selectedDate === '11. März 2026'">11</button>
+          <button class="day" type="button" (click)="selectDate('12. März 2026')" [class.active]="selectedDate === '12. März 2026'">12</button>
+          <button class="day" type="button" (click)="selectDate('13. März 2026')" [class.active]="selectedDate === '13. März 2026'">13</button>
+          <button class="day" type="button" (click)="selectDate('14. März 2026')" [class.active]="selectedDate === '14. März 2026'">14</button>
+          <button class="day" type="button" (click)="selectDate('15. März 2026')" [class.active]="selectedDate === '15. März 2026'">15</button>
+          <button class="day closed" type="button" (click)="selectDate('16. März 2026')" [class.active]="selectedDate === '16. März 2026'">16</button>
+          <button class="day" type="button" (click)="selectDate('17. März 2026')" [class.active]="selectedDate === '17. März 2026'">17</button>
+          <button class="day" type="button" (click)="selectDate('18. März 2026')" [class.active]="selectedDate === '18. März 2026'">18</button>
+          <button class="day" type="button" (click)="selectDate('19. März 2026')" [class.active]="selectedDate === '19. März 2026'">19</button>
+          <button class="day" type="button" (click)="selectDate('20. März 2026')" [class.active]="selectedDate === '20. März 2026'">20</button>
+          <button class="day" type="button" (click)="selectDate('21. März 2026')" [class.active]="selectedDate === '21. März 2026'">21</button>
+        </div>
+      </div>
 
-    <div class="card demo-calendar">
-      <div class="calendar-header">
-        <div>
-          <h2>März 2026</h2>
-          <p>Verfügbare Tage</p>
+      <form class="card demo-form" [formGroup]="bookingForm" (ngSubmit)="submit()">
+        <div class="form-header">
+          <h2>Reservierung</h2>
+          <p>Datum: {{ selectedDate }}</p>
+          <p>Zeitslots 12:00–20:00 · 45 Minuten</p>
         </div>
-        <div class="calendar-legend">
-          <span class="legend available"></span> Verfügbar
-          <span class="legend full"></span> Voll
-          <span class="legend closed"></span> Geschlossen
-        </div>
-      </div>
-      <div class="calendar-grid">
-        <span>Mo</span>
-        <span>Di</span>
-        <span>Mi</span>
-        <span>Do</span>
-        <span>Fr</span>
-        <span>Sa</span>
-        <span>So</span>
-        <button class="day muted" type="button">24</button>
-        <button class="day muted" type="button">25</button>
-        <button class="day" type="button">26</button>
-        <button class="day" type="button">27</button>
-        <button class="day" type="button">28</button>
-        <button class="day full" type="button">1</button>
-        <button class="day closed" type="button">2</button>
-        <button class="day" type="button">3</button>
-        <button class="day active" type="button">4</button>
-        <button class="day" type="button">5</button>
-        <button class="day" type="button">6</button>
-        <button class="day" type="button">7</button>
-        <button class="day full" type="button">8</button>
-        <button class="day closed" type="button">9</button>
-        <button class="day" type="button">10</button>
-        <button class="day" type="button">11</button>
-        <button class="day" type="button">12</button>
-        <button class="day" type="button">13</button>
-        <button class="day" type="button">14</button>
-        <button class="day" type="button">15</button>
-        <button class="day closed" type="button">16</button>
-        <button class="day" type="button">17</button>
-        <button class="day" type="button">18</button>
-        <button class="day" type="button">19</button>
-        <button class="day" type="button">20</button>
-        <button class="day" type="button">21</button>
-      </div>
+        <label>
+          Name
+          <input type="text" formControlName="name" placeholder="Vor- und Nachname" />
+        </label>
+        <label>
+          Telefon
+          <input type="tel" formControlName="phone" placeholder="+49" />
+        </label>
+        <label>
+          Personen
+          <input type="number" min="1" formControlName="people" />
+        </label>
+        <label>
+          Uhrzeit
+          <select formControlName="time">
+            <option *ngFor="let slot of slots" [value]="slot">{{ slot }}</option>
+          </select>
+        </label>
+        <button class="button button-primary" type="submit">Reservieren</button>
+        <p class="demo-success" *ngIf="successMessage">{{ successMessage }}</p>
+        <p class="demo-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+      </form>
     </div>
-
-    <form class="card demo-form" [formGroup]="bookingForm" (ngSubmit)="submit()">
-      <div class="form-header">
-        <h2>Reservierung</h2>
-        <p>Zeitslots 12:00–20:00 · 45 Minuten</p>
-      </div>
-      <label>
-        Name
-        <input type="text" formControlName="name" placeholder="Vor- und Nachname" />
-      </label>
-      <label>
-        Telefon
-        <input type="tel" formControlName="phone" placeholder="+49" />
-      </label>
-      <label>
-        Personen
-        <input type="number" min="1" formControlName="people" />
-      </label>
-      <label>
-        Uhrzeit
-        <select formControlName="time">
-          <option *ngFor="let slot of slots" [value]="slot">{{ slot }}</option>
-        </select>
-      </label>
-      <button class="button button-primary" type="submit">Reservieren</button>
-      <p class="demo-success" *ngIf="successMessage">{{ successMessage }}</p>
-      <p class="demo-error" *ngIf="errorMessage">{{ errorMessage }}</p>
-    </form>
   </div>
 </section>

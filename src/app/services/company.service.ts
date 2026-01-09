@@ -49,6 +49,11 @@ export class CompanyService {
     return this.getCompanies().find((company) => company.slug === slug);
   }
 
+  deleteCompany(slug: string): void {
+    const companies = this.getCompanies().filter((company) => company.slug !== slug);
+    localStorage.setItem(this.storageKey, JSON.stringify(companies));
+  }
+
   private createSlug(value: string): string {
     return value
       .toLowerCase()

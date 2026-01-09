@@ -49,6 +49,16 @@ export class AdminDashboardComponent {
     this.router.navigate(['/r', company.slug], { state: { companyName: company.name } });
   }
 
+  deleteCompany(slug: string): void {
+    const confirmed = window.confirm('Unternehmen wirklich löschen?');
+    if (!confirmed) {
+      return;
+    }
+
+    this.companyService.deleteCompany(slug);
+    this.companies = this.companyService.getCompanies();
+  }
+
   formatDate(value: string): string {
     return this.dateFormatter.format(new Date(value));
   }

@@ -19,6 +19,7 @@
             <span>Kontakt</span>
             <span>Erstellt</span>
             <span></span>
+            <span></span>
           </div>
           <div class="admin-row" *ngFor="let company of companies">
             <span class="strong">{{ company.name }}</span>
@@ -27,6 +28,9 @@
             <span>{{ company.email }}</span>
             <span>{{ formatDate(company.createdAt) }}</span>
             <a [routerLink]="['/r', company.slug]">Seite öffnen</a>
+            <button class="link danger" type="button" (click)="deleteCompany(company.slug)">
+              Löschen
+            </button>
           </div>
         </div>
       </div>

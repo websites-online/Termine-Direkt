@@ -5,7 +5,8 @@
 }
 
 .admin-card {
-  max-width: 520px;
+  max-width: 1120px;
+  width: 100%;
   margin: 0 auto;
   display: grid;
   gap: 18px;
@@ -38,17 +39,20 @@
 .admin-table {
   display: grid;
   gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .admin-row {
   display: grid;
-  grid-template-columns: 1.1fr 1.2fr 1.2fr 1fr 0.8fr 0.8fr;
+  grid-template-columns: 1.1fr 1.2fr 1.2fr 1fr 0.8fr 0.8fr 0.7fr;
   gap: 12px;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   background: rgba(53, 104, 89, 0.06);
   align-items: center;
   font-size: 0.9rem;
+  min-width: 980px;
 }
 
 .admin-head {
@@ -65,6 +69,20 @@
   font-weight: 600;
 }
 
+.link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.danger {
+  color: #9c2a2a;
+  font-weight: 600;
+}
+
 .strong {
   color: var(--ink-900);
   font-weight: 600;
@@ -77,5 +95,10 @@
 
   .admin-head {
     display: none;
+  }
+
+  .admin-row a,
+  .admin-row button {
+    justify-self: start;
   }
 }
