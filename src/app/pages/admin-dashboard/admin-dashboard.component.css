@@ -12,6 +12,19 @@
   gap: 18px;
 }
 
+.admin-section {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  color: var(--ink-500);
+  font-size: 0.9rem;
+}
+
 .admin-form {
   display: grid;
   gap: 12px;
@@ -33,40 +46,53 @@
 .admin-list {
   text-align: left;
   display: grid;
-  gap: 10px;
+  gap: 14px;
 }
 
-.admin-table {
+.admin-item {
   display: grid;
-  gap: 6px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.admin-row {
-  display: grid;
-  grid-template-columns: 1.1fr 1.2fr 1.2fr 1fr 0.8fr 0.8fr 0.7fr;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
+  gap: 14px;
   background: rgba(53, 104, 89, 0.06);
-  align-items: center;
-  font-size: 0.9rem;
-  min-width: 980px;
 }
 
-.admin-head {
-  background: transparent;
-  font-weight: 600;
+.admin-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.admin-item-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--ink-900);
+}
+
+.admin-slug {
+  margin: 4px 0 0;
   color: var(--ink-500);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
 }
 
-.admin-row a {
-  color: var(--accent-dark);
-  font-weight: 600;
+.admin-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.admin-item-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-label {
+  display: inline-block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-500);
+  margin-bottom: 4px;
 }
 
 .link {
@@ -76,6 +102,8 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
+  color: var(--accent-dark);
+  font-weight: 600;
 }
 
 .danger {
@@ -83,22 +111,13 @@
   font-weight: 600;
 }
 
-.strong {
-  color: var(--ink-900);
-  font-weight: 600;
-}
-
 @media (max-width: 900px) {
-  .admin-row {
+  .admin-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-item-grid {
     grid-template-columns: 1fr;
-  }
-
-  .admin-head {
-    display: none;
-  }
-
-  .admin-row a,
-  .admin-row button {
-    justify-self: start;
   }
 }
