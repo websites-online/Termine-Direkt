@@ -22,7 +22,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       (entries) => {
         this.isFooterVisible = entries.some((entry) => entry.isIntersecting);
       },
-      { root: null, threshold: 0 }
+      { root: null, threshold: 0, rootMargin: '0px 0px -80px 0px' }
     );
 
     this.observer.observe(footer);

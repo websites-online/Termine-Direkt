@@ -43,3 +43,9 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+@media (max-width: 480px) {
+  .faq-item h3 {
+    font-size: 1.05rem;
+  }
+}

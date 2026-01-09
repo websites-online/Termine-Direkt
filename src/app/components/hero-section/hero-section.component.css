@@ -56,6 +56,7 @@
   font-size: 0.9rem;
   gap: 10px;
   transition: opacity 0.3s ease, transform 0.3s ease;
+  will-change: opacity, transform;
 }
 
 .scroll-arrow.is-hidden {
@@ -231,5 +232,35 @@
   .scroll-arrow {
     right: 32px;
     bottom: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding-top: 64px;
+  }
+
+  .hero-title {
+    font-size: 1.9rem;
+  }
+
+  .hero-subtitle {
+    font-size: 0.95rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+  }
+
+  .hero-visual {
+    gap: 12px;
+  }
+
+  .scroll-arrow {
+    min-width: 160px;
+    height: 38px;
+    font-size: 0.8rem;
+    right: 14px;
+    bottom: 14px;
   }
 }

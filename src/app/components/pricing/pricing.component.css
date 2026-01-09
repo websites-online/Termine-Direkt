@@ -106,6 +106,24 @@
   }
 }
 
+@media (max-width: 480px) {
+  .pricing-grid {
+    gap: 18px;
+  }
+
+  .pricing-header {
+    font-size: 1.2rem;
+  }
+
+  .pricing-list {
+    gap: 0.45rem;
+  }
+
+  .pricing-divider {
+    font-size: 0.75rem;
+  }
+}
+
 .pricing-divider {
   text-align: center;
   font-weight: 600;

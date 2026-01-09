@@ -143,6 +143,16 @@ textarea:focus {
   }
 }
 
+@media (max-width: 480px) {
+  .contact-details {
+    font-size: 0.9rem;
+  }
+
+  .choice-group {
+    gap: 10px;
+  }
+}
+
 @keyframes floatUp {
   from {
     opacity: 0;

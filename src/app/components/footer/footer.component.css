@@ -56,3 +56,16 @@
     justify-self: start;
   }
 }
+
+@media (max-width: 480px) {
+  .footer-inner {
+    text-align: center;
+    justify-items: center;
+    gap: 10px;
+  }
+
+  .footer-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}

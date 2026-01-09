@@ -68,3 +68,9 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+@media (max-width: 480px) {
+  .benefits-grid h3 {
+    font-size: 1.05rem;
+  }
+}

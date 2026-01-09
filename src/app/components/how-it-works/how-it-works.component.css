@@ -75,3 +75,18 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+@media (max-width: 480px) {
+  .step {
+    padding: 22px 18px 18px 56px;
+  }
+
+  .step::before {
+    top: 14px;
+    left: 16px;
+  }
+
+  .step h3 {
+    font-size: 1.05rem;
+  }
+}
