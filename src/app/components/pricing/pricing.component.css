@@ -11,10 +11,13 @@
 .pricing-card {
   display: grid;
   gap: 18px;
-  background: var(--surface-muted);
+  background: rgba(15, 16, 24, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.25);
   min-height: 360px;
   animation: fadeUp 0.7s ease both;
   position: relative;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
 .pricing-card:nth-child(2) {
@@ -23,7 +26,7 @@
 
 .pricing-header {
   font-size: 1.4rem;
-  color: var(--ink-900);
+  color: #f7f7fb;
   font-weight: 600;
   font-family: 'Newsreader', 'Manrope', serif;
 }
@@ -32,17 +35,18 @@
   display: grid;
   gap: 0.6rem;
   padding-left: 1.1rem;
+  color: rgba(247, 247, 251, 0.7);
 }
 
 .pricing-note {
   font-size: 0.9rem;
-  color: var(--ink-500);
+  color: rgba(247, 247, 251, 0.6);
 }
 
 .pricing-tag {
   align-self: flex-start;
-  background: var(--accent-soft);
-  color: var(--accent-dark);
+  background: rgba(0, 168, 255, 0.18);
+  color: #cfe8ff;
   font-weight: 600;
   font-size: 0.75rem;
   letter-spacing: 0.04em;
@@ -53,7 +57,7 @@
 
 .pricing-detail {
   font-size: 0.95rem;
-  color: var(--ink-700);
+  color: rgba(247, 247, 251, 0.75);
 }
 
 .custom-preview {
@@ -61,7 +65,8 @@
   gap: 12px;
   padding: 12px;
   border-radius: var(--radius-md);
-  background: rgba(53, 104, 89, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .preview-label {
@@ -69,7 +74,7 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--ink-500);
+  color: rgba(247, 247, 251, 0.6);
   margin-bottom: 4px;
 }
 
@@ -78,8 +83,14 @@
 }
 
 .pricing-custom {
-  background: linear-gradient(135deg, rgba(53, 104, 89, 0.08), rgba(255, 255, 255, 0.95));
-  border: 1px solid rgba(53, 104, 89, 0.2);
+  background: linear-gradient(135deg, rgba(17, 19, 30, 0.9), rgba(25, 28, 45, 0.9));
+  border: 1px solid rgba(125, 177, 255, 0.25);
+}
+
+.pricing-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(125, 177, 255, 0.35);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
 }
 
 @keyframes fadeUp {
@@ -127,7 +138,7 @@
 .pricing-divider {
   text-align: center;
   font-weight: 600;
-  color: var(--ink-500);
+  color: rgba(247, 247, 251, 0.6);
   letter-spacing: 0.2em;
 }
 
@@ -137,10 +148,10 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    background: #ffffff;
+    background: rgba(16, 18, 26, 0.9);
     padding: 0.5rem 1.2rem;
     border-radius: 999px;
-    border: 1px solid var(--muted-200);
-    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
   }
 }

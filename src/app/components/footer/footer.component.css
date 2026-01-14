@@ -1,7 +1,9 @@
 .footer {
-  border-top: 1px solid var(--muted-200);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   padding: 28px 0 40px;
-  background: #fbfaf8;
+  background: rgba(10, 12, 18, 0.9);
+  position: relative;
+  z-index: 5;
 }
 
 .footer-inner {
@@ -21,21 +23,21 @@
 }
 
 .footer-links a {
-  color: var(--ink-700);
+  color: rgba(247, 247, 251, 0.75);
 }
 
 .footer-brand {
   font-weight: 600;
-  color: var(--ink-900);
+  color: #f7f7fb;
 }
 
 .footer-admin a {
   font-size: 0.85rem;
-  color: var(--ink-500);
+  color: rgba(247, 247, 251, 0.6);
 }
 
 .divider {
-  color: var(--muted-300);
+  color: rgba(255, 255, 255, 0.2);
 }
 
 @media (min-width: 700px) {

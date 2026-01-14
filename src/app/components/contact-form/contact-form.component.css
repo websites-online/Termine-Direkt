@@ -1,5 +1,5 @@
 .contact {
-  background: linear-gradient(180deg, rgba(246, 244, 240, 0.9), #ffffff);
+  background: linear-gradient(180deg, rgba(18, 20, 30, 0.7), rgba(24, 26, 38, 0.75));
 }
 
 .contact-grid {
@@ -16,7 +16,8 @@
 .contact-details {
   display: grid;
   gap: 6px;
-  background: rgba(53, 104, 89, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .contact-details span {
@@ -29,6 +30,7 @@
   gap: 16px;
   box-shadow: 0 18px 40px rgba(27, 27, 31, 0.08);
   animation: floatUp 0.7s ease both;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .form-grid {
@@ -40,22 +42,28 @@ label {
   display: grid;
   gap: 6px;
   font-size: 0.95rem;
-  color: var(--ink-700);
+  color: rgba(247, 247, 251, 0.75);
 }
 
 input,
 textarea {
   border-radius: var(--radius-sm);
-  border: 1px solid var(--muted-200);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   padding: 0.7rem 0.85rem;
   font: inherit;
-  background: #fff;
+  background: rgba(7, 9, 14, 0.85);
+  color: #f7f7fb;
 }
 
 input:focus,
 textarea:focus {
-  outline: 2px solid rgba(53, 104, 89, 0.2);
-  border-color: rgba(53, 104, 89, 0.35);
+  outline: 2px solid rgba(125, 177, 255, 0.35);
+  border-color: rgba(125, 177, 255, 0.45);
+}
+
+.contact-form:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.45);
 }
 
 .form-actions {
@@ -69,12 +77,12 @@ textarea:focus {
 }
 
 .form-success {
-  color: #2a6b52;
+  color: #8dd5b6;
   font-weight: 600;
 }
 
 .form-error {
-  color: #9c2a2a;
+  color: #ff9b9b;
   font-weight: 600;
 }
 
@@ -96,7 +104,7 @@ textarea:focus {
   display: block;
   margin-bottom: 8px;
   font-size: 0.95rem;
-  color: var(--ink-700);
+  color: rgba(247, 247, 251, 0.75);
 }
 
 .choice-group {
@@ -110,11 +118,11 @@ textarea:focus {
   gap: 10px;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--muted-200);
-  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(7, 9, 14, 0.85);
   cursor: pointer;
   font-size: 0.95rem;
-  color: var(--ink-700);
+  color: rgba(247, 247, 251, 0.75);
 }
 
 .choice-card input {
@@ -123,9 +131,9 @@ textarea:focus {
 }
 
 .choice-card:has(input:checked) {
-  border-color: rgba(53, 104, 89, 0.45);
-  background: rgba(53, 104, 89, 0.08);
-  color: var(--accent-dark);
+  border-color: rgba(125, 177, 255, 0.45);
+  background: rgba(125, 177, 255, 0.16);
+  color: #cfe8ff;
 }
 
 @media (min-width: 900px) {

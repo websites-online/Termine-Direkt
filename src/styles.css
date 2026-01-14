@@ -31,7 +31,7 @@ body {
   margin: 0;
   font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: var(--ink-900);
-  background: radial-gradient(circle at top, #f3efe9 0%, #f8f7f4 40%, #ffffff 100%);
+  background: #0b0c10;
   min-height: 100dvh;
 }
 
@@ -74,6 +74,8 @@ section {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
+  position: relative;
+  overflow: hidden;
 }
 
 .container {
