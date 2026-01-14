@@ -208,9 +208,9 @@ export class LandingPageComponent {
     const cy = this.currentY - this.orbRect.top;
 
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = 'rgba(185, 230, 255, 1)';
-    ctx.shadowColor = 'rgba(45, 156, 255, 0.85)';
-    ctx.shadowBlur = 14;
+    ctx.fillStyle = 'rgba(150, 200, 235, 0.85)';
+    ctx.shadowColor = 'rgba(45, 156, 255, 0.45)';
+    ctx.shadowBlur = 8;
 
     const influence = 140;
     const repel = 2.2;

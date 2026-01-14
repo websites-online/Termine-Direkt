@@ -3,9 +3,9 @@
   position: sticky;
   top: 0;
   z-index: 40;
-  background: linear-gradient(180deg, rgba(12, 14, 22, 0.96), rgba(12, 14, 22, 0.7));
+  background: linear-gradient(180deg, rgba(20, 26, 38, 0.9), rgba(20, 26, 38, 0.72));
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(125, 177, 255, 0.22);
   padding-bottom: 12px;
 }
 
@@ -279,6 +279,10 @@
   background: linear-gradient(140deg, rgba(14, 16, 24, 0.9), rgba(24, 26, 38, 0.9));
 }
 
+.section-for-who {
+  background: linear-gradient(140deg, rgba(22, 28, 42, 0.85), rgba(32, 38, 54, 0.9));
+}
+
 .section-wrap::after {
   content: '';
   position: absolute;
@@ -395,8 +399,8 @@
 }
 
 .for-who-card {
-  background: linear-gradient(135deg, rgba(53, 104, 89, 0.12), rgba(255, 255, 255, 0.9));
-  border: 1px solid rgba(53, 104, 89, 0.18);
+  background: linear-gradient(135deg, rgba(64, 110, 255, 0.14), rgba(255, 255, 255, 0.96));
+  border: 1px solid rgba(125, 177, 255, 0.25);
   display: grid;
   gap: 16px;
 }
