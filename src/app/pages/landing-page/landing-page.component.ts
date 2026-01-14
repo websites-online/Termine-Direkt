@@ -8,7 +8,7 @@ import { PricingComponent } from '../../components/pricing/pricing.component';
 import { FaqComponent } from '../../components/faq/faq.component';
 import { FooterComponent } from '../../components/footer/footer.component';
 import { ContactFormComponent } from '../../components/contact-form/contact-form.component';
-import { HeroMonitorMockupComponent, HeroMonitorMode } from '../../components/hero-monitor-mockup/hero-monitor-mockup.component';
+import { HeroMonitorMode } from '../../components/hero-monitor-mockup/hero-monitor-mockup.component';
 
 @Component({
   selector: 'app-landing-page',
@@ -21,8 +21,7 @@ import { HeroMonitorMockupComponent, HeroMonitorMode } from '../../components/he
     PricingComponent,
     FaqComponent,
     FooterComponent,
-    ContactFormComponent,
-    HeroMonitorMockupComponent
+    ContactFormComponent
   ],
   templateUrl: './landing-page.component.html',
   styleUrl: './landing-page.component.css'
