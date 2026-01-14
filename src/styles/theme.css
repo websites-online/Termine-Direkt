@@ -90,6 +90,7 @@
   background: #fff;
   font-size: 0.95rem;
   color: var(--text);
+  font-family: inherit;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 

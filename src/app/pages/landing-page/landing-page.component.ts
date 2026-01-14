@@ -8,7 +8,7 @@ import { PricingComponent } from '../../components/pricing/pricing.component';
 import { FaqComponent } from '../../components/faq/faq.component';
 import { FooterComponent } from '../../components/footer/footer.component';
 import { ContactFormComponent } from '../../components/contact-form/contact-form.component';
-import { HeroScreenComponent, HeroScreenMode } from '../../components/hero-screen/hero-screen.component';
+import { HeroMonitorMockupComponent, HeroMonitorMode } from '../../components/hero-monitor-mockup/hero-monitor-mockup.component';
 
 @Component({
   selector: 'app-landing-page',
@@ -22,15 +22,24 @@ import { HeroScreenComponent, HeroScreenMode } from '../../components/hero-scree
     FaqComponent,
     FooterComponent,
     ContactFormComponent,
-    HeroScreenComponent
+    HeroMonitorMockupComponent
   ],
   templateUrl: './landing-page.component.html',
   styleUrl: './landing-page.component.css'
 })
 export class LandingPageComponent {
-  screenMode: HeroScreenMode = 'reservation-preview';
+  screenMode: HeroMonitorMode = 'reservation-preview';
+  isNavOpen = false;
 
-  setScreenMode(mode: HeroScreenMode): void {
+  setScreenMode(mode: HeroMonitorMode): void {
     this.screenMode = mode;
+  }
+
+  toggleNav(): void {
+    this.isNavOpen = !this.isNavOpen;
+  }
+
+  closeNav(): void {
+    this.isNavOpen = false;
   }
 }

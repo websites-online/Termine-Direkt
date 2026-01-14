@@ -2,11 +2,91 @@
   margin: 0 0 8px;
 }
 
+.demo-grid {
+  align-items: stretch;
+}
+
+.demo-page {
+  min-height: 100dvh;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.demo-page .section-header {
+  margin-bottom: 10px;
+}
+
+.demo-page .section-lead {
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.demo-page.section {
+  padding: 20px 0;
+}
+
+.demo-page .card {
+  padding: 14px;
+}
+
+.calendar-card {
+  display: grid;
+  gap: 10px;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  grid-auto-rows: minmax(30px, 1fr);
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(79, 70, 229, 0.12);
+  background: rgba(79, 70, 229, 0.06);
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.75rem;
+}
+
+.day.muted {
+  color: var(--muted);
+}
+
+.day.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
 .slot-row {
   display: flex;
-  gap: 10px;
+  gap: 6px;
   flex-wrap: wrap;
-  margin: 14px 0 6px;
+  margin: 6px 0 6px;
 }
 
 .slot {
@@ -27,5 +107,12 @@
 
 .demo-form {
   display: grid;
-  gap: 12px;
+  gap: 8px;
+}
+
+@media (max-width: 720px) {
+  .demo-page {
+    min-height: auto;
+    padding-top: 24px;
+  }
 }

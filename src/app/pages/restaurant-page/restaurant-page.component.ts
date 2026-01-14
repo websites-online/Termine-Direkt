@@ -19,6 +19,8 @@ export class RestaurantPageComponent {
 
   readonly slug = this.route.snapshot.paramMap.get('slug') ?? '';
   readonly company = this.companyService.findBySlug(this.slug);
+  readonly weekdays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+  readonly calendarDays = this.generateCalendar(2026, 2, 26);
   successMessage = '';
 
   readonly bookingForm = this.formBuilder.group({
@@ -45,5 +47,40 @@ export class RestaurantPageComponent {
       note: '',
       time: '18:00'
     });
+  }
+
+  private generateCalendar(
+    year: number,
+    monthIndex: number,
+    activeDay: number
+  ): Array<{ label: number; muted: boolean; active: boolean }> {
+    const firstDay = new Date(year, monthIndex, 1);
+    const startOffset = (firstDay.getDay() + 6) % 7;
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+    const daysInPrevMonth = new Date(year, monthIndex, 0).getDate();
+    const cells: Array<{ label: number; muted: boolean; active: boolean }> = [];
+
+    for (let i = 0; i < 42; i += 1) {
+      if (i < startOffset) {
+        const label = daysInPrevMonth - startOffset + i + 1;
+        cells.push({ label, muted: true, active: false });
+        continue;
+      }
+
+      const dayNumber = i - startOffset + 1;
+      if (dayNumber <= daysInMonth) {
+        cells.push({
+          label: dayNumber,
+          muted: false,
+          active: dayNumber === activeDay
+        });
+        continue;
+      }
+
+      const label = dayNumber - daysInMonth;
+      cells.push({ label, muted: true, active: false });
+    }
+
+    return cells;
   }
 }

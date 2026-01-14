@@ -11,6 +11,28 @@
     </div>
 
     <div class="grid-2 demo-grid" *ngIf="company">
+      <div class="card calendar-card">
+        <h2>Kalender</h2>
+        <div class="calendar-header">
+          <span>März 2026</span>
+          <span class="muted">Mo–So</span>
+        </div>
+        <div class="calendar-weekdays">
+          <span *ngFor="let day of weekdays">{{ day }}</span>
+        </div>
+        <div class="calendar-grid">
+          <span
+            class="day"
+            *ngFor="let day of calendarDays"
+            [class.muted]="day.muted"
+            [class.active]="day.active"
+          >
+            {{ day.label }}
+          </span>
+        </div>
+        <p class="helptext">Datum auswählen (Demo).</p>
+      </div>
+
       <div class="card">
         <h2>Reservierungsdetails</h2>
         <p class="muted">E-Mail: {{ company.email }}</p>
@@ -20,10 +42,6 @@
           <button class="slot" type="button" [class.active]="bookingForm.value.time === '19:00'" (click)="bookingForm.patchValue({ time: '19:00' })">19:00</button>
         </div>
         <p class="helptext">Ausgewählt: {{ bookingForm.value.time }}</p>
-      </div>
-
-      <div class="card">
-        <h2>Reservierung senden</h2>
         <form class="demo-form" [formGroup]="bookingForm" (ngSubmit)="submit()">
           <label>
             <span class="label">Name*</span>

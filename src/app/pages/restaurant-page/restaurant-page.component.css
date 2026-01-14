@@ -2,6 +2,61 @@
   margin: 0 0 8px;
 }
 
+.demo-grid {
+  align-items: stretch;
+}
+
+.calendar-card {
+  display: grid;
+  gap: 12px;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  grid-auto-rows: minmax(34px, 1fr);
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(79, 70, 229, 0.12);
+  background: rgba(79, 70, 229, 0.06);
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.day.muted {
+  color: var(--muted);
+}
+
+.day.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
 .slot-row {
   display: flex;
   gap: 10px;
