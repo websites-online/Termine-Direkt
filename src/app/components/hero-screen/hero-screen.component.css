@@ -6,11 +6,17 @@
 
 .monitor-frame {
   width: min(520px, 100%);
-  background: rgba(255, 255, 255, 0.98);
-  border: 1px solid var(--border);
-  border-radius: 18px;
+  background: #1b1f2a;
+  border: 2px solid rgba(15, 23, 42, 0.12);
+  border-radius: 22px;
+  padding: 14px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.25);
+}
+
+.monitor-glass {
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: var(--shadow);
+  background: #fff;
 }
 
 .screen-topbar {
@@ -19,7 +25,7 @@
   gap: 8px;
   padding: 14px 18px;
   border-bottom: 1px solid var(--border);
-  background: #f8fafc;
+  background: #f1f5ff;
 }
 
 .screen-topbar span {
@@ -38,6 +44,35 @@
 .screen-title {
   font-weight: 700;
   font-size: 1.05rem;
+}
+
+.screen-hero {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(99, 102, 241, 0.05));
+  border-radius: 14px;
+  padding: 14px;
+  display: grid;
+  gap: 6px;
+}
+
+.screen-hero p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.screen-brand {
+  font-weight: 700;
+}
+
+.screen-cta {
+  justify-self: start;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-weight: 600;
+  font-size: 0.8rem;
 }
 
 .screen-slots {
@@ -87,17 +122,17 @@
 }
 
 .monitor-stand {
-  width: 70px;
-  height: 18px;
-  background: #e9edf7;
+  width: 80px;
+  height: 20px;
+  background: #dfe6f2;
   border-radius: 0 0 10px 10px;
   border: 1px solid var(--border);
 }
 
 .monitor-base {
-  width: 180px;
+  width: 200px;
   height: 14px;
-  background: #e3e8f4;
+  background: #d6deee;
   border-radius: 999px;
   border: 1px solid var(--border);
 }

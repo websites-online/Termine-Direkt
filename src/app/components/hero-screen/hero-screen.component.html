@@ -1,49 +1,55 @@
 <div class="monitor">
   <div class="monitor-frame">
-    <div class="screen-topbar">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
-    <div class="screen-content">
-      <ng-container [ngSwitch]="mode">
-        <div *ngSwitchCase="'reservation-preview'" class="screen-panel">
-          <div class="screen-title">Demo Unternehmen</div>
-          <div class="screen-slots">
-            <button class="slot" type="button">18:00</button>
-            <button class="slot" type="button">18:30</button>
-            <button class="slot" type="button">19:00</button>
-          </div>
-          <div class="screen-form">
-            <input class="input" type="text" placeholder="Name" readonly />
-            <input class="input" type="text" placeholder="Telefon" readonly />
-            <input class="input" type="text" placeholder="Personen" readonly />
-          </div>
-          <p class="screen-hint">Vorschau: So sieht die Buchung aus.</p>
-        </div>
-        <div *ngSwitchCase="'dashboard-preview'" class="screen-panel">
-          <div class="screen-title">Dashboard</div>
-          <div class="screen-widgets">
-            <div class="widget">
-              <span>Heute</span>
-              <strong>6 Reservierungen</strong>
+    <div class="monitor-glass">
+      <div class="screen-topbar">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <div class="screen-content">
+        <ng-container [ngSwitch]="mode">
+          <div *ngSwitchCase="'reservation-preview'" class="screen-panel">
+            <div class="screen-hero">
+              <div class="screen-brand">Demo Unternehmen</div>
+              <p>Reservieren Sie direkt online.</p>
+              <button class="screen-cta" type="button">Jetzt buchen</button>
             </div>
-            <div class="widget">
-              <span>Nächster Slot</span>
-              <strong>19:00</strong>
+            <div class="screen-slots">
+              <button class="slot" type="button">18:00</button>
+              <button class="slot" type="button">18:30</button>
+              <button class="slot" type="button">19:00</button>
             </div>
-            <div class="widget">
-              <span>Status</span>
-              <strong>Aktiv</strong>
+            <div class="screen-form">
+              <input class="input" type="text" placeholder="Name" readonly />
+              <input class="input" type="text" placeholder="Telefon" readonly />
+              <input class="input" type="text" placeholder="Personen" readonly />
+            </div>
+            <p class="screen-hint">Vorschau: So sieht die Buchung aus.</p>
+          </div>
+          <div *ngSwitchCase="'dashboard-preview'" class="screen-panel">
+            <div class="screen-title">Dashboard</div>
+            <div class="screen-widgets">
+              <div class="widget">
+                <span>Heute</span>
+                <strong>6 Reservierungen</strong>
+              </div>
+              <div class="widget">
+                <span>Nächster Slot</span>
+                <strong>19:00</strong>
+              </div>
+              <div class="widget">
+                <span>Status</span>
+                <strong>Aktiv</strong>
+              </div>
             </div>
           </div>
-        </div>
-        <div *ngSwitchDefault class="screen-panel">
-          <div class="screen-title">Eigener Inhalt</div>
-          <p class="screen-hint">TODO: Individueller Inhalt kann hier platziert werden.</p>
-          <ng-content></ng-content>
-        </div>
-      </ng-container>
+          <div *ngSwitchDefault class="screen-panel">
+            <div class="screen-title">Eigener Inhalt</div>
+            <p class="screen-hint">TODO: Individueller Inhalt kann hier platziert werden.</p>
+            <ng-content></ng-content>
+          </div>
+        </ng-container>
+      </div>
     </div>
   </div>
   <div class="monitor-stand"></div>
