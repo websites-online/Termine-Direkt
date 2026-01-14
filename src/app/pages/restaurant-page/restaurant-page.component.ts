@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { CompanyService } from '../../services/company.service';
+
 @Component({
   selector: 'app-restaurant-page',
   standalone: true,
@@ -18,18 +19,19 @@ export class RestaurantPageComponent {
 
   readonly slug = this.route.snapshot.paramMap.get('slug') ?? '';
   readonly company = this.companyService.findBySlug(this.slug);
-  readonly slots = this.generateSlots();
-  selectedDate = '04. März 2026';
   successMessage = '';
 
   readonly bookingForm = this.formBuilder.group({
     name: ['', Validators.required],
     phone: ['', Validators.required],
     people: [2, [Validators.required, Validators.min(1)]],
-    time: ['12:00', Validators.required]
+    note: [''],
+    time: ['18:00', Validators.required]
   });
 
   submit(): void {
+    this.successMessage = '';
+
     if (this.bookingForm.invalid) {
       this.bookingForm.markAllAsTouched();
       return;
@@ -40,28 +42,8 @@ export class RestaurantPageComponent {
       name: '',
       phone: '',
       people: 2,
-      time: '12:00'
+      note: '',
+      time: '18:00'
     });
-  }
-
-  selectDate(value: string): void {
-    this.selectedDate = value;
-  }
-
-  private generateSlots(): string[] {
-    const slots: string[] = [];
-    let minutes = 12 * 60;
-    const endMinutes = 20 * 60;
-
-    while (minutes < endMinutes) {
-      const hour = Math.floor(minutes / 60)
-        .toString()
-        .padStart(2, '0');
-      const minute = (minutes % 60).toString().padStart(2, '0');
-      slots.push(`${hour}:${minute}`);
-      minutes += 45;
-    }
-
-    return slots;
   }
 }

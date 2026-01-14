@@ -1,0 +1,150 @@
+.monitor {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+
+.monitor-frame {
+  width: min(520px, 100%);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.screen-topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background: #f8fafc;
+}
+
+.screen-topbar span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #cbd5f5;
+}
+
+.screen-content {
+  padding: 20px 22px 26px;
+  display: grid;
+  gap: 16px;
+}
+
+.screen-title {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.screen-slots {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.slot {
+  border: 1px solid rgba(79, 70, 229, 0.2);
+  background: rgba(79, 70, 229, 0.08);
+  color: var(--primary-600);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.screen-form {
+  display: grid;
+  gap: 10px;
+}
+
+.screen-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.screen-widgets {
+  display: grid;
+  gap: 12px;
+}
+
+.widget {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  background: #fff;
+  display: grid;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+
+.widget strong {
+  font-size: 1.1rem;
+}
+
+.monitor-stand {
+  width: 70px;
+  height: 18px;
+  background: #e9edf7;
+  border-radius: 0 0 10px 10px;
+  border: 1px solid var(--border);
+}
+
+.monitor-base {
+  width: 180px;
+  height: 14px;
+  background: #e3e8f4;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+
+.desk-accessories {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: center;
+  width: min(520px, 100%);
+}
+
+.keyboard {
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #eef2ff, #dfe6f5);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+}
+
+.mouse {
+  width: 40px;
+  height: 24px;
+  border-radius: 999px;
+  background: #f4f6fb;
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+.mouse::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  width: 2px;
+  height: 8px;
+  background: rgba(15, 23, 42, 0.2);
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+@media (max-width: 720px) {
+  .desk-accessories {
+    gap: 16px;
+  }
+
+  .monitor-base {
+    width: 140px;
+  }
+}

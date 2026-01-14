@@ -39,5 +39,9 @@ export const routes: Routes = [
   {
     path: 'r/:slug',
     component: RestaurantPageComponent
+  },
+  {
+    path: '**',
+    redirectTo: ''
   }
 ];

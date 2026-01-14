@@ -1,129 +1,66 @@
 <div class="page landing-page">
-  <header class="topbar">
-    <div class="container topbar-inner">
-      <div class="brand">
-        Termine-Direkt
-        <span class="brand-code" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-            <path d="M9 8l-4 4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M15 8l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="logo">
+        <span class="logo-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+            <path d="M6.5 7.5L3.5 12l3 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M17.5 7.5L20.5 12l-3 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 19l4-14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
         </span>
+        <span>termine-direkt</span>
       </div>
       <nav class="nav">
-        <a href="#pricing">Preis</a>
-        <a href="#faq">FAQ</a>
+        <a routerLink="/demo-unternehmen">Demo</a>
+        <a href="#pricing">Preise</a>
         <a href="#contact">Kontakt</a>
-        <a class="nav-demo" routerLink="/demo-unternehmen">Demo</a>
+        <a class="btn btn-primary" href="#contact">Jetzt starten</a>
       </nav>
-      <button
-        class="nav-toggle"
-        type="button"
-        aria-label="Navigation öffnen"
-        [attr.aria-expanded]="isNavOpen"
-        (click)="toggleNav()"
-      >
-        <span></span>
-      </button>
-    </div>
-    <div class="nav-panel" [class.open]="isNavOpen">
-      <div class="nav-panel-inner">
-        <a href="#pricing" (click)="closeNav()">Preis</a>
-        <a href="#faq" (click)="closeNav()">FAQ</a>
-        <a href="#contact" (click)="closeNav()">Kontakt</a>
-        <a routerLink="/demo-unternehmen" (click)="closeNav()">Demo</a>
-      </div>
     </div>
   </header>
 
   <main>
-    <div class="floating-orb" aria-hidden="true"></div>
-    <div class="bg-orb" aria-hidden="true" style="--base-x: 18; --base-y: 22;"></div>
-    <div class="bg-orb" aria-hidden="true" style="--base-x: 72; --base-y: 26;"></div>
-    <div class="bg-orb" aria-hidden="true" style="--base-x: 82; --base-y: 68;"></div>
-    <div
-      class="section-wrap section-base"
-      #scrollSection
-      data-index="0"
-      [class.is-active]="activeSectionIndex === 0"
-      [class.is-above]="activeSectionIndex > 0"
-    >
-      <app-hero-section></app-hero-section>
-    </div>
-    <div
-      class="section-wrap section-light"
-      #scrollSection
-      data-index="1"
-      [class.is-active]="activeSectionIndex === 1"
-      [class.is-above]="activeSectionIndex > 1"
-    >
-      <app-benefits></app-benefits>
-    </div>
-    <div
-      class="section-wrap section-mid"
-      #scrollSection
-      data-index="2"
-      [class.is-active]="activeSectionIndex === 2"
-      [class.is-above]="activeSectionIndex > 2"
-    >
-      <app-how-it-works></app-how-it-works>
-    </div>
-
-    <div
-      class="section-wrap section-light section-for-who"
-      #scrollSection
-      data-index="3"
-      [class.is-active]="activeSectionIndex === 3"
-      [class.is-above]="activeSectionIndex > 3"
-    >
-      <section class="section for-who">
-        <div class="container for-who-grid">
-          <div class="for-who-copy">
-            <h2 class="section-title">Für wen ist Termine-Direkt?</h2>
-            <p class="section-lead">
-              Ideal für Restaurants, Cafés und kleine Betriebe,
-              die Reservierungen bisher telefonisch annehmen.
-            </p>
+    <section class="section hero hero-bg">
+      <div class="container grid-2 hero-grid">
+        <div class="hero-copy">
+          <span class="badge">Reservierungen ohne App</span>
+          <h1>Online-Reservierungen direkt aus Google – ohne App.</h1>
+          <p class="section-lead">
+            Gäste reservieren über einen Link in Ihrem Google-Profil.
+            Sie erhalten jede Reservierung sofort per E-Mail.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" routerLink="/demo-unternehmen">Demo ansehen</a>
+            <a class="btn btn-outline" href="#contact">Kontakt aufnehmen</a>
           </div>
-          <div class="card for-who-card">
-            <ul>
-              <li>Keine App nötig</li>
-              <li>Kein zusätzliches Gerät</li>
-              <li>Kein kompliziertes System</li>
-            </ul>
-            <div class="for-who-note">
-              Ruhig, verständlich, sofort einsatzbereit.
-            </div>
+          <p class="hero-trust">Monatlich kündbar · In wenigen Minuten eingerichtet</p>
+        </div>
+        <div class="hero-visual">
+          <app-hero-screen [mode]="screenMode"></app-hero-screen>
+          <div class="mode-toggle">
+            <span class="muted">Vorschau:</span>
+            <button class="mode-btn" type="button" [class.active]="screenMode === 'reservation-preview'" (click)="setScreenMode('reservation-preview')">Reservierung</button>
+            <button class="mode-btn" type="button" [class.active]="screenMode === 'dashboard-preview'" (click)="setScreenMode('dashboard-preview')">Dashboard</button>
+            <button class="mode-btn" type="button" [class.active]="screenMode === 'custom'" (click)="setScreenMode('custom')">Custom</button>
           </div>
         </div>
-      </section>
-    </div>
+      </div>
+    </section>
 
-    <div
-      class="section-wrap section-mid"
-      #scrollSection
-      data-index="4"
-      [class.is-active]="activeSectionIndex === 4"
-      [class.is-above]="activeSectionIndex > 4"
-    >
+    <div class="section-band band-light">
+      <app-benefits></app-benefits>
+    </div>
+    <div class="section-band band-muted">
+      <app-how-it-works></app-how-it-works>
+    </div>
+    <div class="section-band band-light">
       <app-pricing></app-pricing>
     </div>
-    <div
-      class="section-wrap section-light"
-      #scrollSection
-      data-index="5"
-      [class.is-active]="activeSectionIndex === 5"
-      [class.is-above]="activeSectionIndex > 5"
-    >
+    <div class="section-band band-muted">
       <app-faq></app-faq>
     </div>
-    <div
-      class="section-wrap section-base"
-      #scrollSection
-      data-index="6"
-      [class.is-active]="activeSectionIndex === 6"
-      [class.is-above]="activeSectionIndex > 6"
-    >
+    <div class="section-band band-light">
       <app-contact-form></app-contact-form>
     </div>
   </main>

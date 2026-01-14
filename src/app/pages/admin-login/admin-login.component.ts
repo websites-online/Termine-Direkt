@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 
@@ -9,7 +10,7 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-admin-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, HttpClientModule],
   templateUrl: './admin-login.component.html',
   styleUrl: './admin-login.component.css'
 })
@@ -21,7 +22,7 @@ export class AdminLoginComponent {
 
   readonly loginForm = this.formBuilder.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required]]
+    password: ['', [Validators.required, Validators.minLength(6)]]
   });
 
   constructor(
@@ -41,7 +42,7 @@ export class AdminLoginComponent {
     const password = this.loginForm.value.password ?? '';
 
     if (email !== this.adminEmail) {
-      this.errorMessage = 'Zugriff verweigert. Diese E-Mail ist nicht berechtigt.';
+      this.errorMessage = 'Nicht berechtigt.';
       return;
     }
 
@@ -54,7 +55,7 @@ export class AdminLoginComponent {
       },
       error: () => {
         this.isSubmitting = false;
-        this.errorMessage = 'Login fehlgeschlagen. Bitte prüfen Sie Ihre Daten.';
+        this.errorMessage = 'Login fehlgeschlagen.';
       }
     });
   }

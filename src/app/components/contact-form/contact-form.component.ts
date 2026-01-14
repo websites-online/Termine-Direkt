@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { ContactPayload, ContactService } from '../../services/contact.service';
@@ -7,7 +8,7 @@ import { ContactPayload, ContactService } from '../../services/contact.service';
 @Component({
   selector: 'app-contact-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, HttpClientModule],
   templateUrl: './contact-form.component.html',
   styleUrl: './contact-form.component.css'
 })
@@ -19,9 +20,8 @@ export class ContactFormComponent {
     contactName: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
     phone: [''],
-    serviceType: ['reservierungsseite', [Validators.required]],
     message: ['', [Validators.required]],
-    acceptedPrivacy: [true]
+    acceptedPrivacy: [false, [Validators.requiredTrue]]
   });
 
   isSubmitting = false;
@@ -41,20 +41,16 @@ export class ContactFormComponent {
 
     this.isSubmitting = true;
 
-    const serviceType =
-      this.contactForm.value.serviceType === 'website' ? 'website' : 'reservierungsseite';
-
     const payload: ContactPayload = {
       companyName: this.contactForm.value.companyName || undefined,
       contactName: this.contactForm.value.contactName ?? '',
       email: this.contactForm.value.email ?? '',
       phone: this.contactForm.value.phone || undefined,
-      serviceType,
       message: this.contactForm.value.message ?? '',
-      acceptedPrivacy: true as const
+      acceptedPrivacy: true
     };
 
-    this.contactService.submitContact(payload).subscribe({
+    this.contactService.sendContactMessage(payload).subscribe({
       next: () => {
         this.isSubmitting = false;
         this.successMessage = 'Danke! Ihre Nachricht wurde gesendet.';
@@ -63,9 +59,8 @@ export class ContactFormComponent {
           contactName: '',
           email: '',
           phone: '',
-          serviceType: 'reservierungsseite',
           message: '',
-          acceptedPrivacy: true
+          acceptedPrivacy: false
         });
       },
       error: () => {
@@ -87,7 +82,7 @@ export class ContactFormComponent {
     return this.contactForm.get('message');
   }
 
-  get serviceType() {
-    return this.contactForm.get('serviceType');
+  get acceptedPrivacy() {
+    return this.contactForm.get('acceptedPrivacy');
   }
 }

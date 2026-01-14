@@ -1,69 +1,33 @@
-.contact {
-  background: linear-gradient(180deg, rgba(18, 20, 30, 0.7), rgba(24, 26, 38, 0.75));
-}
-
-.contact-grid {
+.contact-card {
   display: grid;
-  gap: 24px;
-  animation: fadeIn 0.8s ease both;
-}
-
-.contact-copy {
-  display: grid;
-  gap: 16px;
-}
-
-.contact-details {
-  display: grid;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.contact-details span {
-  color: var(--ink-500);
-  font-size: 0.9rem;
+  gap: 20px;
 }
 
 .contact-form {
   display: grid;
   gap: 16px;
-  box-shadow: 0 18px 40px rgba(27, 27, 31, 0.08);
-  animation: floatUp 0.7s ease both;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .form-grid {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
-label {
-  display: grid;
-  gap: 6px;
-  font-size: 0.95rem;
-  color: rgba(247, 247, 251, 0.75);
+.message-field {
+  grid-column: 1 / -1;
 }
 
-input,
-textarea {
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  padding: 0.7rem 0.85rem;
-  font: inherit;
-  background: rgba(7, 9, 14, 0.85);
-  color: #f7f7fb;
+.checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--muted);
 }
 
-input:focus,
-textarea:focus {
-  outline: 2px solid rgba(125, 177, 255, 0.35);
-  border-color: rgba(125, 177, 255, 0.45);
-}
-
-.contact-form:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.45);
+.checkbox-row input {
+  width: 18px;
+  height: 18px;
 }
 
 .form-actions {
@@ -71,112 +35,8 @@ textarea:focus {
   justify-content: flex-start;
 }
 
-.error {
-  color: #9c2a2a;
-  font-size: 0.8rem;
-}
-
-.form-success {
-  color: #8dd5b6;
-  font-weight: 600;
-}
-
-.form-error {
-  color: #ff9b9b;
-  font-weight: 600;
-}
-
-.checkbox {
-  align-items: center;
-  grid-template-columns: auto 1fr;
-}
-
-.checkbox input {
-  width: 18px;
-  height: 18px;
-}
-
-.full {
-  grid-column: 1 / -1;
-}
-
-.choice-label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 0.95rem;
-  color: rgba(247, 247, 251, 0.75);
-}
-
-.choice-group {
-  display: grid;
-  gap: 12px;
-}
-
-.choice-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(7, 9, 14, 0.85);
-  cursor: pointer;
-  font-size: 0.95rem;
-  color: rgba(247, 247, 251, 0.75);
-}
-
-.choice-card input {
-  width: 18px;
-  height: 18px;
-}
-
-.choice-card:has(input:checked) {
-  border-color: rgba(125, 177, 255, 0.45);
-  background: rgba(125, 177, 255, 0.16);
-  color: #cfe8ff;
-}
-
-@media (min-width: 900px) {
-  .contact-grid {
-    grid-template-columns: 0.9fr 1.1fr;
-    align-items: start;
-  }
-
+@media (min-width: 860px) {
   .form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .choice-group {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 480px) {
-  .contact-details {
-    font-size: 0.9rem;
-  }
-
-  .choice-group {
-    gap: 10px;
-  }
-}
-
-@keyframes floatUp {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
   }
 }

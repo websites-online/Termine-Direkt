@@ -1,99 +1,50 @@
-<section class="reservation-page">
-  <div class="container reservation-layout">
-    <div class="reservation-header card">
-      <div class="reservation-title">
-        <h1>{{ company?.name || 'Reservierungsseite' }}</h1>
-      </div>
-      <div class="reservation-meta">
-        <div>
-          <span class="meta-label">Adresse</span>
-          <p>{{ company?.address || 'Adresse folgt' }}</p>
-        </div>
-        <div>
-          <span class="meta-label">Öffnungszeiten</span>
-          <p>{{ company?.hours || 'Öffnungszeiten folgen' }}</p>
-        </div>
-      </div>
-      <p class="slug">/r/{{ slug }}</p>
+<section class="section page">
+  <div class="container">
+    <div class="section-header">
+      <h1 class="section-title">{{ company?.name || 'Reservierungsseite' }}</h1>
+      <p class="section-lead" *ngIf="company">
+        {{ company.address }} · {{ company.hours }}
+      </p>
+      <p class="section-lead" *ngIf="!company">
+        Reservierungsseite folgt.
+      </p>
     </div>
 
-    <div class="reservation-content">
-      <div class="card reservation-calendar">
-        <div class="calendar-header">
-          <div>
-            <h2>März 2026</h2>
-            <p>Verfügbare Tage</p>
-          </div>
-          <div class="calendar-legend">
-            <span class="legend available"></span> Verfügbar
-            <span class="legend full"></span> Voll
-            <span class="legend closed"></span> Geschlossen
-          </div>
+    <div class="grid-2 demo-grid" *ngIf="company">
+      <div class="card">
+        <h2>Reservierungsdetails</h2>
+        <p class="muted">E-Mail: {{ company.email }}</p>
+        <div class="slot-row">
+          <button class="slot" type="button" [class.active]="bookingForm.value.time === '18:00'" (click)="bookingForm.patchValue({ time: '18:00' })">18:00</button>
+          <button class="slot" type="button" [class.active]="bookingForm.value.time === '18:30'" (click)="bookingForm.patchValue({ time: '18:30' })">18:30</button>
+          <button class="slot" type="button" [class.active]="bookingForm.value.time === '19:00'" (click)="bookingForm.patchValue({ time: '19:00' })">19:00</button>
         </div>
-        <div class="calendar-grid">
-          <span>Mo</span>
-          <span>Di</span>
-          <span>Mi</span>
-          <span>Do</span>
-          <span>Fr</span>
-          <span>Sa</span>
-          <span>So</span>
-          <button class="day muted" type="button" (click)="selectDate('24. Feb 2026')" [class.active]="selectedDate === '24. Feb 2026'">24</button>
-          <button class="day muted" type="button" (click)="selectDate('25. Feb 2026')" [class.active]="selectedDate === '25. Feb 2026'">25</button>
-          <button class="day" type="button" (click)="selectDate('26. Feb 2026')" [class.active]="selectedDate === '26. Feb 2026'">26</button>
-          <button class="day" type="button" (click)="selectDate('27. Feb 2026')" [class.active]="selectedDate === '27. Feb 2026'">27</button>
-          <button class="day" type="button" (click)="selectDate('28. Feb 2026')" [class.active]="selectedDate === '28. Feb 2026'">28</button>
-          <button class="day full" type="button" (click)="selectDate('01. März 2026')" [class.active]="selectedDate === '01. März 2026'">1</button>
-          <button class="day closed" type="button" (click)="selectDate('02. März 2026')" [class.active]="selectedDate === '02. März 2026'">2</button>
-          <button class="day" type="button" (click)="selectDate('03. März 2026')" [class.active]="selectedDate === '03. März 2026'">3</button>
-          <button class="day" type="button" (click)="selectDate('04. März 2026')" [class.active]="selectedDate === '04. März 2026'">4</button>
-          <button class="day" type="button" (click)="selectDate('05. März 2026')" [class.active]="selectedDate === '05. März 2026'">5</button>
-          <button class="day" type="button" (click)="selectDate('06. März 2026')" [class.active]="selectedDate === '06. März 2026'">6</button>
-          <button class="day" type="button" (click)="selectDate('07. März 2026')" [class.active]="selectedDate === '07. März 2026'">7</button>
-          <button class="day full" type="button" (click)="selectDate('08. März 2026')" [class.active]="selectedDate === '08. März 2026'">8</button>
-          <button class="day closed" type="button" (click)="selectDate('09. März 2026')" [class.active]="selectedDate === '09. März 2026'">9</button>
-          <button class="day" type="button" (click)="selectDate('10. März 2026')" [class.active]="selectedDate === '10. März 2026'">10</button>
-          <button class="day" type="button" (click)="selectDate('11. März 2026')" [class.active]="selectedDate === '11. März 2026'">11</button>
-          <button class="day" type="button" (click)="selectDate('12. März 2026')" [class.active]="selectedDate === '12. März 2026'">12</button>
-          <button class="day" type="button" (click)="selectDate('13. März 2026')" [class.active]="selectedDate === '13. März 2026'">13</button>
-          <button class="day" type="button" (click)="selectDate('14. März 2026')" [class.active]="selectedDate === '14. März 2026'">14</button>
-          <button class="day" type="button" (click)="selectDate('15. März 2026')" [class.active]="selectedDate === '15. März 2026'">15</button>
-          <button class="day closed" type="button" (click)="selectDate('16. März 2026')" [class.active]="selectedDate === '16. März 2026'">16</button>
-          <button class="day" type="button" (click)="selectDate('17. März 2026')" [class.active]="selectedDate === '17. März 2026'">17</button>
-          <button class="day" type="button" (click)="selectDate('18. März 2026')" [class.active]="selectedDate === '18. März 2026'">18</button>
-          <button class="day" type="button" (click)="selectDate('19. März 2026')" [class.active]="selectedDate === '19. März 2026'">19</button>
-          <button class="day" type="button" (click)="selectDate('20. März 2026')" [class.active]="selectedDate === '20. März 2026'">20</button>
-          <button class="day" type="button" (click)="selectDate('21. März 2026')" [class.active]="selectedDate === '21. März 2026'">21</button>
-        </div>
+        <p class="helptext">Ausgewählt: {{ bookingForm.value.time }}</p>
       </div>
 
-      <form class="card reservation-form" [formGroup]="bookingForm" (ngSubmit)="submit()">
-        <div class="form-header">
-          <h2>Reservierung</h2>
-          <p>Datum: {{ selectedDate }}</p>
-          <p>Zeitslots 12:00–20:00 · 45 Minuten</p>
-        </div>
-        <label>
-          Name
-          <input type="text" formControlName="name" placeholder="Vor- und Nachname" />
-        </label>
-        <label>
-          Telefon
-          <input type="tel" formControlName="phone" placeholder="+49" />
-        </label>
-        <label>
-          Personen
-          <input type="number" min="1" formControlName="people" />
-        </label>
-        <label>
-          Uhrzeit
-          <select formControlName="time">
-            <option *ngFor="let slot of slots" [value]="slot">{{ slot }}</option>
-          </select>
-        </label>
-        <button class="button button-primary" type="submit">Reservieren</button>
-        <p class="demo-success" *ngIf="successMessage">{{ successMessage }}</p>
-      </form>
+      <div class="card">
+        <h2>Reservierung senden</h2>
+        <form class="demo-form" [formGroup]="bookingForm" (ngSubmit)="submit()">
+          <label>
+            <span class="label">Name*</span>
+            <input class="input" type="text" formControlName="name" placeholder="Vor- und Nachname" />
+          </label>
+          <label>
+            <span class="label">Telefon*</span>
+            <input class="input" type="tel" formControlName="phone" placeholder="Telefonnummer" />
+          </label>
+          <label>
+            <span class="label">Personen*</span>
+            <input class="input" type="number" min="1" formControlName="people" />
+          </label>
+          <label>
+            <span class="label">Notiz (optional)</span>
+            <textarea class="textarea" formControlName="note" placeholder="Zusätzliche Hinweise"></textarea>
+          </label>
+          <button class="btn btn-primary" type="submit">Reservieren</button>
+          <p class="helptext" *ngIf="successMessage">{{ successMessage }}</p>
+        </form>
+      </div>
     </div>
   </div>
 </section>

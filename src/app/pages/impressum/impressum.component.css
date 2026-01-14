@@ -1,15 +1,8 @@
-.legal-page {
-  min-height: 100dvh;
-  padding: 80px 0;
-  background: radial-gradient(circle at top, #f4efe9 0%, #ffffff 70%);
-}
-
 .legal-card {
-  margin-top: 20px;
   display: grid;
-  gap: 8px;
+  gap: 12px;
 }
 
-.legal-note {
-  color: var(--ink-500);
+.legal-block p {
+  margin: 0 0 6px;
 }

@@ -1,70 +1,56 @@
-<section class="section contact" id="contact">
-  <div class="container contact-grid">
-    <div class="contact-copy">
+<section class="section" id="contact">
+  <div class="container">
+    <div class="section-header">
       <h2 class="section-title">Kontakt</h2>
       <p class="section-lead">
-        Schreiben Sie uns kurz Ihre Wünsche. Wir melden uns schnellstmöglich zurück.
+        Erzählen Sie uns kurz, was Sie brauchen. Wir melden uns schnell zurück.
       </p>
-      <div class="contact-details card">
-        <p>Direkt erreichbar für Rückfragen.</p>
-        <span>Antwort in der Regel innerhalb von 24 Stunden.</span>
-      </div>
     </div>
-    <form class="card contact-form" [formGroup]="contactForm" (ngSubmit)="submit()">
-      <div class="form-grid">
-        <label>
-          Firmenname (optional)
-          <input type="text" formControlName="companyName" placeholder="Ihr Restaurant" />
-        </label>
-        <label>
-          Ansprechpartner *
-          <input type="text" formControlName="contactName" placeholder="Vor- und Nachname" />
-          <span class="error" *ngIf="contactName?.touched && contactName?.invalid">
-            Bitte Ansprechpartner angeben.
-          </span>
-        </label>
-        <label>
-          E-Mail *
-          <input type="email" formControlName="email" placeholder="name@email.de" />
-          <span class="error" *ngIf="email?.touched && email?.invalid">
-            Bitte gültige E-Mail eingeben.
-          </span>
-        </label>
-        <label>
-          Telefon (optional)
-          <input type="tel" formControlName="phone" placeholder="+49" />
-        </label>
-        <div class="full">
-          <span class="choice-label">Ich interessiere mich für *</span>
-          <div class="choice-group">
-            <label class="choice-card">
-              <input type="radio" formControlName="serviceType" value="reservierungsseite" />
-              <span>Nur die eigene Reservierungsseite</span>
-            </label>
-            <label class="choice-card">
-              <input type="radio" formControlName="serviceType" value="website" />
-              <span>Eigene Website mit Terminplanung</span>
-            </label>
-          </div>
-          <span class="error" *ngIf="serviceType?.touched && serviceType?.invalid">
-            Bitte eine Option auswählen.
-          </span>
+    <div class="card contact-card">
+      <form class="contact-form" [formGroup]="contactForm" (ngSubmit)="submit()">
+        <div class="form-grid">
+          <label>
+            <span class="label">Firmenname (optional)</span>
+            <input class="input" type="text" formControlName="companyName" placeholder="Restaurantname" />
+          </label>
+          <label>
+            <span class="label">Ansprechpartner*</span>
+            <input class="input" type="text" formControlName="contactName" placeholder="Vor- und Nachname" />
+            <span class="error" *ngIf="contactName?.touched && contactName?.invalid">Pflichtfeld.</span>
+          </label>
+          <label>
+            <span class="label">E-Mail*</span>
+            <input class="input" type="email" formControlName="email" placeholder="name@restaurant.de" />
+            <span class="error" *ngIf="email?.touched && email?.invalid">Bitte gültige E-Mail eingeben.</span>
+          </label>
+          <label>
+            <span class="label">Telefon (optional)</span>
+            <input class="input" type="tel" formControlName="phone" placeholder="Telefonnummer" />
+          </label>
+          <label class="message-field">
+            <span class="label">Nachricht*</span>
+            <textarea class="textarea" formControlName="message" placeholder="Kurzbeschreibung"></textarea>
+            <span class="error" *ngIf="message?.touched && message?.invalid">Pflichtfeld.</span>
+          </label>
         </div>
-        <label class="full">
-          Nachricht *
-          <textarea rows="4" formControlName="message" placeholder="Wie können wir helfen?"></textarea>
-          <span class="error" *ngIf="message?.touched && message?.invalid">
-            Bitte Nachricht eingeben.
-          </span>
+
+        <label class="checkbox-row">
+          <input type="checkbox" formControlName="acceptedPrivacy" />
+          <span>Ich habe die Datenschutzerklärung gelesen.</span>
         </label>
-      </div>
-      <div class="form-actions">
-        <button class="button button-primary" type="submit" [disabled]="isSubmitting">
-          {{ isSubmitting ? 'Senden...' : 'Nachricht senden' }}
-        </button>
-      </div>
-      <p class="form-success" *ngIf="successMessage">{{ successMessage }}</p>
-      <p class="form-error" *ngIf="errorMessage">{{ errorMessage }}</p>
-    </form>
+        <span class="error" *ngIf="acceptedPrivacy?.touched && acceptedPrivacy?.invalid">
+          Bitte bestätigen Sie die Datenschutzerklärung.
+        </span>
+
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit" [disabled]="isSubmitting">
+            {{ isSubmitting ? 'Senden...' : 'Nachricht senden' }}
+          </button>
+        </div>
+
+        <p class="helptext" *ngIf="successMessage">{{ successMessage }}</p>
+        <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+      </form>
+    </div>
   </div>
 </section>

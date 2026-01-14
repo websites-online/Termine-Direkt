@@ -9,7 +9,6 @@ export interface ContactPayload {
   contactName: string;
   email: string;
   phone?: string;
-  serviceType: 'reservierungsseite' | 'website';
   message: string;
   acceptedPrivacy: true;
 }
@@ -22,10 +21,10 @@ export class ContactService {
 
   constructor(private readonly http: HttpClient) {}
 
-  submitContact(payload: ContactPayload): Observable<{ success: boolean }> {
+  sendContactMessage(payload: ContactPayload): Observable<{ success: boolean }> {
     if (environment.mockApi) {
-      // TODO: Backend endpoint required
-      return of({ success: true }).pipe(delay(800));
+      // TODO: Backend Endpoint required
+      return of({ success: true }).pipe(delay(600));
     }
 
     return this.http.post<{ success: boolean }>(this.contactUrl, payload);

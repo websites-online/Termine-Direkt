@@ -1,58 +1,9 @@
-<section class="admin-page">
+<section class="section page">
   <div class="container">
     <div class="card admin-card">
-      <h1>Admin Dashboard</h1>
-      <section class="admin-section">
-        <h2>Neues Unternehmen</h2>
-        <form class="admin-form" [formGroup]="companyForm" (ngSubmit)="createCompany()">
-          <label>
-            Firmenname
-            <input type="text" formControlName="name" placeholder="Firmenname" />
-          </label>
-          <button class="button button-primary" type="submit">Unternehmen anlegen</button>
-        </form>
-      </section>
-      <section class="admin-section" *ngIf="companies.length">
-        <div class="admin-section-header">
-          <h2>Unternehmen</h2>
-          <span>{{ companies.length }} Einträge</span>
-        </div>
-        <div class="admin-list">
-          <article class="admin-item card" *ngFor="let company of companies">
-            <div class="admin-item-header">
-              <div>
-                <h3>{{ company.name }}</h3>
-                <p class="admin-slug">/r/{{ company.slug }}</p>
-              </div>
-              <div class="admin-actions">
-                <a class="link" [routerLink]="['/r', company.slug]">Seite öffnen</a>
-                <button class="link danger" type="button" (click)="deleteCompany(company.slug)">
-                  Löschen
-                </button>
-              </div>
-            </div>
-            <div class="admin-item-grid">
-              <div>
-                <span class="admin-label">Adresse</span>
-                <p>{{ company.address }}</p>
-              </div>
-              <div>
-                <span class="admin-label">Öffnungszeiten</span>
-                <p>{{ company.hours }}</p>
-              </div>
-              <div>
-                <span class="admin-label">Kontakt</span>
-                <p>{{ company.email }}</p>
-              </div>
-              <div>
-                <span class="admin-label">Erstellt</span>
-                <p>{{ formatDate(company.createdAt) }}</p>
-              </div>
-            </div>
-          </article>
-        </div>
-      </section>
-      <button class="button button-secondary" type="button" (click)="logout()">Logout</button>
+      <h1 class="section-title">Admin Dashboard</h1>
+      <p class="section-lead">Sie sind erfolgreich eingeloggt.</p>
+      <button class="btn btn-outline" type="button" (click)="logout()">Logout</button>
     </div>
   </div>
 </section>

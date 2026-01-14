@@ -1,20 +1,21 @@
-<section class="admin-page">
+<section class="section page">
   <div class="container">
-    <div class="card admin-card">
-      <h1>Admin Login</h1>
-      <form [formGroup]="loginForm" (ngSubmit)="submit()">
+    <div class="card auth-card">
+      <h1 class="section-title">Admin Login</h1>
+      <p class="section-lead">Nur autorisierte Administratoren.</p>
+      <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="submit()">
         <label>
-          E-Mail
-          <input type="email" formControlName="email" placeholder="admin@email.de" />
+          <span class="label">E-Mail*</span>
+          <input class="input" type="email" formControlName="email" placeholder="admin@mail.de" />
         </label>
         <label>
-          Passwort
-          <input type="password" formControlName="password" placeholder="Passwort" />
+          <span class="label">Passwort*</span>
+          <input class="input" type="password" formControlName="password" placeholder="••••••••" />
         </label>
-        <button class="button button-primary" type="submit" [disabled]="isSubmitting">
-          {{ isSubmitting ? 'Login...' : 'Login' }}
+        <button class="btn btn-primary" type="submit" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Anmelden...' : 'Anmelden' }}
         </button>
-        <p class="admin-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+        <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
       </form>
     </div>
   </div>
