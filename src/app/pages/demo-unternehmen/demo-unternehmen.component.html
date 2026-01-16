@@ -9,8 +9,13 @@
       <div class="card calendar-card">
         <h2>Kalender</h2>
         <div class="calendar-header">
-          <span>März 2026</span>
-          <span class="muted">Mo–So</span>
+          <button class="month-nav" type="button" (click)="prevMonth()" [disabled]="!canGoPrev">
+            ‹
+          </button>
+          <span class="month-label">{{ currentMonthLabel }}</span>
+          <button class="month-nav" type="button" (click)="nextMonth()" [disabled]="!canGoNext">
+            ›
+          </button>
         </div>
         <div class="calendar-weekdays">
           <span *ngFor="let day of weekdays">{{ day }}</span>
@@ -22,7 +27,8 @@
             *ngFor="let day of calendarDays"
             [class.muted]="day.muted"
             [class.active]="day.active"
-            (click)="selectDate(day.label)"
+            [disabled]="day.muted"
+            (click)="selectDate(day)"
           >
             {{ day.label }}
           </button>
