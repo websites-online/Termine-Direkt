@@ -128,16 +128,17 @@
   display: none;
   flex-direction: column;
   gap: 5px;
-  border: 1px solid var(--border);
-  background: #fff;
-  border-radius: 12px;
-  padding: 8px;
+  border: 1px solid rgba(79, 70, 229, 0.2);
+  background: linear-gradient(135deg, #ffffff, #eef2ff);
+  border-radius: 999px;
+  padding: 10px;
+  box-shadow: 0 12px 20px rgba(79, 70, 229, 0.15);
 }
 
 .nav-toggle span {
   width: 20px;
   height: 2px;
-  background: var(--text);
+  background: var(--primary);
   border-radius: 999px;
 }
 
@@ -145,11 +146,11 @@
   display: none;
   flex-direction: column;
   gap: 12px;
-  padding: 14px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 18px 32px rgba(15, 23, 42, 0.12);
+  padding: 16px;
+  border: 1px solid rgba(79, 70, 229, 0.18);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(238, 242, 255, 0.98));
+  box-shadow: 0 24px 40px rgba(79, 70, 229, 0.18);
   position: absolute;
   right: 0;
   top: calc(100% + 8px);
