@@ -28,16 +28,16 @@ export class CompanyService {
     }
   }
 
-  addCompany(name: string): Company {
-    const slug = this.createSlug(name);
+  addCompany(data: { name: string; address: string; hours: string; email?: string }): Company {
+    const slug = this.createSlug(data.name);
     const companies = this.getCompanies();
     const uniqueSlug = this.ensureUniqueSlug(slug, companies);
     const company: Company = {
-      name,
+      name: data.name,
       slug: uniqueSlug,
-      address: 'Beispielstraße 12, 12345 Musterstadt',
-      hours: 'Di–So 12:00–20:00 · Montag geschlossen',
-      email: 'kontakt@example.com',
+      address: data.address,
+      hours: data.hours,
+      email: data.email || 'kontakt@example.com',
       createdAt: new Date().toISOString()
     };
     const updated = [...companies, company];

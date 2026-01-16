@@ -1,9 +1,9 @@
-<section class="section page">
+<section class="section page demo-page">
   <div class="container">
     <div class="section-header">
       <h1 class="section-title">{{ company?.name || 'Reservierungsseite' }}</h1>
       <p class="section-lead" *ngIf="company">
-        {{ company.address }} · {{ company.hours }}
+        {{ company.address || 'Adresse folgt' }} · {{ company.hours || 'Öffnungszeiten folgen' }}
       </p>
       <p class="section-lead" *ngIf="!company">
         Reservierungsseite folgt.
@@ -14,34 +14,49 @@
       <div class="card calendar-card">
         <h2>Kalender</h2>
         <div class="calendar-header">
-          <span>März 2026</span>
-          <span class="muted">Mo–So</span>
+          <button class="month-nav" type="button" (click)="prevMonth()" [disabled]="!canGoPrev">
+            ‹
+          </button>
+          <span class="month-label">{{ currentMonthLabel }}</span>
+          <button class="month-nav" type="button" (click)="nextMonth()" [disabled]="!canGoNext">
+            ›
+          </button>
         </div>
         <div class="calendar-weekdays">
           <span *ngFor="let day of weekdays">{{ day }}</span>
         </div>
         <div class="calendar-grid">
-          <span
+          <button
             class="day"
+            type="button"
             *ngFor="let day of calendarDays"
             [class.muted]="day.muted"
             [class.active]="day.active"
+            [disabled]="day.muted"
+            (click)="selectDate(day)"
           >
             {{ day.label }}
-          </span>
+          </button>
         </div>
-        <p class="helptext">Datum auswählen (Demo).</p>
+        <p class="helptext">Datum auswählen.</p>
       </div>
 
       <div class="card">
         <h2>Reservierungsdetails</h2>
-        <p class="muted">E-Mail: {{ company.email }}</p>
+        <p class="muted">{{ company.address || 'Adresse folgt' }}</p>
+        <p class="muted">{{ company.hours || 'Öffnungszeiten folgen' }}</p>
         <div class="slot-row">
-          <button class="slot" type="button" [class.active]="bookingForm.value.time === '18:00'" (click)="bookingForm.patchValue({ time: '18:00' })">18:00</button>
-          <button class="slot" type="button" [class.active]="bookingForm.value.time === '18:30'" (click)="bookingForm.patchValue({ time: '18:30' })">18:30</button>
-          <button class="slot" type="button" [class.active]="bookingForm.value.time === '19:00'" (click)="bookingForm.patchValue({ time: '19:00' })">19:00</button>
+          <button
+            class="slot"
+            type="button"
+            *ngFor="let slot of slots"
+            [class.active]="bookingForm.value.time === slot"
+            (click)="bookingForm.patchValue({ time: slot })"
+          >
+            {{ slot }}
+          </button>
         </div>
-        <p class="helptext">Ausgewählt: {{ bookingForm.value.time }}</p>
+        <p class="helptext">Datum: {{ selectedDate }} · Zeit: {{ bookingForm.value.time }}</p>
         <form class="demo-form" [formGroup]="bookingForm" (ngSubmit)="submit()">
           <label>
             <span class="label">Name*</span>
@@ -59,7 +74,7 @@
             <span class="label">Notiz (optional)</span>
             <textarea class="textarea" formControlName="note" placeholder="Zusätzliche Hinweise"></textarea>
           </label>
-          <button class="btn btn-primary" type="submit">Reservieren</button>
+          <button class="btn btn-primary" type="submit">Reservierung senden</button>
           <p class="helptext" *ngIf="successMessage">{{ successMessage }}</p>
         </form>
       </div>
