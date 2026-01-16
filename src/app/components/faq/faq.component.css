@@ -28,3 +28,21 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+@media (max-width: 480px) {
+  .faq-item {
+    gap: 6px;
+  }
+
+  .faq-label {
+    font-size: 0.7rem;
+  }
+
+  .faq-item h3 {
+    font-size: 0.95rem;
+  }
+
+  .faq-item p {
+    font-size: 0.82rem;
+  }
+}

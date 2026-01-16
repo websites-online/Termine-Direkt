@@ -50,3 +50,23 @@
     display: block;
   }
 }
+
+@media (max-width: 480px) {
+  .pricing-card {
+    gap: 12px;
+  }
+
+  .pricing-header {
+    font-size: 1.05rem;
+    line-height: 1.2;
+  }
+
+  .pricing-list {
+    font-size: 0.82rem;
+  }
+
+  .pricing-divider {
+    display: block;
+    margin: 4px 0 6px;
+  }
+}
