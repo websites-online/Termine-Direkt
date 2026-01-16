@@ -5,7 +5,15 @@
   gap: 14px;
 }
 
+.back-button {
+  justify-self: start;
+}
+
 .auth-form {
   display: grid;
   gap: 12px;
+}
+
+.auth-form .btn {
+  width: 100%;
 }

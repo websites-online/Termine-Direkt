@@ -4,3 +4,11 @@
   display: grid;
   gap: 12px;
 }
+
+.back-button {
+  justify-self: start;
+}
+
+.admin-card .btn {
+  width: 100%;
+}
