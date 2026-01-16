@@ -6,12 +6,15 @@
 
 .page-shell {
   min-height: 100%;
+  padding-top: 76px;
   transition: transform 0.35s ease;
 }
 
 .site-header {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 10;
   background: rgba(247, 248, 255, 0.9);
   backdrop-filter: blur(12px);
@@ -34,6 +37,26 @@
   align-items: center;
   gap: 10px;
   color: #101827;
+}
+
+.site-header.compact .header-inner {
+  padding: 10px 10px;
+}
+
+.site-header.compact .logo {
+  font-size: 1.05rem;
+}
+
+.site-header.compact .nav a {
+  font-size: 0.95rem;
+}
+
+.site-header.compact .nav .btn {
+  padding: 0.55rem 1rem;
+}
+
+.site-header.compact .nav-toggle {
+  padding: 8px 10px;
 }
 
 .logo-icon {

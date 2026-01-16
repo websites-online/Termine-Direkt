@@ -29,6 +29,7 @@ import { HeroMonitorMode } from '../../components/hero-monitor-mockup/hero-monit
 export class LandingPageComponent {
   screenMode: HeroMonitorMode = 'reservation-preview';
   isNavOpen = false;
+  isNavCompact = false;
   @ViewChild('cursorArrow') cursorArrow?: ElementRef<HTMLElement>;
   @ViewChild('demoBtn') demoBtn?: ElementRef<HTMLElement>;
   private targetX = 0;
@@ -49,6 +50,11 @@ export class LandingPageComponent {
 
   closeNav(): void {
     this.isNavOpen = false;
+  }
+
+  @HostListener('window:scroll')
+  onScroll(): void {
+    this.isNavCompact = window.scrollY > 24;
   }
 
   @HostListener('document:mousemove', ['$event'])

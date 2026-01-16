@@ -1,6 +1,6 @@
 <div class="page landing-page" [class.nav-open]="isNavOpen">
   <div class="page-shell">
-    <header class="site-header">
+    <header class="site-header" [class.compact]="isNavCompact">
       <div class="container header-inner">
         <div class="logo">
           <span class="logo-icon" aria-hidden="true">
@@ -68,11 +68,11 @@
     <app-footer></app-footer>
   </div>
 
-  <div class="nav-panel" [class.open]="isNavOpen">
-    <a routerLink="/demo-unternehmen" (click)="closeNav()">Demo</a>
-    <a href="#pricing" (click)="closeNav()">Preise</a>
-    <a href="#contact" (click)="closeNav()">Kontakt</a>
-    <a class="btn btn-primary" href="#contact" (click)="closeNav()">Jetzt starten</a>
+  <div class="nav-panel" [class.open]="isNavOpen" (click)="closeNav()">
+    <a routerLink="/demo-unternehmen" (click)="$event.stopPropagation(); closeNav()">Demo</a>
+    <a href="#pricing" (click)="$event.stopPropagation(); closeNav()">Preise</a>
+    <a href="#contact" (click)="$event.stopPropagation(); closeNav()">Kontakt</a>
+    <a class="btn btn-primary" href="#contact" (click)="$event.stopPropagation(); closeNav()">Jetzt starten</a>
   </div>
   <div class="nav-backdrop" [class.open]="isNavOpen" (click)="closeNav()" aria-hidden="true"></div>
 
