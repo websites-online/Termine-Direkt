@@ -1,78 +1,81 @@
 <section class="section page demo-page">
-  <div class="container">
-    <div class="section-header">
-      <h1 class="section-title">Demo Unternehmen</h1>
-      <p class="section-lead">Beispielhafte Reservierungsseite ohne Backend.</p>
-    </div>
-
-    <div class="grid-2 demo-grid">
-      <div class="card calendar-card">
-        <h2>Kalender</h2>
-        <div class="calendar-header">
-          <button class="month-nav" type="button" (click)="prevMonth()" [disabled]="!canGoPrev">
-            ‹
-          </button>
-          <span class="month-label">{{ currentMonthLabel }}</span>
-          <button class="month-nav" type="button" (click)="nextMonth()" [disabled]="!canGoNext">
-            ›
-          </button>
-        </div>
-        <div class="calendar-weekdays">
-          <span *ngFor="let day of weekdays">{{ day }}</span>
-        </div>
-        <div class="calendar-grid">
-          <button
-            class="day"
-            type="button"
-            *ngFor="let day of calendarDays"
-            [class.muted]="day.muted"
-            [class.active]="day.active"
-            [disabled]="day.muted"
-            (click)="selectDate(day)"
-          >
-            {{ day.label }}
-          </button>
-        </div>
-        <p class="helptext">Datum auswählen (Demo).</p>
+    <div class="container">
+      <div class="section-header">
+        <h1 class="section-title">Max Grill</h1>
+        <p class="section-lead">Beispielhafte Reservierungsseite ohne Backend.</p>
       </div>
 
-      <div class="card">
-        <h2>Reservierungsdetails</h2>
-        <p class="muted">Musterstraße 12, 10115 Berlin</p>
-        <p class="muted">Öffnungszeiten: Mo–So 12:00–20:00</p>
-        <div class="slot-row">
-          <button
-            class="slot"
-            type="button"
-            *ngFor="let slot of slots"
-            [class.active]="bookingForm.value.time === slot"
-            (click)="bookingForm.patchValue({ time: slot })"
-          >
-            {{ slot }}
-          </button>
+      <div class="grid-2 demo-grid">
+        <div class="card calendar-card">
+          <h2>Kalender</h2>
+          <div class="calendar-header">
+            <button class="month-nav" type="button" (click)="prevMonth()" [disabled]="!canGoPrev">
+              ‹
+            </button>
+            <span class="month-label">{{ currentMonthLabel }}</span>
+            <button class="month-nav" type="button" (click)="nextMonth()" [disabled]="!canGoNext">
+              ›
+            </button>
+          </div>
+          <div class="calendar-weekdays">
+            <span *ngFor="let day of weekdays">{{ day }}</span>
+          </div>
+          <div class="calendar-grid">
+            <button
+              class="day"
+              type="button"
+              *ngFor="let day of calendarDays"
+              [class.muted]="day.muted"
+              [class.active]="day.active"
+              [disabled]="day.muted"
+              (click)="selectDate(day)"
+            >
+              {{ day.label }}
+            </button>
+          </div>
+          <p class="helptext">Datum auswählen (Demo).</p>
         </div>
-        <p class="helptext">Datum: {{ selectedDate }} · Zeit: {{ bookingForm.value.time }}</p>
-        <form class="demo-form" [formGroup]="bookingForm" (ngSubmit)="submit()">
-          <label>
-            <span class="label">Name*</span>
-            <input class="input" type="text" formControlName="name" placeholder="Vor- und Nachname" />
-          </label>
-          <label>
-            <span class="label">Telefon*</span>
-            <input class="input" type="tel" formControlName="phone" placeholder="Telefonnummer" />
-          </label>
-          <label>
-            <span class="label">Personen*</span>
-            <input class="input" type="number" min="1" formControlName="people" />
-          </label>
-          <label>
-            <span class="label">Notiz (optional)</span>
-            <textarea class="textarea" formControlName="note" placeholder="Zusätzliche Hinweise"></textarea>
-          </label>
-          <button class="btn btn-primary" type="submit">Reservierung senden</button>
-          <p class="helptext" *ngIf="successMessage">{{ successMessage }}</p>
-        </form>
+
+        <div class="card">
+          <h2>Reservierungsdetails</h2>
+          <p class="muted">Musterstraße 12, 10115 Berlin</p>
+          <p class="muted">Öffnungszeiten: Mo–So 12:00–20:00</p>
+          <div class="slot-row">
+            <button
+              class="slot"
+              type="button"
+              *ngFor="let slot of slots"
+              [class.active]="bookingForm.value.time === slot"
+              (click)="bookingForm.patchValue({ time: slot })"
+            >
+              {{ slot }}
+            </button>
+          </div>
+          <p class="helptext">Datum: {{ selectedDate }} · Zeit: {{ bookingForm.value.time }}</p>
+          <form class="demo-form" [formGroup]="bookingForm" (ngSubmit)="submit()">
+            <label>
+              <span class="label">Name*</span>
+              <input class="input" type="text" formControlName="name" placeholder="Vor- und Nachname" />
+            </label>
+            <label>
+              <span class="label">Telefon*</span>
+              <input class="input" type="tel" formControlName="phone" placeholder="Telefonnummer" />
+            </label>
+            <label>
+              <span class="label">Personen*</span>
+              <input class="input" type="number" min="1" formControlName="people" />
+            </label>
+            <label>
+              <span class="label">Notiz (optional)</span>
+              <textarea class="textarea" formControlName="note" placeholder="Zusätzliche Hinweise"></textarea>
+            </label>
+            <button class="btn btn-primary" type="submit">Reservierung senden</button>
+            <p class="helptext" *ngIf="successMessage">{{ successMessage }}</p>
+          </form>
+        </div>
       </div>
     </div>
-  </div>
 </section>
+<footer class="demo-footer-note">
+  Erstellt von termine-direkt. Moderne Terminplanung leicht und günstig gemacht!
+</footer>

@@ -2,19 +2,3 @@
   display: block;
   min-height: 100dvh;
 }
-
-.home-fab {
-  position: fixed;
-  left: 20px;
-  bottom: 20px;
-  z-index: 12;
-  padding: 0.6rem 1rem;
-  border-radius: 999px;
-  background: #fff;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  color: var(--primary-600);
-  font-weight: 600;
-  font-size: 0.85rem;
-  text-decoration: none;
-}
