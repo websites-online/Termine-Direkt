@@ -9,28 +9,7 @@
 
 .step {
   display: grid;
-  gap: 10px;
-}
-
-.step-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary-600);
-  background: rgba(79, 70, 229, 0.12);
-}
-
-.step-icon svg {
-  width: 22px;
-  height: 22px;
-}
-
-.step-letter {
-  font-weight: 700;
-  font-size: 1rem;
+  gap: 8px;
 }
 
 .step h3 {

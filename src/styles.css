@@ -68,6 +68,10 @@ button {
     font-size: 13px;
   }
 
+  .section {
+    padding: 36px 0;
+  }
+
   .section-title {
     font-size: 1.1rem;
   }
@@ -90,6 +94,11 @@ button {
 
   .card {
     padding: 14px;
+  }
+
+  .card p,
+  .card li {
+    font-size: 0.82rem;
   }
 
   .label {
