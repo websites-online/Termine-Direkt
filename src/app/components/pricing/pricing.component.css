@@ -7,6 +7,16 @@
   gap: 18px;
 }
 
+.pricing-divider {
+  display: none;
+  align-self: center;
+  justify-self: center;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.2em;
+  font-size: 0.8rem;
+}
+
 .pricing-card {
   display: grid;
   gap: 16px;
@@ -28,4 +38,15 @@
 .pricing-note {
   margin: 0;
   color: var(--muted);
+}
+
+@media (min-width: 860px) {
+  .pricing-grid {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .pricing-divider {
+    display: block;
+  }
 }
