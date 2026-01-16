@@ -35,3 +35,15 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+@media (max-width: 480px) {
+  .benefit-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 0.9rem;
+  }
+
+  .benefits-grid h3 {
+    font-size: 0.95rem;
+  }
+}
