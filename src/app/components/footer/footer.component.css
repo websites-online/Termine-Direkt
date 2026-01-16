@@ -28,6 +28,10 @@
   color: rgba(15, 23, 42, 0.2);
 }
 
+.mobile-only {
+  display: none;
+}
+
 @media (min-width: 720px) {
   .footer-inner {
     grid-template-columns: 1fr auto 1fr;
@@ -41,10 +45,19 @@
 @media (max-width: 719px) {
   .footer-inner {
     text-align: center;
+    grid-template-rows: auto auto;
   }
 
   .footer-links,
   .footer-admin {
     justify-content: center;
+  }
+
+  .footer-admin {
+    display: none;
+  }
+
+  .mobile-only {
+    display: inline-flex;
   }
 }
