@@ -208,6 +208,28 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
+.nav-panel .btn.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 14px 24px rgba(79, 70, 229, 0.25);
+}
+
+.nav-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  z-index: 20;
+}
+
+.nav-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .nav-panel a:hover {
   border-color: rgba(79, 70, 229, 0.3);
   box-shadow: 0 10px 18px rgba(79, 70, 229, 0.15);

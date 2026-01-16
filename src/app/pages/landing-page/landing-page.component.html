@@ -74,6 +74,7 @@
     <a href="#contact" (click)="closeNav()">Kontakt</a>
     <a class="btn btn-primary" href="#contact" (click)="closeNav()">Jetzt starten</a>
   </div>
+  <div class="nav-backdrop" [class.open]="isNavOpen" (click)="closeNav()" aria-hidden="true"></div>
 
   <span #cursorArrow class="cursor-arrow" aria-hidden="true"></span>
 </div>
