@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
@@ -29,6 +29,12 @@ import { HeroMonitorMode } from '../../components/hero-monitor-mockup/hero-monit
 export class LandingPageComponent {
   screenMode: HeroMonitorMode = 'reservation-preview';
   isNavOpen = false;
+  @ViewChild('cursorBall') cursorBall?: ElementRef<HTMLElement>;
+  private targetX = 0;
+  private targetY = 0;
+  private currentX = 0;
+  private currentY = 0;
+  private rafId?: number;
 
   setScreenMode(mode: HeroMonitorMode): void {
     this.screenMode = mode;
@@ -40,5 +46,36 @@ export class LandingPageComponent {
 
   closeNav(): void {
     this.isNavOpen = false;
+  }
+
+  @HostListener('document:mousemove', ['$event'])
+  onMouseMove(event: MouseEvent): void {
+    this.targetX = event.clientX;
+    this.targetY = event.clientY;
+    this.startBallFollow();
+  }
+
+  private startBallFollow(): void {
+    const ball = this.cursorBall?.nativeElement;
+    if (!ball || this.rafId) {
+      return;
+    }
+
+    const animate = () => {
+      const dx = this.targetX - this.currentX;
+      const dy = this.targetY - this.currentY;
+      this.currentX += dx * 0.12;
+      this.currentY += dy * 0.12;
+      ball.style.left = `${this.currentX}px`;
+      ball.style.top = `${this.currentY}px`;
+      ball.style.opacity = '0.7';
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
+        this.rafId = undefined;
+        return;
+      }
+      this.rafId = requestAnimationFrame(animate);
+    };
+
+    this.rafId = requestAnimationFrame(animate);
   }
 }

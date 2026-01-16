@@ -78,6 +78,24 @@
   box-shadow: 0 30px 60px rgba(15, 23, 42, 0.18);
 }
 
+.cursor-ball {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(79, 70, 229, 0.18);
+  border: 1px solid rgba(79, 70, 229, 0.25);
+  box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
+  pointer-events: none;
+  z-index: 30;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  transform: translate(-50%, -50%);
+  will-change: left, top;
+}
+
 .section-band {
   background: #fff;
 }
