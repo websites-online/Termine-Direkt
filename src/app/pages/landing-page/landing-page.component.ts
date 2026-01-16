@@ -29,11 +29,14 @@ import { HeroMonitorMode } from '../../components/hero-monitor-mockup/hero-monit
 export class LandingPageComponent {
   screenMode: HeroMonitorMode = 'reservation-preview';
   isNavOpen = false;
-  @ViewChild('cursorBall') cursorBall?: ElementRef<HTMLElement>;
+  @ViewChild('cursorArrow') cursorArrow?: ElementRef<HTMLElement>;
+  @ViewChild('demoBtn') demoBtn?: ElementRef<HTMLElement>;
   private targetX = 0;
   private targetY = 0;
   private currentX = 0;
   private currentY = 0;
+  private targetAngle = 0;
+  private currentAngle = 0;
   private rafId?: number;
 
   setScreenMode(mode: HeroMonitorMode): void {
@@ -52,12 +55,13 @@ export class LandingPageComponent {
   onMouseMove(event: MouseEvent): void {
     this.targetX = event.clientX;
     this.targetY = event.clientY;
+    this.updateTargetAngle(event.clientX, event.clientY);
     this.startBallFollow();
   }
 
   private startBallFollow(): void {
-    const ball = this.cursorBall?.nativeElement;
-    if (!ball || this.rafId) {
+    const arrow = this.cursorArrow?.nativeElement;
+    if (!arrow || this.rafId) {
       return;
     }
 
@@ -66,9 +70,11 @@ export class LandingPageComponent {
       const dy = this.targetY - this.currentY;
       this.currentX += dx * 0.12;
       this.currentY += dy * 0.12;
-      ball.style.left = `${this.currentX}px`;
-      ball.style.top = `${this.currentY}px`;
-      ball.style.opacity = '0.7';
+      this.currentAngle += (this.targetAngle - this.currentAngle) * 0.18;
+      arrow.style.left = `${this.currentX}px`;
+      arrow.style.top = `${this.currentY}px`;
+      arrow.style.opacity = '0.8';
+      arrow.style.transform = `translate(-50%, -50%) rotate(${this.currentAngle}deg)`;
       if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
         this.rafId = undefined;
         return;
@@ -77,5 +83,17 @@ export class LandingPageComponent {
     };
 
     this.rafId = requestAnimationFrame(animate);
+  }
+
+  private updateTargetAngle(mouseX: number, mouseY: number): void {
+    const button = this.demoBtn?.nativeElement;
+    if (!button) {
+      return;
+    }
+    const rect = button.getBoundingClientRect();
+    const targetX = rect.left + rect.width / 2;
+    const targetY = rect.top + rect.height / 2;
+    const angle = Math.atan2(targetY - mouseY, targetX - mouseX) * (180 / Math.PI);
+    this.targetAngle = angle;
   }
 }
