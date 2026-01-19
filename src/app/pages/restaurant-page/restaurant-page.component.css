@@ -20,7 +20,7 @@
 
 .demo-page .section-lead {
   margin-top: 0.25rem;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .demo-page.section {
@@ -28,12 +28,12 @@
 }
 
 .demo-page .card {
-  padding: 12px;
+  padding: 10px;
 }
 
 .calendar-card {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .calendar-header {
@@ -68,15 +68,15 @@
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
-  grid-auto-rows: minmax(28px, 1fr);
+  gap: 3px;
+  grid-auto-rows: minmax(26px, 1fr);
 }
 
 .calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
-  font-size: 0.68rem;
+  gap: 3px;
+  font-size: 0.64rem;
   color: var(--muted);
   font-weight: 600;
 }
@@ -92,7 +92,7 @@
   background: rgba(79, 70, 229, 0.06);
   font-weight: 600;
   color: var(--text);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
 }
 
 .day.muted {
@@ -111,8 +111,8 @@
 .slot-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
-  gap: 6px;
-  margin: 6px 0 6px;
+  gap: 5px;
+  margin: 4px 0 4px;
 }
 
 .slot {
@@ -120,10 +120,10 @@
   background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(129, 140, 248, 0.2));
   color: var(--primary-600);
   border-radius: 12px;
-  padding: 6px 8px;
+  padding: 5px 7px;
   font-weight: 600;
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   box-shadow: 0 6px 12px rgba(79, 70, 229, 0.12);
 }
 
@@ -136,7 +136,7 @@
 
 .demo-form {
   display: grid;
-  gap: 6px;
+  gap: 5px;
 }
 
 @media (max-width: 720px) {
@@ -180,34 +180,34 @@
   }
 
   .calendar-weekdays {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
   }
 
   .calendar-grid {
-    gap: 3px;
-    grid-auto-rows: minmax(24px, 1fr);
+    gap: 2px;
+    grid-auto-rows: minmax(22px, 1fr);
   }
 
   .day {
-    font-size: 0.68rem;
+    font-size: 0.64rem;
   }
 
   .slot-row {
-    gap: 5px;
+    gap: 4px;
   }
 
   .slot {
-    padding: 5px 7px;
-    font-size: 0.72rem;
+    padding: 4px 6px;
+    font-size: 0.68rem;
   }
 
   .demo-form {
-    gap: 5px;
+    gap: 4px;
   }
 
   .input,
   .textarea {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
   }
 }
 

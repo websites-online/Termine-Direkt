@@ -137,9 +137,10 @@ export class RestaurantPageComponent {
   }
 
   private generateSlots(): string[] {
+    const { start, end } = this.getHoursRange();
     const slots: string[] = [];
-    let minutes = 12 * 60;
-    const endMinutes = 20 * 60;
+    let minutes = start;
+    const endMinutes = end;
 
     while (minutes < endMinutes) {
       const hour = Math.floor(minutes / 60)
@@ -151,6 +152,35 @@ export class RestaurantPageComponent {
     }
 
     return slots;
+  }
+
+  private getHoursRange(): { start: number; end: number } {
+    const fallback = { start: 12 * 60, end: 20 * 60 };
+    const hours = this.company?.hours;
+    if (!hours) {
+      return fallback;
+    }
+
+    const match = hours.match(/(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})/);
+    if (!match) {
+      return fallback;
+    }
+
+    const start = this.toMinutes(match[1]);
+    const end = this.toMinutes(match[2]);
+    if (Number.isNaN(start) || Number.isNaN(end) || start >= end) {
+      return fallback;
+    }
+
+    return { start, end };
+  }
+
+  private toMinutes(time: string): number {
+    const [hour, minute] = time.split(':').map((value) => Number(value));
+    if (Number.isNaN(hour) || Number.isNaN(minute)) {
+      return NaN;
+    }
+    return hour * 60 + minute;
   }
 
   private generateCalendar(
