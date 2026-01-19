@@ -39,6 +39,16 @@
   gap: 12px;
 }
 
+.admin-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admin-form-actions .btn {
+  width: auto;
+}
+
 .company-list {
   display: grid;
   gap: 14px;

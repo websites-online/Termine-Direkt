@@ -5,6 +5,7 @@ export interface Company {
   slug: string;
   address: string;
   hours: string;
+  breakHours?: string;
   email: string;
   createdAt: string;
 }
@@ -28,7 +29,13 @@ export class CompanyService {
     }
   }
 
-  addCompany(data: { name: string; address: string; hours: string; email?: string }): Company {
+  addCompany(data: {
+    name: string;
+    address: string;
+    hours: string;
+    breakHours?: string;
+    email?: string;
+  }): Company {
     const slug = this.createSlug(data.name);
     const companies = this.getCompanies();
     const uniqueSlug = this.ensureUniqueSlug(slug, companies);
@@ -37,6 +44,7 @@ export class CompanyService {
       slug: uniqueSlug,
       address: data.address,
       hours: data.hours,
+      breakHours: data.breakHours,
       email: data.email || 'kontakt@example.com',
       createdAt: new Date().toISOString()
     };
@@ -52,6 +60,36 @@ export class CompanyService {
   deleteCompany(slug: string): void {
     const companies = this.getCompanies().filter((company) => company.slug !== slug);
     localStorage.setItem(this.storageKey, JSON.stringify(companies));
+  }
+
+  updateCompany(
+    slug: string,
+    updates: { name: string; address: string; hours: string; breakHours?: string; email?: string }
+  ): Company | undefined {
+    const companies = this.getCompanies();
+    const targetIndex = companies.findIndex((company) => company.slug === slug);
+    if (targetIndex === -1) {
+      return undefined;
+    }
+
+    const current = companies[targetIndex];
+    const baseSlug = this.createSlug(updates.name);
+    const otherCompanies = companies.filter((company) => company.slug !== slug);
+    const nextSlug = this.ensureUniqueSlug(baseSlug, otherCompanies);
+    const updated: Company = {
+      ...current,
+      name: updates.name,
+      slug: nextSlug,
+      address: updates.address,
+      hours: updates.hours,
+      breakHours: updates.breakHours,
+      email: updates.email || current.email
+    };
+
+    const nextCompanies = [...companies];
+    nextCompanies[targetIndex] = updated;
+    localStorage.setItem(this.storageKey, JSON.stringify(nextCompanies));
+    return updated;
   }
 
   private createSlug(value: string): string {

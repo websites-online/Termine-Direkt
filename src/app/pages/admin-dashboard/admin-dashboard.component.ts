@@ -16,10 +16,12 @@ import { Company, CompanyService } from '../../services/company.service';
 export class AdminDashboardComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   companies: Company[] = [];
+  editingSlug: string | null = null;
   readonly companyForm = this.formBuilder.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     address: ['Beispielstraße 12, 12345 Musterstadt', Validators.required],
     hours: ['Mo–So 12:00–20:00', Validators.required],
+    breakHours: [''],
     email: ['kontakt@example.com']
   });
 
@@ -38,21 +40,43 @@ export class AdminDashboardComponent implements OnInit {
     this.router.navigate(['/admin/login']);
   }
 
-  createCompany(): void {
+  submitCompany(): void {
     if (this.companyForm.invalid) {
       this.companyForm.markAllAsTouched();
       return;
     }
 
     const value = this.companyForm.value;
-    this.companyService.addCompany({
+    const payload = {
       name: value.name || 'Neues Unternehmen',
       address: value.address || 'Beispielstraße 12, 12345 Musterstadt',
       hours: value.hours || 'Mo–So 12:00–20:00',
+      breakHours: value.breakHours || undefined,
       email: value.email || undefined
-    });
-    this.companyForm.markAsPristine();
+    };
+
+    if (this.editingSlug) {
+      this.companyService.updateCompany(this.editingSlug, payload);
+    } else {
+      this.companyService.addCompany(payload);
+    }
+    this.resetForm();
     this.loadCompanies();
+  }
+
+  startEdit(company: Company): void {
+    this.editingSlug = company.slug;
+    this.companyForm.patchValue({
+      name: company.name,
+      address: company.address,
+      hours: company.hours,
+      breakHours: company.breakHours || '',
+      email: company.email
+    });
+  }
+
+  cancelEdit(): void {
+    this.resetForm();
   }
 
   deleteCompany(slug: string): void {
@@ -66,5 +90,17 @@ export class AdminDashboardComponent implements OnInit {
 
   private loadCompanies(): void {
     this.companies = this.companyService.getCompanies();
+  }
+
+  private resetForm(): void {
+    this.editingSlug = null;
+    this.companyForm.reset({
+      name: '',
+      address: 'Beispielstraße 12, 12345 Musterstadt',
+      hours: 'Mo–So 12:00–20:00',
+      breakHours: '',
+      email: 'kontakt@example.com'
+    });
+    this.companyForm.markAsPristine();
   }
 }

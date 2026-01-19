@@ -138,16 +138,19 @@ export class RestaurantPageComponent {
 
   private generateSlots(): string[] {
     const { start, end } = this.getHoursRange();
+    const breaks = this.getBreakRanges();
     const slots: string[] = [];
     let minutes = start;
     const endMinutes = end;
 
     while (minutes < endMinutes) {
-      const hour = Math.floor(minutes / 60)
-        .toString()
-        .padStart(2, '0');
-      const minute = (minutes % 60).toString().padStart(2, '0');
-      slots.push(`${hour}:${minute}`);
+      if (!this.isInBreak(minutes, breaks)) {
+        const hour = Math.floor(minutes / 60)
+          .toString()
+          .padStart(2, '0');
+        const minute = (minutes % 60).toString().padStart(2, '0');
+        slots.push(`${hour}:${minute}`);
+      }
       minutes += 45;
     }
 
@@ -173,6 +176,27 @@ export class RestaurantPageComponent {
     }
 
     return { start, end };
+  }
+
+  private getBreakRanges(): Array<{ start: number; end: number }> {
+    const raw = this.company?.breakHours;
+    if (!raw) {
+      return [];
+    }
+    return raw
+      .split(',')
+      .map((value) => value.trim())
+      .map((value) => value.match(/(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})/))
+      .filter((match): match is RegExpMatchArray => Boolean(match))
+      .map((match) => ({
+        start: this.toMinutes(match[1]),
+        end: this.toMinutes(match[2])
+      }))
+      .filter((range) => !Number.isNaN(range.start) && !Number.isNaN(range.end));
+  }
+
+  private isInBreak(minutes: number, ranges: Array<{ start: number; end: number }>): boolean {
+    return ranges.some((range) => minutes >= range.start && minutes < range.end);
   }
 
   private toMinutes(time: string): number {

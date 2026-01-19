@@ -44,7 +44,10 @@
       <div class="card">
         <h2>Reservierungsdetails</h2>
         <p class="muted">{{ company.address || 'Adresse folgt' }}</p>
-        <p class="muted">{{ company.hours || 'Öffnungszeiten folgen' }}</p>
+        <p class="muted">
+          {{ company.hours || 'Öffnungszeiten folgen' }}
+          <span *ngIf="company.breakHours"> · Pause: {{ company.breakHours }}</span>
+        </p>
         <div class="slot-row">
           <button
             class="slot"
