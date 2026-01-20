@@ -9,6 +9,7 @@ export interface ContactPayload {
   contactName: string;
   email: string;
   phone?: string;
+  plan?: 'test' | 'starter' | 'pro';
   message: string;
   acceptedPrivacy: true;
 }

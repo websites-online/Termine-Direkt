@@ -20,6 +20,8 @@ export class ContactFormComponent {
     contactName: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
     phone: [''],
+    location: [''],
+    plan: ['starter', [Validators.required]],
     message: ['', [Validators.required]],
     acceptedPrivacy: [false, [Validators.requiredTrue]]
   });
@@ -46,6 +48,7 @@ export class ContactFormComponent {
       contactName: this.contactForm.value.contactName ?? '',
       email: this.contactForm.value.email ?? '',
       phone: this.contactForm.value.phone || undefined,
+      plan: (this.contactForm.value.plan || undefined) as 'test' | 'starter' | 'pro' | undefined,
       message: this.contactForm.value.message ?? '',
       acceptedPrivacy: true
     };
@@ -59,6 +62,8 @@ export class ContactFormComponent {
           contactName: '',
           email: '',
           phone: '',
+          location: '',
+          plan: 'starter',
           message: '',
           acceptedPrivacy: false
         });

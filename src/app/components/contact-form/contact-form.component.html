@@ -27,6 +27,18 @@
             <span class="label">Telefon (optional)</span>
             <input class="input" type="tel" formControlName="phone" placeholder="Telefonnummer" />
           </label>
+          <label>
+            <span class="label">Standort (optional)</span>
+            <input class="input" type="text" formControlName="location" placeholder="z. B. Berlin" />
+          </label>
+          <label>
+            <span class="label">Gewünschtes Paket*</span>
+            <select class="input" formControlName="plan">
+              <option value="test">Testversion</option>
+              <option value="starter">Starter</option>
+              <option value="pro">Pro</option>
+            </select>
+          </label>
           <label class="message-field">
             <span class="label">Nachricht*</span>
             <textarea class="textarea" formControlName="message" placeholder="Kurzbeschreibung"></textarea>
