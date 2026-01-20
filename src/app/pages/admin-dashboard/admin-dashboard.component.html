@@ -14,7 +14,10 @@
     </div>
 
     <div class="card admin-card admin-form-card">
-      <h2>{{ editingSlug ? 'Unternehmen bearbeiten' : 'Neues Unternehmen' }}</h2>
+      <div class="admin-card-header">
+        <h2>{{ editingSlug ? 'Unternehmen bearbeiten' : 'Neues Unternehmen' }}</h2>
+        <span class="admin-badge">Empfohlen</span>
+      </div>
       <form class="admin-form" [formGroup]="companyForm" (ngSubmit)="submitCompany()">
         <label>
           <span class="label">Name*</span>

@@ -49,6 +49,22 @@
   width: auto;
 }
 
+.admin-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: rgba(79, 70, 229, 0.12);
+  color: var(--primary-600);
+}
+
 .company-list {
   display: grid;
   gap: 14px;
