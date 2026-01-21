@@ -32,7 +32,8 @@ export class ContactService {
   constructor(private readonly http: HttpClient) {}
 
   sendContactMessage(payload: ContactPayload): Observable<{ success: boolean }> {
-    if (environment.mockApi) {
+    const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+    if (environment.mockApi && isLocalhost) {
       // TODO: Backend Endpoint required
       return of({ success: true }).pipe(delay(600));
     }
