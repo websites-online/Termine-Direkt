@@ -12,7 +12,7 @@ type ContactBody = {
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Method not allowed' });
+    res.status(200).json({ ok: true, message: 'Use POST /api/contact' });
     return;
   }
 

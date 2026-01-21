@@ -19,8 +19,15 @@ export interface ContactPayload {
   providedIn: 'root'
 })
 export class ContactService {
-  private readonly contactUrl =
-    environment.API_BASE_URL?.length > 0 ? `${environment.API_BASE_URL}/api/contact` : '/api/contact';
+  private readonly contactUrl = this.resolveContactUrl();
+
+  private resolveContactUrl(): string {
+    const baseUrl = environment.API_BASE_URL || '';
+    if (typeof window !== 'undefined' && baseUrl.includes('localhost') && window.location.hostname !== 'localhost') {
+      return '/api/contact';
+    }
+    return baseUrl.length > 0 ? `${baseUrl}/api/contact` : '/api/contact';
+  }
 
   constructor(private readonly http: HttpClient) {}
 
