@@ -38,6 +38,7 @@ export class ContactFormComponent {
 
     if (this.contactForm.invalid) {
       this.contactForm.markAllAsTouched();
+      this.errorMessage = 'Bitte Pflichtfelder ausfüllen und Datenschutz bestätigen.';
       return;
     }
 
