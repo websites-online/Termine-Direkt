@@ -49,6 +49,7 @@ export class ContactFormComponent {
       email: this.contactForm.value.email ?? '',
       phone: this.contactForm.value.phone || undefined,
       plan: (this.contactForm.value.plan || undefined) as 'test' | 'starter' | 'pro' | undefined,
+      location: this.contactForm.value.location || undefined,
       message: this.contactForm.value.message ?? '',
       acceptedPrivacy: true
     };

@@ -10,6 +10,7 @@ export interface ContactPayload {
   email: string;
   phone?: string;
   plan?: 'test' | 'starter' | 'pro';
+  location?: string;
   message: string;
   acceptedPrivacy: true;
 }
@@ -18,7 +19,8 @@ export interface ContactPayload {
   providedIn: 'root'
 })
 export class ContactService {
-  private readonly contactUrl = `${environment.API_BASE_URL}/api/public/contact`;
+  private readonly contactUrl =
+    environment.API_BASE_URL?.length > 0 ? `${environment.API_BASE_URL}/api/contact` : '/api/contact';
 
   constructor(private readonly http: HttpClient) {}
 
