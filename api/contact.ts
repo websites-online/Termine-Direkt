@@ -32,6 +32,36 @@ module.exports = async function handler(req: any, res: any) {
     const from = process.env.FROM_EMAIL || 'onboarding@resend.dev';
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
 
+    const lines = [
+      { label: 'Name', value: body.contactName },
+      { label: 'E-Mail', value: body.email },
+      { label: 'Telefon', value: body.phone },
+      { label: 'Firma', value: body.companyName },
+      { label: 'Standort', value: body.location },
+      { label: 'Gewünschtes Paket', value: body.plan }
+    ].filter((item) => item.value);
+
+    const html = `
+      <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.5;color:#0f172a;background:#f8fafc;padding:24px">
+        <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:24px">
+          <h2 style="margin:0 0 8px;font-size:20px;color:#0f172a">Neue Anfrage über termine-direkt</h2>
+          <p style="margin:0 0 16px;color:#475569">Eine neue Anfrage ist eingegangen.</p>
+          <div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-top:12px">
+            ${lines
+              .map(
+                (item) =>
+                  `<div style="margin:6px 0"><strong style="display:inline-block;min-width:140px;color:#0f172a">${item.label}:</strong> <span style="color:#334155">${item.value}</span></div>`
+              )
+              .join('')}
+          </div>
+          <div style="margin-top:16px;padding:12px 14px;border-radius:12px;background:#f1f5f9;color:#0f172a">
+            <strong>Nachricht</strong>
+            <div style="margin-top:6px;color:#334155;white-space:pre-line">${body.message}</div>
+          </div>
+        </div>
+      </div>
+    `;
+
     await resend.emails.send({
       from,
       to: adminEmail,
@@ -47,7 +77,8 @@ module.exports = async function handler(req: any, res: any) {
         body.message
       ]
         .filter(Boolean)
-        .join('\n')
+        .join('\n'),
+      html
     });
 
     res.status(200).json({ success: true });
