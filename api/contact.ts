@@ -8,7 +8,7 @@ type ContactBody = {
   message?: string;
 };
 
-export default async function handler(req: any, res: any) {
+module.exports = async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     res.status(200).json({ ok: true, message: 'Use POST /api/contact' });
     return;
@@ -26,7 +26,8 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    const { Resend } = await import('resend');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { Resend } = require('resend');
     const resend = new Resend(process.env.RESEND_API_KEY);
     const from = process.env.FROM_EMAIL || 'onboarding@resend.dev';
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
@@ -54,4 +55,4 @@ export default async function handler(req: any, res: any) {
     console.error('contact api error', error);
     res.status(500).json({ error: 'Email send failed' });
   }
-}
+};

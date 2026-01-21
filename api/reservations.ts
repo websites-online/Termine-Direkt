@@ -1,5 +1,3 @@
-import { Resend } from 'resend';
-
 type ReservationBody = {
   restaurantName?: string;
   restaurantEmail?: string;
@@ -12,9 +10,9 @@ type ReservationBody = {
   note?: string;
 };
 
-export default async function handler(req: any, res: any) {
+module.exports = async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Method not allowed' });
+    res.status(200).json({ ok: true, message: 'Use POST /api/reservations' });
     return;
   }
 
@@ -24,7 +22,14 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const resend = new Resend(process.env.RESEND_API_KEY || '');
+  if (!process.env.RESEND_API_KEY) {
+    res.status(500).json({ error: 'Missing RESEND_API_KEY' });
+    return;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { Resend } = require('resend');
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const from = process.env.FROM_EMAIL || 'onboarding@resend.dev';
 
   await resend.emails.send({
@@ -60,4 +65,4 @@ export default async function handler(req: any, res: any) {
   });
 
   res.status(200).json({ success: true });
-}
+};
