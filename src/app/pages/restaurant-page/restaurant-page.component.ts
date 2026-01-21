@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -8,7 +9,7 @@ import { CompanyService } from '../../services/company.service';
 @Component({
   selector: 'app-restaurant-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, HttpClientModule],
   templateUrl: './restaurant-page.component.html',
   styleUrl: './restaurant-page.component.css'
 })
@@ -16,6 +17,7 @@ export class RestaurantPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly companyService = inject(CompanyService);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly http = inject(HttpClient);
 
   readonly slug = this.route.snapshot.paramMap.get('slug') ?? '';
   readonly company = this.companyService.findBySlug(this.slug);
@@ -49,9 +51,12 @@ export class RestaurantPageComponent {
     this.baseDate.getDate()
   );
   successMessage = '';
+  errorMessage = '';
+  isSubmitting = false;
 
   readonly bookingForm = this.formBuilder.group({
     name: ['', Validators.required],
+    email: ['', [Validators.required, Validators.email]],
     phone: ['', Validators.required],
     people: [2, [Validators.required, Validators.min(1)]],
     note: [''],
@@ -60,19 +65,48 @@ export class RestaurantPageComponent {
 
   submit(): void {
     this.successMessage = '';
+    this.errorMessage = '';
 
     if (this.bookingForm.invalid) {
       this.bookingForm.markAllAsTouched();
       return;
     }
 
-    this.successMessage = 'Reservierung wurde simuliert.';
-    this.bookingForm.reset({
-      name: '',
-      phone: '',
-      people: 2,
-      note: '',
-      time: '18:00'
+    if (!this.company?.email) {
+      this.errorMessage = 'Restaurant-E-Mail fehlt. Bitte später erneut versuchen.';
+      return;
+    }
+
+    const payload = {
+      restaurantName: this.company.name,
+      restaurantEmail: this.company.email,
+      guestEmail: this.bookingForm.value.email ?? '',
+      guestName: this.bookingForm.value.name ?? '',
+      date: this.selectedDate,
+      time: this.bookingForm.value.time ?? '',
+      people: this.bookingForm.value.people ?? 2,
+      phone: this.bookingForm.value.phone ?? '',
+      note: this.bookingForm.value.note ?? ''
+    };
+
+    this.isSubmitting = true;
+    this.http.post('/api/reservations', payload).subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        this.successMessage = 'Reservierung wurde gesendet.';
+        this.bookingForm.reset({
+          name: '',
+          email: '',
+          phone: '',
+          people: 2,
+          note: '',
+          time: '18:00'
+        });
+      },
+      error: () => {
+        this.isSubmitting = false;
+        this.errorMessage = 'Senden fehlgeschlagen. Bitte später erneut versuchen.';
+      }
     });
   }
 

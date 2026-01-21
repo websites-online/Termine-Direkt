@@ -8,32 +8,34 @@
 
 .demo-page {
   min-height: 100dvh;
-  height: 100dvh;
+  height: auto;
   display: flex;
   align-items: center;
   overflow: visible;
+  transform: scale(1.00);
+  transform-origin: top center;
 }
 
 .demo-page .section-header {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .demo-page .section-lead {
   margin-top: 0.25rem;
-  font-size: 0.74rem;
+  font-size: 0.66rem;
 }
 
 .demo-page.section {
-  padding: 20px 0;
+  padding: 16px 0 20px;
 }
 
 .demo-page .card {
-  padding: 9px;
+  padding: 7px;
 }
 
 .calendar-card {
   display: grid;
-  gap: 5px;
+  gap: 3px;
 }
 
 .calendar-header {
@@ -46,12 +48,12 @@
 
 .month-label {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
 }
 
 .month-nav {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
   border-radius: 10px;
   border: 1px solid rgba(79, 70, 229, 0.2);
   background: rgba(79, 70, 229, 0.08);
@@ -69,14 +71,14 @@
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 2px;
-  grid-auto-rows: minmax(24px, 1fr);
+  grid-auto-rows: minmax(20px, 1fr);
 }
 
 .calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 2px;
-  font-size: 0.6rem;
+  font-size: 0.52rem;
   color: var(--muted);
   font-weight: 600;
 }
@@ -92,7 +94,7 @@
   background: rgba(79, 70, 229, 0.06);
   font-weight: 600;
   color: var(--text);
-  font-size: 0.64rem;
+  font-size: 0.56rem;
 }
 
 .day.muted {
@@ -110,9 +112,9 @@
 
 .slot-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
-  gap: 4px;
-  margin: 3px 0 3px;
+  grid-template-columns: repeat(auto-fit, minmax(62px, 1fr));
+  gap: 3px;
+  margin: 2px 0 2px;
 }
 
 .slot {
@@ -120,10 +122,10 @@
   background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(129, 140, 248, 0.2));
   color: var(--primary-600);
   border-radius: 12px;
-  padding: 4px 6px;
+  padding: 3px 4px;
   font-weight: 600;
   cursor: pointer;
-  font-size: 0.68rem;
+  font-size: 0.6rem;
   box-shadow: 0 6px 12px rgba(79, 70, 229, 0.12);
 }
 
@@ -136,7 +138,17 @@
 
 .demo-form {
   display: grid;
-  gap: 4px;
+  gap: 2px;
+}
+
+.demo-page .label {
+  font-size: 0.68rem;
+}
+
+.demo-page .input,
+.demo-page .textarea {
+  padding: 6px 8px;
+  font-size: 0.68rem;
 }
 
 @media (max-width: 720px) {
@@ -163,59 +175,59 @@
   }
 
   .demo-page .section-lead {
-    font-size: 0.74rem;
+    font-size: 0.66rem;
   }
 
   .demo-page .card {
-    padding: 9px;
+    padding: 7px;
   }
 
   .calendar-header {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
 
   .month-nav {
-    width: 26px;
-    height: 26px;
+    width: 22px;
+    height: 22px;
   }
 
   .calendar-weekdays {
-    font-size: 0.56rem;
+    font-size: 0.5rem;
   }
 
   .calendar-grid {
     gap: 2px;
-    grid-auto-rows: minmax(20px, 1fr);
+    grid-auto-rows: minmax(16px, 1fr);
   }
 
   .day {
-    font-size: 0.6rem;
+    font-size: 0.52rem;
   }
 
   .slot-row {
-    gap: 3px;
+    gap: 2px;
   }
 
   .slot {
-    padding: 4px 5px;
-    font-size: 0.64rem;
+    padding: 3px 4px;
+    font-size: 0.56rem;
   }
 
   .demo-form {
-    gap: 3px;
+    gap: 2px;
   }
 
   .input,
   .textarea {
-    font-size: 0.74rem;
+    font-size: 0.66rem;
   }
 }
 
 .demo-footer-note {
   text-align: center;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   color: var(--muted);
-  padding: 12px 16px 18px;
+  padding: 8px 16px 14px;
 }
 
 @media (max-width: 480px) {

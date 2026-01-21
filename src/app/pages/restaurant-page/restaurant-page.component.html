@@ -66,6 +66,13 @@
             <input class="input" type="text" formControlName="name" placeholder="Vor- und Nachname" />
           </label>
           <label>
+            <span class="label">E-Mail*</span>
+            <input class="input" type="email" formControlName="email" placeholder="gast@mail.de" />
+            <span class="error" *ngIf="bookingForm.get('email')?.touched && bookingForm.get('email')?.invalid">
+              Bitte gültige E-Mail eingeben.
+            </span>
+          </label>
+          <label>
             <span class="label">Telefon*</span>
             <input class="input" type="tel" formControlName="phone" placeholder="Telefonnummer" />
           </label>
@@ -77,8 +84,11 @@
             <span class="label">Notiz (optional)</span>
             <textarea class="textarea" formControlName="note" placeholder="Zusätzliche Hinweise"></textarea>
           </label>
-          <button class="btn btn-primary" type="submit">Reservierung senden</button>
+          <button class="btn btn-primary" type="submit" [disabled]="isSubmitting">
+            {{ isSubmitting ? 'Senden...' : 'Reservierung senden' }}
+          </button>
           <p class="helptext" *ngIf="successMessage">{{ successMessage }}</p>
+          <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
         </form>
       </div>
     </div>
