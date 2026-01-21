@@ -95,7 +95,7 @@
   font-size: 0.9rem;
   color: var(--muted);
   white-space: nowrap;
-  text-align: center;
+  text-align: left;
 }
 
 .hero-visual {
