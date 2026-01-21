@@ -1,5 +1,3 @@
-import { Resend } from 'resend';
-
 type ContactBody = {
   companyName?: string;
   contactName?: string;
@@ -28,6 +26,7 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
+    const { Resend } = await import('resend');
     const resend = new Resend(process.env.RESEND_API_KEY);
     const from = process.env.FROM_EMAIL || 'onboarding@resend.dev';
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
