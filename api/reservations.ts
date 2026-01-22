@@ -1,5 +1,6 @@
 type ReservationBody = {
   restaurantName?: string;
+  restaurantSlug?: string;
   restaurantEmail?: string;
   guestEmail?: string;
   guestName?: string;
@@ -8,6 +9,17 @@ type ReservationBody = {
   people?: number;
   phone?: string;
   note?: string;
+};
+
+const getClient = () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { createClient } = require('@supabase/supabase-js');
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    throw new Error('Missing SUPABASE_URL or SUPABASE key');
+  }
+  return createClient(url, key);
 };
 
 module.exports = async function handler(req: any, res: any) {
@@ -28,6 +40,27 @@ module.exports = async function handler(req: any, res: any) {
       return;
     }
 
+    if (!body.restaurantSlug) {
+      res.status(400).json({ error: 'Missing restaurant slug' });
+      return;
+    }
+
+    const supabase = getClient();
+    const { count, error: countError } = await supabase
+      .from('reservations')
+      .select('id', { count: 'exact', head: true })
+      .eq('restaurant_slug', body.restaurantSlug)
+      .eq('date', body.date)
+      .eq('time', body.time);
+    if (countError) {
+      res.status(500).json({ error: countError.message });
+      return;
+    }
+    if ((count || 0) >= 3) {
+      res.status(409).json({ error: 'Slot voll' });
+      return;
+    }
+
     console.log('reservation request', {
       restaurantEmail: body.restaurantEmail,
       guestEmail: body.guestEmail,
@@ -39,6 +72,23 @@ module.exports = async function handler(req: any, res: any) {
     const { Resend } = require('resend');
     const resend = new Resend(process.env.RESEND_API_KEY);
     const from = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+
+    const { error: insertError } = await supabase.from('reservations').insert({
+      restaurant_slug: body.restaurantSlug,
+      restaurant_name: body.restaurantName || null,
+      restaurant_email: body.restaurantEmail,
+      guest_name: body.guestName || null,
+      guest_email: body.guestEmail,
+      phone: body.phone || null,
+      people: body.people || null,
+      note: body.note || null,
+      date: body.date,
+      time: body.time
+    });
+    if (insertError) {
+      res.status(500).json({ error: insertError.message });
+      return;
+    }
 
     const details = [
       { label: 'Restaurant', value: body.restaurantName || '-' },

@@ -83,6 +83,7 @@ export class RestaurantPageComponent implements OnInit {
 
     const payload = {
       restaurantName: this.company.name,
+      restaurantSlug: this.slug,
       restaurantEmail: this.company.email,
       guestEmail: this.bookingForm.value.email ?? '',
       guestName: this.bookingForm.value.name ?? '',
