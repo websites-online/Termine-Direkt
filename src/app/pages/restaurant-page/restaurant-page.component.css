@@ -1,9 +1,24 @@
 .demo-grid h2 {
   margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.98rem;
+  letter-spacing: -0.01em;
+}
+
+.demo-grid h2::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
 }
 
 .demo-grid {
   align-items: stretch;
+  gap: 12px;
 }
 
 .demo-page {
@@ -14,15 +29,25 @@
   overflow: visible;
   transform: scale(1.00);
   transform-origin: top center;
+  position: relative;
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(79, 70, 229, 0.12), rgba(79, 70, 229, 0) 60%),
+    radial-gradient(120% 90% at 100% 100%, rgba(56, 189, 248, 0.16), rgba(56, 189, 248, 0) 60%),
+    var(--bg);
 }
 
 .demo-page .section-header {
   margin-bottom: 6px;
 }
 
+.demo-header .section-title {
+  letter-spacing: -0.02em;
+}
+
 .demo-page .section-lead {
   margin-top: 0.25rem;
   font-size: 0.66rem;
+  color: var(--muted);
 }
 
 .demo-page.section {
@@ -31,11 +56,20 @@
 
 .demo-page .card {
   padding: 7px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(6px);
 }
 
 .calendar-card {
   display: grid;
   gap: 3px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(243, 244, 255, 0.88));
+}
+
+.details-card {
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.98), rgba(236, 254, 255, 0.88));
 }
 
 .calendar-header {
@@ -72,6 +106,9 @@
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 2px;
   grid-auto-rows: minmax(20px, 1fr);
+  padding: 3px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.03);
 }
 
 .calendar-weekdays {
@@ -95,6 +132,7 @@
   font-weight: 600;
   color: var(--text);
   font-size: 0.56rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
 .day.muted {
@@ -110,11 +148,17 @@
   color: #fff;
 }
 
+.day:not(.muted):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 10px rgba(79, 70, 229, 0.18);
+  background: rgba(79, 70, 229, 0.12);
+}
+
 .slot-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(62px, 1fr));
-  gap: 3px;
-  margin: 2px 0 2px;
+  gap: 5px;
+  margin: 4px 0 4px;
 }
 
 .slot {
@@ -127,6 +171,12 @@
   cursor: pointer;
   font-size: 0.6rem;
   box-shadow: 0 6px 12px rgba(79, 70, 229, 0.12);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.slot:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 16px rgba(79, 70, 229, 0.2);
 }
 
 .slot.full {
@@ -147,6 +197,10 @@
 .demo-form {
   display: grid;
   gap: 2px;
+}
+
+.demo-form .btn {
+  margin-top: 2px;
 }
 
 .demo-page .label {
@@ -172,6 +226,10 @@
     min-height: 100dvh;
     padding-top: 12px;
     overflow: auto;
+  }
+
+  .demo-grid {
+    gap: 10px;
   }
 
   .demo-page .section-header {
@@ -206,6 +264,7 @@
   .calendar-grid {
     gap: 2px;
     grid-auto-rows: minmax(16px, 1fr);
+    padding: 2px;
   }
 
   .day {
@@ -214,6 +273,7 @@
 
   .slot-row {
     gap: 2px;
+    margin: 3px 0;
   }
 
   .slot {

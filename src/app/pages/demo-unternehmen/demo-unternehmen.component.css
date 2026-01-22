@@ -1,9 +1,24 @@
 .demo-grid h2 {
   margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.demo-grid h2::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--primary);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
 }
 
 .demo-grid {
   align-items: stretch;
+  gap: 14px;
 }
 
 .demo-page {
@@ -12,10 +27,23 @@
   display: flex;
   align-items: center;
   overflow: hidden;
+  position: relative;
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(79, 70, 229, 0.14), rgba(79, 70, 229, 0) 60%),
+    radial-gradient(120% 90% at 100% 100%, rgba(56, 189, 248, 0.18), rgba(56, 189, 248, 0) 60%),
+    var(--bg);
 }
 
 .demo-page .section-header {
   margin-bottom: 10px;
+}
+
+.demo-header .section-title {
+  letter-spacing: -0.02em;
+}
+
+.demo-header .section-lead {
+  color: var(--muted);
 }
 
 .demo-page .section-lead {
@@ -29,11 +57,20 @@
 
 .demo-page .card {
   padding: 9px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(6px);
 }
 
 .calendar-card {
   display: grid;
   gap: 5px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(243, 244, 255, 0.88));
+}
+
+.details-card {
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.98), rgba(236, 254, 255, 0.88));
 }
 
 .calendar-header {
@@ -68,8 +105,11 @@
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 2px;
+  gap: 3px;
   grid-auto-rows: minmax(24px, 1fr);
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.03);
 }
 
 .calendar-weekdays {
@@ -93,6 +133,7 @@
   font-weight: 600;
   color: var(--text);
   font-size: 0.64rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
 .day.muted {
@@ -100,6 +141,12 @@
   background: rgba(148, 163, 184, 0.28);
   border-color: rgba(148, 163, 184, 0.35);
   opacity: 0.65;
+}
+
+.day:not(.muted):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 10px rgba(79, 70, 229, 0.18);
+  background: rgba(79, 70, 229, 0.12);
 }
 
 .day.active {
@@ -111,8 +158,8 @@
 .slot-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
-  gap: 4px;
-  margin: 3px 0 3px;
+  gap: 6px;
+  margin: 6px 0 6px;
 }
 
 .slot {
@@ -125,6 +172,12 @@
   cursor: pointer;
   font-size: 0.68rem;
   box-shadow: 0 6px 12px rgba(79, 70, 229, 0.12);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.slot:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 16px rgba(79, 70, 229, 0.2);
 }
 
 .slot.active {
@@ -137,6 +190,10 @@
 .demo-form {
   display: grid;
   gap: 4px;
+}
+
+.demo-form .btn {
+  margin-top: 2px;
 }
 
 @media (max-width: 720px) {
@@ -152,6 +209,10 @@
     min-height: 100dvh;
     padding-top: 12px;
     overflow: auto;
+  }
+
+  .demo-grid {
+    gap: 10px;
   }
 
   .demo-page .section-header {
@@ -186,6 +247,7 @@
   .calendar-grid {
     gap: 2px;
     grid-auto-rows: minmax(20px, 1fr);
+    padding: 3px;
   }
 
   .day {
@@ -193,7 +255,8 @@
   }
 
   .slot-row {
-    gap: 3px;
+    gap: 4px;
+    margin: 4px 0;
   }
 
   .slot {

@@ -1,6 +1,6 @@
 <section class="section page demo-page">
   <div class="container">
-    <div class="section-header">
+    <div class="section-header demo-header">
       <h1 class="section-title">{{ company?.name || 'Reservierungsseite' }}</h1>
       <p class="section-lead" *ngIf="company">
         {{ company.address || 'Adresse folgt' }} · {{ company.hours || 'Öffnungszeiten folgen' }}
@@ -41,7 +41,7 @@
         <p class="helptext">Datum auswählen.</p>
       </div>
 
-      <div class="card">
+      <div class="card details-card">
         <h2>Reservierungsdetails</h2>
         <p class="muted">{{ company.address || 'Adresse folgt' }}</p>
         <p class="muted">
