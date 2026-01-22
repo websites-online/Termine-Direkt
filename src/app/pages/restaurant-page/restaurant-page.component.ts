@@ -1,10 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { CompanyService } from '../../services/company.service';
+import { Company, CompanyApiService } from '../../services/company-api.service';
 
 @Component({
   selector: 'app-restaurant-page',
@@ -13,15 +13,15 @@ import { CompanyService } from '../../services/company.service';
   templateUrl: './restaurant-page.component.html',
   styleUrl: './restaurant-page.component.css'
 })
-export class RestaurantPageComponent {
+export class RestaurantPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly companyService = inject(CompanyService);
+  private readonly companyService = inject(CompanyApiService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly http = inject(HttpClient);
 
   readonly slug = this.route.snapshot.paramMap.get('slug') ?? '';
-  readonly company = this.companyService.findBySlug(this.slug);
-  readonly slots = this.generateSlots();
+  company: Company | null = null;
+  slots: string[] = [];
   readonly weekdays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
   readonly monthNames = [
     'Januar',
@@ -62,6 +62,10 @@ export class RestaurantPageComponent {
     note: [''],
     time: ['18:00', Validators.required]
   });
+
+  ngOnInit(): void {
+    this.loadCompany();
+  }
 
   submit(): void {
     this.successMessage = '';
@@ -283,6 +287,18 @@ export class RestaurantPageComponent {
       day: 'numeric',
       month: 'long',
       year: 'numeric'
+    });
+  }
+
+  private loadCompany(): void {
+    this.companyService.getCompany(this.slug).subscribe({
+      next: (company) => {
+        this.company = company;
+        this.slots = this.generateSlots();
+      },
+      error: () => {
+        this.company = null;
+      }
     });
   }
 }

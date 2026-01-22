@@ -1,15 +1,16 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { AdminAuthService } from '../../services/admin-auth.service';
-import { Company, CompanyService } from '../../services/company.service';
+import { Company, CompanyApiService } from '../../services/company-api.service';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, HttpClientModule],
   templateUrl: './admin-dashboard.component.html',
   styleUrl: './admin-dashboard.component.css'
 })
@@ -22,13 +23,13 @@ export class AdminDashboardComponent implements OnInit {
     address: ['Beispielstraße 12, 12345 Musterstadt', Validators.required],
     hours: ['Mo–So 12:00–20:00', Validators.required],
     breakHours: [''],
-    email: ['kontakt@example.com']
+    email: ['kontakt@example.com', [Validators.required, Validators.email]]
   });
 
   constructor(
     private readonly authService: AdminAuthService,
     private readonly router: Router,
-    private readonly companyService: CompanyService
+    private readonly companyService: CompanyApiService
   ) {}
 
   ngOnInit(): void {
@@ -52,16 +53,18 @@ export class AdminDashboardComponent implements OnInit {
       address: value.address || 'Beispielstraße 12, 12345 Musterstadt',
       hours: value.hours || 'Mo–So 12:00–20:00',
       breakHours: value.breakHours || undefined,
-      email: value.email || undefined
+      email: value.email || 'kontakt@example.com'
     };
 
-    if (this.editingSlug) {
-      this.companyService.updateCompany(this.editingSlug, payload);
-    } else {
-      this.companyService.addCompany(payload);
-    }
-    this.resetForm();
-    this.loadCompanies();
+    const request$ = this.editingSlug
+      ? this.companyService.updateCompany(this.editingSlug, payload)
+      : this.companyService.createCompany(payload);
+    request$.subscribe({
+      next: () => {
+        this.resetForm();
+        this.loadCompanies();
+      }
+    });
   }
 
   startEdit(company: Company): void {
@@ -84,12 +87,17 @@ export class AdminDashboardComponent implements OnInit {
     if (!confirmed) {
       return;
     }
-    this.companyService.deleteCompany(slug);
-    this.loadCompanies();
+    this.companyService.deleteCompany(slug).subscribe({
+      next: () => this.loadCompanies()
+    });
   }
 
   private loadCompanies(): void {
-    this.companies = this.companyService.getCompanies();
+    this.companyService.listCompanies().subscribe({
+      next: (companies) => {
+        this.companies = companies;
+      }
+    });
   }
 
   private resetForm(): void {
