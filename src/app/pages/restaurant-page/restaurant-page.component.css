@@ -129,6 +129,14 @@
   box-shadow: 0 6px 12px rgba(79, 70, 229, 0.12);
 }
 
+.slot.full {
+  background: rgba(148, 163, 184, 0.25);
+  border-color: rgba(148, 163, 184, 0.45);
+  color: #64748b;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
 .slot.active {
   background: var(--primary);
   color: #fff;

@@ -22,6 +22,7 @@ export class RestaurantPageComponent implements OnInit {
   readonly slug = this.route.snapshot.paramMap.get('slug') ?? '';
   company: Company | null = null;
   slots: string[] = [];
+  slotCounts: Record<string, number> = {};
   readonly weekdays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
   readonly monthNames = [
     'Januar',
@@ -99,6 +100,7 @@ export class RestaurantPageComponent implements OnInit {
       next: () => {
         this.isSubmitting = false;
         this.successMessage = 'Reservierung wurde gesendet.';
+        this.loadSlotAvailability();
         this.bookingForm.reset({
           name: '',
           email: '',
@@ -108,8 +110,13 @@ export class RestaurantPageComponent implements OnInit {
           time: '18:00'
         });
       },
-      error: () => {
+      error: (error) => {
         this.isSubmitting = false;
+        if (error?.status === 409) {
+          this.errorMessage = 'Dieser Slot ist leider ausgebucht.';
+          this.loadSlotAvailability();
+          return;
+        }
         this.errorMessage = 'Senden fehlgeschlagen. Bitte später erneut versuchen.';
       }
     });
@@ -124,6 +131,7 @@ export class RestaurantPageComponent implements OnInit {
     this.calendarDays.forEach((entry) => {
       entry.active = !entry.muted && entry.date?.getTime() === day.date?.getTime();
     });
+    this.loadSlotAvailability();
   }
 
   get currentMonthLabel(): string {
@@ -296,10 +304,34 @@ export class RestaurantPageComponent implements OnInit {
       next: (company) => {
         this.company = company;
         this.slots = this.generateSlots();
+        this.loadSlotAvailability();
       },
       error: () => {
         this.company = null;
       }
     });
+  }
+
+  private loadSlotAvailability(): void {
+    if (!this.company || !this.selectedDate) {
+      return;
+    }
+    const query = `restaurantSlug=${encodeURIComponent(this.slug)}&date=${encodeURIComponent(
+      this.selectedDate
+    )}`;
+    this.http.get<{ slots: Record<string, number> }>(`/api/reservations?${query}`).subscribe({
+      next: (response) => {
+        this.slotCounts = response.slots || {};
+        const current = this.bookingForm.value.time || '';
+        if (current && this.isSlotFull(current)) {
+          const nextSlot = this.slots.find((slot) => !this.isSlotFull(slot));
+          this.bookingForm.patchValue({ time: nextSlot || '' });
+        }
+      }
+    });
+  }
+
+  isSlotFull(slot: string): boolean {
+    return (this.slotCounts[slot] || 0) >= 3;
   }
 }

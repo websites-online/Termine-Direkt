@@ -23,6 +23,37 @@ const getClient = () => {
 };
 
 module.exports = async function handler(req: any, res: any) {
+  if (req.method === 'GET') {
+    try {
+      const restaurantSlug = typeof req.query?.restaurantSlug === 'string' ? req.query.restaurantSlug : '';
+      const date = typeof req.query?.date === 'string' ? req.query.date : '';
+      if (!restaurantSlug || !date) {
+        res.status(200).json({ slots: {} });
+        return;
+      }
+      const supabase = getClient();
+      const { data, error } = await supabase
+        .from('reservations')
+        .select('time')
+        .eq('restaurant_slug', restaurantSlug)
+        .eq('date', date);
+      if (error) {
+        res.status(500).json({ error: error.message });
+        return;
+      }
+      const counts: Record<string, number> = {};
+      (data || []).forEach((row: { time: string }) => {
+        counts[row.time] = (counts[row.time] || 0) + 1;
+      });
+      res.status(200).json({ slots: counts });
+      return;
+    } catch (error: any) {
+      console.error('reservations api error', error);
+      res.status(500).json({ error: error.message || 'Server error' });
+      return;
+    }
+  }
+
   if (req.method !== 'POST') {
     res.status(200).json({ ok: true, message: 'Use POST /api/reservations' });
     return;
