@@ -16,53 +16,65 @@ module.exports = async function handler(req: any, res: any) {
     return;
   }
 
-  const body = (req.body || {}) as ReservationBody;
-  if (!body.restaurantEmail || !body.guestEmail || !body.date || !body.time) {
-    res.status(400).json({ error: 'Missing required fields' });
-    return;
+  try {
+    const body = (req.body || {}) as ReservationBody;
+    if (!body.restaurantEmail || !body.guestEmail || !body.date || !body.time) {
+      res.status(400).json({ error: 'Missing required fields' });
+      return;
+    }
+
+    if (!process.env.RESEND_API_KEY) {
+      res.status(500).json({ error: 'Missing RESEND_API_KEY' });
+      return;
+    }
+
+    console.log('reservation request', {
+      restaurantEmail: body.restaurantEmail,
+      guestEmail: body.guestEmail,
+      date: body.date,
+      time: body.time
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { Resend } = require('resend');
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const from = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+
+    await resend.emails.send({
+      from,
+      to: body.restaurantEmail,
+      subject: `Neue Reservierung: ${body.date} ${body.time}`,
+      text: [
+        `Restaurant: ${body.restaurantName || '-'}`,
+        `Datum: ${body.date}`,
+        `Uhrzeit: ${body.time}`,
+        `Name: ${body.guestName || '-'}`,
+        `E-Mail: ${body.guestEmail}`,
+        body.phone ? `Telefon: ${body.phone}` : null,
+        body.people ? `Personen: ${body.people}` : null,
+        body.note ? `Notiz: ${body.note}` : null
+      ]
+        .filter(Boolean)
+        .join('\n')
+    });
+
+    await resend.emails.send({
+      from,
+      to: body.guestEmail,
+      subject: `Ihre Reservierung bei ${body.restaurantName || 'dem Restaurant'}`,
+      text: [
+        `Danke für Ihre Reservierung!`,
+        `Datum: ${body.date}`,
+        `Uhrzeit: ${body.time}`,
+        body.people ? `Personen: ${body.people}` : null
+      ]
+        .filter(Boolean)
+        .join('\n')
+    });
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('reservations api error', error);
+    res.status(500).json({ error: 'Email send failed' });
   }
-
-  if (!process.env.RESEND_API_KEY) {
-    res.status(500).json({ error: 'Missing RESEND_API_KEY' });
-    return;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { Resend } = require('resend');
-  const resend = new Resend(process.env.RESEND_API_KEY);
-  const from = process.env.FROM_EMAIL || 'onboarding@resend.dev';
-
-  await resend.emails.send({
-    from,
-    to: body.restaurantEmail,
-    subject: `Neue Reservierung: ${body.date} ${body.time}`,
-    text: [
-      `Restaurant: ${body.restaurantName || '-'}`,
-      `Datum: ${body.date}`,
-      `Uhrzeit: ${body.time}`,
-      `Name: ${body.guestName || '-'}`,
-      `E-Mail: ${body.guestEmail}`,
-      body.phone ? `Telefon: ${body.phone}` : null,
-      body.people ? `Personen: ${body.people}` : null,
-      body.note ? `Notiz: ${body.note}` : null
-    ]
-      .filter(Boolean)
-      .join('\n')
-  });
-
-  await resend.emails.send({
-    from,
-    to: body.guestEmail,
-    subject: `Ihre Reservierung bei ${body.restaurantName || 'dem Restaurant'}`,
-    text: [
-      `Danke für Ihre Reservierung!`,
-      `Datum: ${body.date}`,
-      `Uhrzeit: ${body.time}`,
-      body.people ? `Personen: ${body.people}` : null
-    ]
-      .filter(Boolean)
-      .join('\n')
-  });
-
-  res.status(200).json({ success: true });
 };
