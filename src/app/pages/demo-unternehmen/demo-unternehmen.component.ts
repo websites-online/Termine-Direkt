@@ -29,6 +29,11 @@ export class DemoUnternehmenComponent {
     'Dezember'
   ];
   private readonly baseDate = new Date();
+  private readonly today = new Date(
+    this.baseDate.getFullYear(),
+    this.baseDate.getMonth(),
+    this.baseDate.getDate()
+  );
   monthOffset = 0;
   calendarDays = this.generateCalendar(
     this.baseDate.getFullYear(),
@@ -132,7 +137,7 @@ export class DemoUnternehmenComponent {
   private refreshCalendar(): void {
     const baseYear = this.baseDate.getFullYear();
     const baseMonth = this.baseDate.getMonth();
-    const activeDay = 1;
+    const activeDay = this.monthOffset === 0 ? this.baseDate.getDate() : 1;
     this.calendarDays = this.generateCalendar(baseYear, baseMonth + this.monthOffset, activeDay);
     const firstActive = this.calendarDays.find((entry) => !entry.muted && entry.date);
     if (firstActive?.date) {
@@ -149,12 +154,12 @@ export class DemoUnternehmenComponent {
     year: number,
     monthIndex: number,
     activeDay: number
-  ): Array<{ label: number; muted: boolean; active: boolean; date?: Date }> {
+  ): Array<{ label: number; muted: boolean; active: boolean; date?: Date; today?: boolean }> {
     const firstDay = new Date(year, monthIndex, 1);
     const startOffset = (firstDay.getDay() + 6) % 7;
     const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
     const daysInPrevMonth = new Date(year, monthIndex, 0).getDate();
-    const cells: Array<{ label: number; muted: boolean; active: boolean; date?: Date }> = [];
+    const cells: Array<{ label: number; muted: boolean; active: boolean; date?: Date; today?: boolean }> = [];
 
     for (let i = 0; i < 42; i += 1) {
       if (i < startOffset) {
@@ -166,11 +171,14 @@ export class DemoUnternehmenComponent {
       const dayNumber = i - startOffset + 1;
       if (dayNumber <= daysInMonth) {
         const date = new Date(year, monthIndex, dayNumber);
+        const isPast = date.getTime() < this.today.getTime();
+        const isToday = date.getTime() === this.today.getTime();
         cells.push({
           label: dayNumber,
-          muted: false,
-          active: dayNumber === activeDay,
-          date
+          muted: isPast,
+          active: !isPast && dayNumber === activeDay,
+          date,
+          today: isToday
         });
         continue;
       }

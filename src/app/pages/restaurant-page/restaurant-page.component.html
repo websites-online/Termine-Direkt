@@ -32,6 +32,7 @@
             *ngFor="let day of calendarDays"
             [class.muted]="day.muted"
             [class.active]="day.active"
+            [class.today]="day.today"
             [disabled]="day.muted"
             (click)="selectDate(day)"
           >
