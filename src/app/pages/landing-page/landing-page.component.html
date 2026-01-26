@@ -2,16 +2,9 @@
   <div class="page-shell">
     <header class="site-header" [class.compact]="isNavCompact">
       <div class="container header-inner">
-        <div class="logo">
-          <span class="logo-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-              <path d="M6.5 7.5L3.5 12l3 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M17.5 7.5L20.5 12l-3 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M10 19l4-14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-            </svg>
-          </span>
-          <span>termine-direkt</span>
-        </div>
+        <a class="logo" routerLink="/">
+          <img class="logo-image" src="/logo.png" alt="reserVino Logo" />
+        </a>
         <nav class="nav">
           <a routerLink="/demo-unternehmen">Demo</a>
           <a href="#pricing">Preise</a>

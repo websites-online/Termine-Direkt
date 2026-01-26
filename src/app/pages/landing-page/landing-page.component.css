@@ -30,21 +30,27 @@
 }
 
 .logo {
-  font-weight: 700;
-  font-size: 1.2rem;
-  letter-spacing: -0.01em;
   display: inline-flex;
   align-items: center;
   gap: 10px;
   color: #101827;
+  text-decoration: none;
 }
 
 .site-header.compact .header-inner {
   padding: 10px 10px;
 }
 
-.site-header.compact .logo {
-  font-size: 1.05rem;
+.logo-image {
+  height: 52px;
+  width: auto;
+  max-width: 240px;
+  display: block;
+  object-fit: contain;
+}
+
+.site-header.compact .logo-image {
+  height: 38px;
 }
 
 .site-header.compact .nav a {
