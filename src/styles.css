@@ -63,6 +63,10 @@ button {
   text-decoration: underline;
 }
 
+.back-btn {
+  margin: 12px 0 18px;
+}
+
 @media (max-width: 480px) {
   body {
     font-size: 13px;
