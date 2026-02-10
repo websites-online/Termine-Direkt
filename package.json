@@ -6,7 +6,7 @@
     "start": "ng serve",
     "build": "ng build",
     "build:prod": "ng build --configuration production --base-href /",
-    "deploy": "gh-pages -d dist/termine-direkt/browser",
+    "deploy": "npm run build:prod && gh-pages -d dist/termine-direkt/browser",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
