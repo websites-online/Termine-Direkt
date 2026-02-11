@@ -102,7 +102,13 @@ module.exports = async function handler(req: any, res: any) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { Resend } = require('resend');
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const from = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+    const fromAddress = process.env.FROM_EMAIL;
+    if (!fromAddress) {
+      res.status(500).json({ error: 'Missing FROM_EMAIL' });
+      return;
+    }
+    const fromName = body.restaurantName ? `${body.restaurantName} ` : '';
+    const from = fromName ? `${fromName}<${fromAddress}>` : fromAddress;
 
     const { error: insertError } = await supabase.from('reservations').insert({
       restaurant_slug: body.restaurantSlug,
@@ -168,6 +174,7 @@ module.exports = async function handler(req: any, res: any) {
       from,
       to: body.restaurantEmail,
       subject: `Neue Reservierung: ${body.date} ${body.time}`,
+      replyTo: body.guestEmail,
       text: [
         `Restaurant: ${body.restaurantName || '-'}`,
         `Datum: ${body.date}`,
@@ -187,6 +194,7 @@ module.exports = async function handler(req: any, res: any) {
       from,
       to: body.guestEmail,
       subject: `Ihre Reservierung bei ${body.restaurantName || 'dem Restaurant'}`,
+      replyTo: body.restaurantEmail,
       text: [
         `Danke für Ihre Reservierung!`,
         `Datum: ${body.date}`,

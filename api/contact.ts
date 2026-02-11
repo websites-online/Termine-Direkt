@@ -29,7 +29,12 @@ module.exports = async function handler(req: any, res: any) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { Resend } = require('resend');
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const from = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+    const fromAddress = process.env.FROM_EMAIL;
+    if (!fromAddress) {
+      res.status(500).json({ error: 'Missing FROM_EMAIL' });
+      return;
+    }
+    const from = fromAddress;
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
 
     const lines = [
@@ -66,6 +71,7 @@ module.exports = async function handler(req: any, res: any) {
       from,
       to: adminEmail,
       subject: 'Neue Anfrage von reserVino',
+      replyTo: body.email,
       text: [
         `Name: ${body.contactName}`,
         `E-Mail: ${body.email}`,
