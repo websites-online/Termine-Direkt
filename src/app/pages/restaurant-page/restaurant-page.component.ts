@@ -268,6 +268,7 @@ export class RestaurantPageComponent implements OnInit {
     const startOffset = (firstDay.getDay() + 6) % 7;
     const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
     const daysInPrevMonth = new Date(year, monthIndex, 0).getDate();
+    const openDays = this.getOpenWeekdayIndexes();
     const cells: Array<{ label: number; muted: boolean; active: boolean; date?: Date; today?: boolean }> = [];
 
     for (let i = 0; i < 42; i += 1) {
@@ -282,10 +283,12 @@ export class RestaurantPageComponent implements OnInit {
         const date = new Date(year, monthIndex, dayNumber);
         const isPast = date.getTime() < this.today.getTime();
         const isToday = date.getTime() === this.today.getTime();
+        const weekdayIndex = (date.getDay() + 6) % 7;
+        const isClosed = !openDays.has(weekdayIndex);
         cells.push({
           label: dayNumber,
-          muted: isPast,
-          active: !isPast && dayNumber === activeDay,
+          muted: isPast || isClosed,
+          active: !isPast && !isClosed && dayNumber === activeDay,
           date,
           today: isToday
         });
@@ -297,6 +300,72 @@ export class RestaurantPageComponent implements OnInit {
     }
 
     return cells;
+  }
+
+  private getOpenWeekdayIndexes(): Set<number> {
+    const open = new Set<number>();
+    const hours = this.company?.hours;
+    if (!hours) {
+      return new Set([0, 1, 2, 3, 4, 5, 6]);
+    }
+
+    const dayPartMatch = hours.match(
+      /^([A-Za-zÄÖÜäöü]{2}(?:\s*[–-]\s*[A-Za-zÄÖÜäöü]{2})?(?:\s*,\s*[A-Za-zÄÖÜäöü]{2}(?:\s*[–-]\s*[A-Za-zÄÖÜäöü]{2})?)*)/
+    );
+    if (!dayPartMatch) {
+      return new Set([0, 1, 2, 3, 4, 5, 6]);
+    }
+
+    const dayMap: Record<string, number> = {
+      Mo: 0,
+      Di: 1,
+      Mi: 2,
+      Do: 3,
+      Fr: 4,
+      Sa: 5,
+      So: 6
+    };
+
+    const segments = dayPartMatch[1]
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    for (const segment of segments) {
+      const cleaned = segment.replace(/\./g, '');
+      const rangeMatch = cleaned.match(/^([A-Za-zÄÖÜäöü]{2})\s*[–-]\s*([A-Za-zÄÖÜäöü]{2})$/);
+      if (rangeMatch) {
+        const start = dayMap[rangeMatch[1]];
+        const end = dayMap[rangeMatch[2]];
+        if (start === undefined || end === undefined) {
+          continue;
+        }
+        if (start <= end) {
+          for (let i = start; i <= end; i += 1) {
+            open.add(i);
+          }
+        } else {
+          for (let i = start; i < 7; i += 1) {
+            open.add(i);
+          }
+          for (let i = 0; i <= end; i += 1) {
+            open.add(i);
+          }
+        }
+        continue;
+      }
+
+      const single = dayMap[cleaned];
+      if (single !== undefined) {
+        open.add(single);
+      }
+    }
+
+    if (open.size === 0) {
+      return new Set([0, 1, 2, 3, 4, 5, 6]);
+    }
+
+    return open;
   }
 
   private formatDate(date: Date): string {
@@ -312,6 +381,7 @@ export class RestaurantPageComponent implements OnInit {
       next: (company) => {
         this.company = company;
         this.slots = this.generateSlots();
+        this.refreshCalendar();
         this.loadSlotAvailability();
       },
       error: () => {
