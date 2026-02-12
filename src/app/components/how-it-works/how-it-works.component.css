@@ -184,10 +184,18 @@
 
 @media (max-width: 640px) {
   .step-media {
-    height: 180px;
+    height: 160px;
   }
 
   .step-copy h3 {
     font-size: 1.05rem;
+  }
+
+  .step-copy {
+    padding: 14px 16px 18px;
+  }
+
+  .step-card {
+    border-radius: 14px;
   }
 }
