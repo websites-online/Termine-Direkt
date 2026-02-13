@@ -97,6 +97,27 @@
     </div>
   </div>
 </section>
+<div class="reservation-modal" *ngIf="showThanksModal">
+  <div class="reservation-modal__backdrop" (click)="closeThanksModal()"></div>
+  <div class="reservation-modal__panel" role="dialog" aria-modal="true" aria-labelledby="reservation-modal-title">
+    <div class="reservation-modal__badge">✓</div>
+    <h3 id="reservation-modal-title">Vielen Dank für Ihre Reservierung!</h3>
+    <p>
+      Wir haben Ihre Anfrage erhalten. Eine Bestätigung wird Ihnen per E-Mail zugesendet.
+    </p>
+    <div class="reservation-modal__details">
+      <div>
+        <span>Datum</span>
+        <strong>{{ lastReservationDate }}</strong>
+      </div>
+      <div>
+        <span>Uhrzeit</span>
+        <strong>{{ lastReservationTime }}</strong>
+      </div>
+    </div>
+    <button class="btn btn-primary" type="button" (click)="closeThanksModal()">OK</button>
+  </div>
+</div>
 <footer class="demo-footer-note">
   Erstellt von reserVino. Moderne Terminplanung leicht und günstig gemacht!
 </footer>

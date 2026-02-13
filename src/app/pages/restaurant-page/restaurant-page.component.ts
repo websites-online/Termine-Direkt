@@ -59,6 +59,9 @@ export class RestaurantPageComponent implements OnInit {
   successMessage = '';
   errorMessage = '';
   isSubmitting = false;
+  showThanksModal = false;
+  lastReservationDate = '';
+  lastReservationTime = '';
 
   readonly bookingForm = this.formBuilder.group({
     name: ['', Validators.required],
@@ -76,6 +79,7 @@ export class RestaurantPageComponent implements OnInit {
   submit(): void {
     this.successMessage = '';
     this.errorMessage = '';
+    this.showThanksModal = false;
 
     if (this.bookingForm.invalid) {
       this.bookingForm.markAllAsTouched();
@@ -100,10 +104,16 @@ export class RestaurantPageComponent implements OnInit {
       note: this.bookingForm.value.note ?? ''
     };
 
+    const reservationDate = this.selectedDate;
+    const reservationTime = this.bookingForm.value.time ?? '';
+
     this.isSubmitting = true;
     this.http.post('/api/reservations', payload).subscribe({
       next: () => {
         this.isSubmitting = false;
+        this.lastReservationDate = reservationDate;
+        this.lastReservationTime = reservationTime;
+        this.showThanksModal = true;
         this.successMessage = 'Reservierung wurde gesendet.';
         this.loadSlotAvailability();
         this.bookingForm.reset({
@@ -125,6 +135,10 @@ export class RestaurantPageComponent implements OnInit {
         this.errorMessage = 'Senden fehlgeschlagen. Bitte später erneut versuchen.';
       }
     });
+  }
+
+  closeThanksModal(): void {
+    this.showThanksModal = false;
   }
 
   selectDate(day: { label: number; muted: boolean; active: boolean; date?: Date }): void {
