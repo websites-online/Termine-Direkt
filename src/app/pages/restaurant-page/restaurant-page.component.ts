@@ -150,6 +150,11 @@ export class RestaurantPageComponent implements OnInit {
     this.calendarDays.forEach((entry) => {
       entry.active = !entry.muted && entry.date?.getTime() === day.date?.getTime();
     });
+    this.slots = this.generateSlots(this.selectedDateObj);
+    const currentTime = this.bookingForm.value.time ?? '';
+    if (!this.slots.includes(currentTime)) {
+      this.bookingForm.patchValue({ time: this.slots[0] || '' });
+    }
     this.loadSlotAvailability();
   }
 
@@ -199,31 +204,42 @@ export class RestaurantPageComponent implements OnInit {
         entry.active =
           !entry.muted && entry.date?.getTime() === this.selectedDateObj.getTime();
       });
+      this.slots = this.generateSlots(this.selectedDateObj);
+      const currentTime = this.bookingForm.value.time ?? '';
+      if (!this.slots.includes(currentTime)) {
+        this.bookingForm.patchValue({ time: this.slots[0] || '' });
+      }
     }
   }
 
-  private generateSlots(): string[] {
-    const { start, end } = this.getHoursRange();
+  private generateSlots(date: Date | null): string[] {
+    const ranges = this.getHoursRangesForDate(date);
+    if (ranges.length === 0) {
+      return [];
+    }
     const breaks = this.getBreakRanges();
     const slots: string[] = [];
-    let minutes = start;
-    const endMinutes = end;
 
-    while (minutes < endMinutes) {
-      if (!this.isInBreak(minutes, breaks)) {
-        const hour = Math.floor(minutes / 60)
-          .toString()
-          .padStart(2, '0');
-        const minute = (minutes % 60).toString().padStart(2, '0');
-        slots.push(`${hour}:${minute}`);
+    for (const range of ranges) {
+      let minutes = range.start;
+      const endMinutes = range.end;
+
+      while (minutes < endMinutes) {
+        if (!this.isInBreak(minutes, breaks)) {
+          const hour = Math.floor(minutes / 60)
+            .toString()
+            .padStart(2, '0');
+          const minute = (minutes % 60).toString().padStart(2, '0');
+          slots.push(`${hour}:${minute}`);
+        }
+        minutes += 45;
       }
-      minutes += 45;
     }
 
     return slots;
   }
 
-  private getHoursRange(): { start: number; end: number } {
+  private getFallbackHoursRange(): { start: number; end: number } {
     const fallback = { start: 12 * 60, end: 20 * 60 };
     const hours = this.company?.hours;
     if (!hours) {
@@ -242,6 +258,145 @@ export class RestaurantPageComponent implements OnInit {
     }
 
     return { start, end };
+  }
+
+  private getHoursRangesForDate(date: Date | null): Array<{ start: number; end: number }> {
+    const schedule = this.parseHoursSchedule();
+    if (!date || schedule.size === 0) {
+      return [this.getFallbackHoursRange()];
+    }
+    const weekdayIndex = (date.getDay() + 6) % 7;
+    return schedule.get(weekdayIndex) || [];
+  }
+
+  private parseHoursSchedule(): Map<number, Array<{ start: number; end: number }>> {
+    const hours = this.company?.hours?.trim();
+    const schedule = new Map<number, Array<{ start: number; end: number }>>();
+    if (!hours) {
+      return schedule;
+    }
+
+    const segments = hours
+      .split(/[\n;]+/)
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    const dayMap: Record<string, number> = {
+      Mo: 0,
+      Di: 1,
+      Mi: 2,
+      Do: 3,
+      Fr: 4,
+      Sa: 5,
+      So: 6
+    };
+
+    for (const segment of segments) {
+      const matches = Array.from(
+        segment.matchAll(/(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})/g)
+      );
+      if (matches.length === 0) {
+        continue;
+      }
+
+      const firstIndex = matches[0].index ?? 0;
+      const daysPart = segment.slice(0, firstIndex).trim();
+      const days = this.parseDayList(daysPart, dayMap);
+      const targetDays = days.length > 0 ? days : [0, 1, 2, 3, 4, 5, 6];
+
+      for (const match of matches) {
+        const start = this.toMinutes(match[1]);
+        const end = this.toMinutes(match[2]);
+        if (Number.isNaN(start) || Number.isNaN(end) || start >= end) {
+          continue;
+        }
+        for (const day of targetDays) {
+          const existing = schedule.get(day) || [];
+          existing.push({ start, end });
+          schedule.set(day, existing);
+        }
+      }
+    }
+
+    schedule.forEach((ranges, day) => {
+      ranges.sort((a, b) => a.start - b.start);
+      schedule.set(day, this.mergeRanges(ranges));
+    });
+
+    return schedule;
+  }
+
+  private parseDayList(input: string, dayMap: Record<string, number>): number[] {
+    if (!input) {
+      return [];
+    }
+    const cleaned = input.replace(/\./g, '');
+    const parts = cleaned
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+    const result = new Set<number>();
+
+    for (const part of parts) {
+      const rangeMatch = part.match(/^([A-Za-zÄÖÜäöü]{2})\s*[–-]\s*([A-Za-zÄÖÜäöü]{2})$/);
+      if (rangeMatch) {
+        const startKey = this.normalizeDayKey(rangeMatch[1]);
+        const endKey = this.normalizeDayKey(rangeMatch[2]);
+        const start = dayMap[startKey];
+        const end = dayMap[endKey];
+        if (start === undefined || end === undefined) {
+          continue;
+        }
+        if (start <= end) {
+          for (let i = start; i <= end; i += 1) {
+            result.add(i);
+          }
+        } else {
+          for (let i = start; i < 7; i += 1) {
+            result.add(i);
+          }
+          for (let i = 0; i <= end; i += 1) {
+            result.add(i);
+          }
+        }
+        continue;
+      }
+
+      const singleKey = this.normalizeDayKey(part);
+      const single = dayMap[singleKey];
+      if (single !== undefined) {
+        result.add(single);
+      }
+    }
+
+    return Array.from(result);
+  }
+
+  private normalizeDayKey(value: string): string {
+    const trimmed = value.trim();
+    if (trimmed.length < 2) {
+      return trimmed;
+    }
+    return trimmed[0].toUpperCase() + trimmed[1].toLowerCase();
+  }
+
+  private mergeRanges(ranges: Array<{ start: number; end: number }>) {
+    if (ranges.length <= 1) {
+      return ranges;
+    }
+    const merged: Array<{ start: number; end: number }> = [];
+    let current = ranges[0];
+    for (let i = 1; i < ranges.length; i += 1) {
+      const next = ranges[i];
+      if (next.start <= current.end) {
+        current = { start: current.start, end: Math.max(current.end, next.end) };
+      } else {
+        merged.push(current);
+        current = next;
+      }
+    }
+    merged.push(current);
+    return merged;
   }
 
   private getBreakRanges(): Array<{ start: number; end: number }> {
@@ -317,69 +472,11 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   private getOpenWeekdayIndexes(): Set<number> {
-    const open = new Set<number>();
-    const hours = this.company?.hours;
-    if (!hours) {
+    const schedule = this.parseHoursSchedule();
+    if (schedule.size === 0) {
       return new Set([0, 1, 2, 3, 4, 5, 6]);
     }
-
-    const dayPartMatch = hours.match(
-      /^([A-Za-zÄÖÜäöü]{2}(?:\s*[–-]\s*[A-Za-zÄÖÜäöü]{2})?(?:\s*,\s*[A-Za-zÄÖÜäöü]{2}(?:\s*[–-]\s*[A-Za-zÄÖÜäöü]{2})?)*)/
-    );
-    if (!dayPartMatch) {
-      return new Set([0, 1, 2, 3, 4, 5, 6]);
-    }
-
-    const dayMap: Record<string, number> = {
-      Mo: 0,
-      Di: 1,
-      Mi: 2,
-      Do: 3,
-      Fr: 4,
-      Sa: 5,
-      So: 6
-    };
-
-    const segments = dayPartMatch[1]
-      .split(',')
-      .map((value) => value.trim())
-      .filter(Boolean);
-
-    for (const segment of segments) {
-      const cleaned = segment.replace(/\./g, '');
-      const rangeMatch = cleaned.match(/^([A-Za-zÄÖÜäöü]{2})\s*[–-]\s*([A-Za-zÄÖÜäöü]{2})$/);
-      if (rangeMatch) {
-        const start = dayMap[rangeMatch[1]];
-        const end = dayMap[rangeMatch[2]];
-        if (start === undefined || end === undefined) {
-          continue;
-        }
-        if (start <= end) {
-          for (let i = start; i <= end; i += 1) {
-            open.add(i);
-          }
-        } else {
-          for (let i = start; i < 7; i += 1) {
-            open.add(i);
-          }
-          for (let i = 0; i <= end; i += 1) {
-            open.add(i);
-          }
-        }
-        continue;
-      }
-
-      const single = dayMap[cleaned];
-      if (single !== undefined) {
-        open.add(single);
-      }
-    }
-
-    if (open.size === 0) {
-      return new Set([0, 1, 2, 3, 4, 5, 6]);
-    }
-
-    return open;
+    return new Set(Array.from(schedule.keys()));
   }
 
   private formatDate(date: Date): string {
@@ -394,7 +491,6 @@ export class RestaurantPageComponent implements OnInit {
     this.companyService.getCompany(this.slug).subscribe({
       next: (company) => {
         this.company = company;
-        this.slots = this.generateSlots();
         this.refreshCalendar();
         this.loadSlotAvailability();
       },
