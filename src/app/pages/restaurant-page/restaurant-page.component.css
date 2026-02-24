@@ -203,9 +203,9 @@
 }
 
 .slot.soon {
-  background: rgba(251, 191, 36, 0.18);
-  border-color: rgba(251, 191, 36, 0.45);
-  color: #92400e;
+  background: rgba(148, 163, 184, 0.25);
+  border-color: rgba(148, 163, 184, 0.45);
+  color: #64748b;
   box-shadow: none;
   cursor: not-allowed;
 }
