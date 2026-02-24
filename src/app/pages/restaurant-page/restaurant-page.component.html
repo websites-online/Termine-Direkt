@@ -65,6 +65,7 @@
           </button>
         </div>
         <p class="helptext">Datum: {{ selectedDate }} · Zeit: {{ bookingForm.value.time }}</p>
+        <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
         <form class="demo-form" [formGroup]="bookingForm" (ngSubmit)="submit()">
           <label>
             <span class="label">Name*</span>
@@ -93,7 +94,6 @@
             {{ isSubmitting ? 'Senden...' : 'Reservierung senden' }}
           </button>
           <p class="helptext" *ngIf="successMessage">{{ successMessage }}</p>
-          <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
         </form>
       </div>
     </div>
