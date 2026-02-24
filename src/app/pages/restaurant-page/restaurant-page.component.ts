@@ -44,6 +44,8 @@ export class RestaurantPageComponent implements OnInit {
     this.baseDate.getMonth(),
     this.baseDate.getDate()
   );
+  private readonly slotIntervalMinutes = 45;
+  private readonly bookingBufferSlots = 3;
   monthOffset = 0;
   calendarDays = this.generateCalendar(
     this.baseDate.getFullYear(),
@@ -91,6 +93,12 @@ export class RestaurantPageComponent implements OnInit {
       return;
     }
 
+    const requestedTime = this.bookingForm.value.time ?? '';
+    if (this.isSlotTooSoon(requestedTime)) {
+      this.errorMessage = 'Bitte wählen Sie einen späteren Slot (mind. 2 Slots Vorlauf).';
+      return;
+    }
+
     const payload = {
       restaurantName: this.company.name,
       restaurantSlug: this.slug,
@@ -105,7 +113,7 @@ export class RestaurantPageComponent implements OnInit {
     };
 
     const reservationDate = this.selectedDate;
-    const reservationTime = this.bookingForm.value.time ?? '';
+    const reservationTime = requestedTime;
 
     this.isSubmitting = true;
     this.http.post('/api/reservations', payload).subscribe({
@@ -152,8 +160,11 @@ export class RestaurantPageComponent implements OnInit {
     });
     this.slots = this.generateSlots(this.selectedDateObj);
     const currentTime = this.bookingForm.value.time ?? '';
-    if (!this.slots.includes(currentTime)) {
-      this.bookingForm.patchValue({ time: this.slots[0] || '' });
+    if (!this.slots.includes(currentTime) || this.isSlotTooSoon(currentTime)) {
+      const nextSlot = this.slots.find(
+        (slot) => !this.isSlotFull(slot) && !this.isSlotTooSoon(slot)
+      );
+      this.bookingForm.patchValue({ time: nextSlot || '' });
     }
     this.loadSlotAvailability();
   }
@@ -206,8 +217,11 @@ export class RestaurantPageComponent implements OnInit {
       });
       this.slots = this.generateSlots(this.selectedDateObj);
       const currentTime = this.bookingForm.value.time ?? '';
-      if (!this.slots.includes(currentTime)) {
-        this.bookingForm.patchValue({ time: this.slots[0] || '' });
+      if (!this.slots.includes(currentTime) || this.isSlotTooSoon(currentTime)) {
+        const nextSlot = this.slots.find(
+          (slot) => !this.isSlotFull(slot) && !this.isSlotTooSoon(slot)
+        );
+        this.bookingForm.patchValue({ time: nextSlot || '' });
       }
     }
   }
@@ -232,7 +246,7 @@ export class RestaurantPageComponent implements OnInit {
           const minute = (minutes % 60).toString().padStart(2, '0');
           slots.push(`${hour}:${minute}`);
         }
-        minutes += 45;
+        minutes += this.slotIntervalMinutes;
       }
     }
 
@@ -511,8 +525,10 @@ export class RestaurantPageComponent implements OnInit {
       next: (response) => {
         this.slotCounts = response.slots || {};
         const current = this.bookingForm.value.time || '';
-        if (current && this.isSlotFull(current)) {
-          const nextSlot = this.slots.find((slot) => !this.isSlotFull(slot));
+        if (current && (this.isSlotFull(current) || this.isSlotTooSoon(current))) {
+          const nextSlot = this.slots.find(
+            (slot) => !this.isSlotFull(slot) && !this.isSlotTooSoon(slot)
+          );
           this.bookingForm.patchValue({ time: nextSlot || '' });
         }
       }
@@ -521,5 +537,27 @@ export class RestaurantPageComponent implements OnInit {
 
   isSlotFull(slot: string): boolean {
     return (this.slotCounts[slot] || 0) >= 3;
+  }
+
+  isSlotTooSoon(slot: string): boolean {
+    if (!this.isTodaySelected()) {
+      return false;
+    }
+    const slotMinutes = this.toMinutes(slot);
+    if (Number.isNaN(slotMinutes)) {
+      return false;
+    }
+    const earliest = this.getEarliestBookableMinutes();
+    return slotMinutes < earliest;
+  }
+
+  private isTodaySelected(): boolean {
+    return this.selectedDateObj?.getTime() === this.today.getTime();
+  }
+
+  private getEarliestBookableMinutes(): number {
+    const now = new Date();
+    const minutesNow = now.getHours() * 60 + now.getMinutes();
+    return minutesNow + this.bookingBufferSlots * this.slotIntervalMinutes;
   }
 }

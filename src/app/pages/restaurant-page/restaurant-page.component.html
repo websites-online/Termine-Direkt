@@ -56,7 +56,8 @@
             *ngFor="let slot of slots"
             [class.active]="bookingForm.value.time === slot"
             [class.full]="isSlotFull(slot)"
-            [disabled]="isSlotFull(slot)"
+            [class.soon]="isSlotTooSoon(slot)"
+            [disabled]="isSlotFull(slot) || isSlotTooSoon(slot)"
             (click)="bookingForm.patchValue({ time: slot })"
           >
             {{ slot }}

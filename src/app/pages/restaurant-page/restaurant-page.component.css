@@ -202,6 +202,14 @@
   cursor: not-allowed;
 }
 
+.slot.soon {
+  background: rgba(251, 191, 36, 0.18);
+  border-color: rgba(251, 191, 36, 0.45);
+  color: #92400e;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
 .slot.active {
   background: var(--primary);
   color: #fff;
