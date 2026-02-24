@@ -57,8 +57,9 @@
             [class.active]="bookingForm.value.time === slot"
             [class.full]="isSlotFull(slot)"
             [class.soon]="isSlotTooSoon(slot)"
-            [disabled]="isSlotFull(slot) || isSlotTooSoon(slot)"
-            (click)="bookingForm.patchValue({ time: slot })"
+            [disabled]="isSlotFull(slot)"
+            [attr.aria-disabled]="isSlotTooSoon(slot)"
+            (click)="onSlotClick(slot)"
           >
             {{ slot }}
           </button>

@@ -45,7 +45,7 @@ export class RestaurantPageComponent implements OnInit {
     this.baseDate.getDate()
   );
   private readonly slotIntervalMinutes = 45;
-  private readonly bookingBufferSlots = 3;
+  private readonly bookingBufferMinutes = 120;
   monthOffset = 0;
   calendarDays = this.generateCalendar(
     this.baseDate.getFullYear(),
@@ -95,7 +95,7 @@ export class RestaurantPageComponent implements OnInit {
 
     const requestedTime = this.bookingForm.value.time ?? '';
     if (this.isSlotTooSoon(requestedTime)) {
-      this.errorMessage = 'Bitte wählen Sie einen späteren Slot (mind. 2 Slots Vorlauf).';
+      this.errorMessage = 'Bitte beachten Sie: Reservierungen sind frühestens 2 Stunden im Voraus möglich.';
       return;
     }
 
@@ -167,6 +167,15 @@ export class RestaurantPageComponent implements OnInit {
       this.bookingForm.patchValue({ time: nextSlot || '' });
     }
     this.loadSlotAvailability();
+  }
+
+  onSlotClick(slot: string): void {
+    if (this.isSlotTooSoon(slot)) {
+      this.errorMessage = 'Bitte beachten Sie: Reservierungen sind frühestens 2 Stunden im Voraus möglich.';
+      return;
+    }
+    this.errorMessage = '';
+    this.bookingForm.patchValue({ time: slot });
   }
 
   get currentMonthLabel(): string {
@@ -558,6 +567,6 @@ export class RestaurantPageComponent implements OnInit {
   private getEarliestBookableMinutes(): number {
     const now = new Date();
     const minutesNow = now.getHours() * 60 + now.getMinutes();
-    return minutesNow + this.bookingBufferSlots * this.slotIntervalMinutes;
+    return minutesNow + this.bookingBufferMinutes;
   }
 }
