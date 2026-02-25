@@ -18,7 +18,7 @@ export class AdminAuthService {
   constructor(private readonly http: HttpClient) {}
 
   login(email: string, password: string): Observable<boolean> {
-    if (this.isLocalMock()) {
+    if (environment.mockApi) {
       if (email !== environment.ADMIN_EMAIL || password.length < 6) {
         return throwError(() => new Error('Nicht berechtigt.'));
       }
@@ -39,14 +39,6 @@ export class AdminAuthService {
       return '/api/admin/login';
     }
     return baseUrl.length > 0 ? `${baseUrl}/api/admin/login` : '/api/admin/login';
-  }
-
-  private isLocalMock(): boolean {
-    return (
-      environment.mockApi &&
-      typeof window !== 'undefined' &&
-      window.location.hostname === 'localhost'
-    );
   }
 
   logout(): void {
