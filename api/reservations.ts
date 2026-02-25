@@ -2,6 +2,8 @@ type ReservationBody = {
   restaurantName?: string;
   restaurantSlug?: string;
   restaurantEmail?: string;
+  serviceType?: 'restaurant' | 'friseur';
+  service?: string;
   guestEmail?: string;
   guestName?: string;
   date?: string;
@@ -110,6 +112,11 @@ module.exports = async function handler(req: any, res: any) {
     const fromName = body.restaurantName ? `${body.restaurantName} ` : '';
     const from = fromName ? `${fromName}<${fromAddress}>` : fromAddress;
 
+    const noteParts = [
+      body.service ? `Service: ${body.service}` : null,
+      body.note ? `Notiz: ${body.note}` : null
+    ].filter(Boolean);
+
     const { error: insertError } = await supabase.from('reservations').insert({
       restaurant_slug: body.restaurantSlug,
       restaurant_name: body.restaurantName || null,
@@ -118,7 +125,7 @@ module.exports = async function handler(req: any, res: any) {
       guest_email: body.guestEmail,
       phone: body.phone || null,
       people: body.people || null,
-      note: body.note || null,
+      note: noteParts.length > 0 ? noteParts.join(' | ') : null,
       date: body.date,
       time: body.time
     });
@@ -127,22 +134,46 @@ module.exports = async function handler(req: any, res: any) {
       return;
     }
 
+    const isSalon = body.serviceType === 'friseur';
+    const businessLabel = isSalon ? 'Salon' : 'Restaurant';
+    const bookingCopy = isSalon
+      ? {
+          newTitle: 'Neuer Termin',
+          newSentence: 'Ein neuer Termin ist eingegangen.',
+          confirmTitle: 'Termin bestätigt',
+          confirmThanks: `Danke für Ihren Termin${body.restaurantName ? ` bei ${body.restaurantName}` : ''}.`,
+          subjectNew: 'Neuer Termin',
+          subjectYour: 'Ihr Termin',
+          thanksLine: 'Danke für Ihren Termin!'
+        }
+      : {
+          newTitle: 'Neue Reservierung',
+          newSentence: 'Eine neue Reservierung ist eingegangen.',
+          confirmTitle: 'Reservierung bestätigt',
+          confirmThanks: `Danke für Ihre Reservierung${body.restaurantName ? ` bei ${body.restaurantName}` : ''}.`,
+          subjectNew: 'Neue Reservierung',
+          subjectYour: 'Ihre Reservierung',
+          thanksLine: 'Danke für Ihre Reservierung!'
+        };
+
     const details = [
-      { label: 'Restaurant', value: body.restaurantName || '-' },
+      { label: businessLabel, value: body.restaurantName || '-' },
       { label: 'Datum', value: body.date },
       { label: 'Uhrzeit', value: body.time },
       { label: 'Name', value: body.guestName || '-' },
       { label: 'E-Mail', value: body.guestEmail },
       { label: 'Telefon', value: body.phone || '-' },
-      { label: 'Personen', value: body.people ? String(body.people) : '-' },
+      ...(isSalon
+        ? [{ label: 'Service', value: body.service || '-' }]
+        : [{ label: 'Personen', value: body.people ? String(body.people) : '-' }]),
       { label: 'Notiz', value: body.note || '-' }
     ];
 
     const restaurantHtml = `
       <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.5;color:#0f172a;background:#f8fafc;padding:24px">
         <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:24px">
-          <h2 style="margin:0 0 8px;font-size:20px;color:#0f172a">Neue Reservierung</h2>
-          <p style="margin:0 0 16px;color:#475569">Eine neue Reservierung ist eingegangen.</p>
+          <h2 style="margin:0 0 8px;font-size:20px;color:#0f172a">${bookingCopy.newTitle}</h2>
+          <p style="margin:0 0 16px;color:#475569">${bookingCopy.newSentence}</p>
           <div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-top:12px">
             ${details
               .map(
@@ -158,12 +189,20 @@ module.exports = async function handler(req: any, res: any) {
     const guestHtml = `
       <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.5;color:#0f172a;background:#f8fafc;padding:24px">
         <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:24px">
-          <h2 style="margin:0 0 8px;font-size:20px;color:#0f172a">Reservierung bestätigt</h2>
-          <p style="margin:0 0 16px;color:#475569">Danke für Ihre Reservierung${body.restaurantName ? ` bei ${body.restaurantName}` : ''}.</p>
+          <h2 style="margin:0 0 8px;font-size:20px;color:#0f172a">${bookingCopy.confirmTitle}</h2>
+          <p style="margin:0 0 16px;color:#475569">${bookingCopy.confirmThanks}</p>
           <div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-top:12px">
             <div style="margin:6px 0"><strong style="display:inline-block;min-width:120px;color:#0f172a">Datum:</strong> <span style="color:#334155">${body.date}</span></div>
             <div style="margin:6px 0"><strong style="display:inline-block;min-width:120px;color:#0f172a">Uhrzeit:</strong> <span style="color:#334155">${body.time}</span></div>
-            ${body.people ? `<div style="margin:6px 0"><strong style="display:inline-block;min-width:120px;color:#0f172a">Personen:</strong> <span style="color:#334155">${body.people}</span></div>` : ''}
+            ${
+              isSalon
+                ? body.service
+                  ? `<div style="margin:6px 0"><strong style="display:inline-block;min-width:120px;color:#0f172a">Service:</strong> <span style="color:#334155">${body.service}</span></div>`
+                  : ''
+                : body.people
+                  ? `<div style="margin:6px 0"><strong style="display:inline-block;min-width:120px;color:#0f172a">Personen:</strong> <span style="color:#334155">${body.people}</span></div>`
+                  : ''
+            }
           </div>
           <p style="margin:16px 0 0;color:#475569">Wir freuen uns auf Ihren Besuch.</p>
         </div>
@@ -173,16 +212,16 @@ module.exports = async function handler(req: any, res: any) {
     await resend.emails.send({
       from,
       to: body.restaurantEmail,
-      subject: `Neue Reservierung: ${body.date} ${body.time}`,
+      subject: `${bookingCopy.subjectNew}: ${body.date} ${body.time}`,
       replyTo: body.guestEmail,
       text: [
-        `Restaurant: ${body.restaurantName || '-'}`,
+        `${businessLabel}: ${body.restaurantName || '-'}`,
         `Datum: ${body.date}`,
         `Uhrzeit: ${body.time}`,
         `Name: ${body.guestName || '-'}`,
         `E-Mail: ${body.guestEmail}`,
         body.phone ? `Telefon: ${body.phone}` : null,
-        body.people ? `Personen: ${body.people}` : null,
+        isSalon ? (body.service ? `Service: ${body.service}` : null) : body.people ? `Personen: ${body.people}` : null,
         body.note ? `Notiz: ${body.note}` : null
       ]
         .filter(Boolean)
@@ -193,13 +232,13 @@ module.exports = async function handler(req: any, res: any) {
     await resend.emails.send({
       from,
       to: body.guestEmail,
-      subject: `Ihre Reservierung bei ${body.restaurantName || 'dem Restaurant'}`,
+      subject: `${bookingCopy.subjectYour} bei ${body.restaurantName || 'dem Betrieb'}`,
       replyTo: body.restaurantEmail,
       text: [
-        `Danke für Ihre Reservierung!`,
+        bookingCopy.thanksLine,
         `Datum: ${body.date}`,
         `Uhrzeit: ${body.time}`,
-        body.people ? `Personen: ${body.people}` : null
+        isSalon ? (body.service ? `Service: ${body.service}` : null) : body.people ? `Personen: ${body.people}` : null
       ]
         .filter(Boolean)
         .join('\n'),

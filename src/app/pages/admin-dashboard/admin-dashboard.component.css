@@ -88,6 +88,26 @@
 
 .company-main h3 {
   margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.company-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: rgba(59, 130, 246, 0.14);
+  color: #1d4ed8;
+}
+
+.company-tag--salon {
+  background: rgba(16, 185, 129, 0.18);
+  color: #047857;
 }
 
 .company-link {

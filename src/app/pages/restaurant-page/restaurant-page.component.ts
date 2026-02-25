@@ -70,6 +70,7 @@ export class RestaurantPageComponent implements OnInit {
     email: ['', [Validators.required, Validators.email]],
     phone: ['', Validators.required],
     people: [2, [Validators.required, Validators.min(1)]],
+    service: [''],
     note: [''],
     time: ['18:00', Validators.required]
   });
@@ -88,6 +89,13 @@ export class RestaurantPageComponent implements OnInit {
       return;
     }
 
+    const serviceValue = this.getSalonServiceLabel(this.bookingForm.value.service ?? '');
+    if (this.isSalon && serviceValue.length === 0) {
+      this.errorMessage = 'Bitte wählen Sie eine gewünschte Leistung aus.';
+      this.bookingForm.get('service')?.markAsTouched();
+      return;
+    }
+
     if (!this.company?.email) {
       this.errorMessage = 'Restaurant-E-Mail fehlt. Bitte später erneut versuchen.';
       return;
@@ -103,11 +111,13 @@ export class RestaurantPageComponent implements OnInit {
       restaurantName: this.company.name,
       restaurantSlug: this.slug,
       restaurantEmail: this.company.email,
+      serviceType: this.company.serviceType || 'restaurant',
       guestEmail: this.bookingForm.value.email ?? '',
       guestName: this.bookingForm.value.name ?? '',
+      service: this.isSalon ? serviceValue : undefined,
       date: this.selectedDate,
       time: this.bookingForm.value.time ?? '',
-      people: this.bookingForm.value.people ?? 2,
+      people: this.isSalon ? 1 : (this.bookingForm.value.people ?? 2),
       phone: this.bookingForm.value.phone ?? '',
       note: this.bookingForm.value.note ?? ''
     };
@@ -122,13 +132,14 @@ export class RestaurantPageComponent implements OnInit {
         this.lastReservationDate = reservationDate;
         this.lastReservationTime = reservationTime;
         this.showThanksModal = true;
-        this.successMessage = 'Reservierung wurde gesendet.';
+        this.successMessage = this.getSuccessMessage();
         this.loadSlotAvailability();
         this.bookingForm.reset({
           name: '',
           email: '',
           phone: '',
           people: 2,
+          service: '',
           note: '',
           time: '18:00'
         });
@@ -147,6 +158,71 @@ export class RestaurantPageComponent implements OnInit {
 
   closeThanksModal(): void {
     this.showThanksModal = false;
+  }
+
+  get isSalon(): boolean {
+    return this.company?.serviceType === 'friseur';
+  }
+
+  get bookingTitle(): string {
+    return this.isSalon ? 'Termindetails' : 'Reservierungsdetails';
+  }
+
+  get bookingButtonLabel(): string {
+    return this.isSalon ? 'Termin buchen' : 'Reservierung senden';
+  }
+
+  get bookingSuccessHeadline(): string {
+    return this.isSalon ? 'Vielen Dank für Ihren Termin!' : 'Vielen Dank für Ihre Reservierung!';
+  }
+
+  get bookingConfirmText(): string {
+    return this.isSalon
+      ? 'Wir haben Ihre Termin-Anfrage erhalten. Eine Bestätigung wird Ihnen per E-Mail zugesendet.'
+      : 'Wir haben Ihre Reservierung erhalten. Eine Bestätigung wird Ihnen per E-Mail zugesendet.';
+  }
+
+  get guestCountLabel(): string {
+    return this.isSalon ? 'Kunden*' : 'Personen*';
+  }
+
+  get salonServices(): Array<{ value: string; label: string }> {
+    return [
+      { value: 'haarschnitt', label: 'Haarschnitt' },
+      { value: 'haarschnitt_bart', label: 'Haarschnitt und Bart' },
+      { value: 'bart', label: 'Bart' },
+      { value: 'haarschnitt_bart_augenbrauen', label: 'Haarschnitt, Bart und Augenbrauen' },
+      { value: 'faerben', label: 'Färben' },
+      { value: 'faerben_schneiden_frauen', label: 'Färben und Schneiden (Frauen)' },
+      { value: 'waschen_schneiden_frauen', label: 'Waschen und Schneiden (Frauen)' },
+      { value: 'ansaetze_faerben_frauen', label: 'Ansätze färben (Frauen)' },
+      { value: 'sonstiges', label: 'Sonstiges' }
+    ];
+  }
+
+  private getSuccessMessage(): string {
+    return this.isSalon ? 'Termin wurde gesendet.' : 'Reservierung wurde gesendet.';
+  }
+
+  private getSalonServiceLabel(value: string): string {
+    if (!this.isSalon) {
+      return '';
+    }
+    const match = this.salonServices.find((item) => item.value === value);
+    return match ? match.label : '';
+  }
+
+  private updateServiceValidators(): void {
+    const control = this.bookingForm.get('service');
+    if (!control) {
+      return;
+    }
+    if (this.isSalon) {
+      control.setValidators([Validators.required]);
+    } else {
+      control.clearValidators();
+    }
+    control.updateValueAndValidity();
   }
 
   selectDate(day: { label: number; muted: boolean; active: boolean; date?: Date }): void {
@@ -514,6 +590,7 @@ export class RestaurantPageComponent implements OnInit {
     this.companyService.getCompany(this.slug).subscribe({
       next: (company) => {
         this.company = company;
+        this.updateServiceValidators();
         this.refreshCalendar();
         this.loadSlotAvailability();
       },

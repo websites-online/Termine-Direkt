@@ -43,7 +43,7 @@
       </div>
 
       <div class="card details-card">
-        <h2>Reservierungsdetails</h2>
+        <h2>{{ bookingTitle }}</h2>
         <p class="muted">{{ company.address || 'Adresse folgt' }}</p>
         <p class="muted">
           {{ company.hours || 'Öffnungszeiten folgen' }}
@@ -82,16 +82,28 @@
             <span class="label">Telefon*</span>
             <input class="input" type="tel" formControlName="phone" placeholder="Telefonnummer" />
           </label>
-          <label>
-            <span class="label">Personen*</span>
+          <label *ngIf="!isSalon">
+            <span class="label">{{ guestCountLabel }}</span>
             <input class="input" type="number" min="1" formControlName="people" />
+          </label>
+          <label *ngIf="isSalon">
+            <span class="label">Service*</span>
+            <select class="input" formControlName="service">
+              <option value="" disabled>Bitte wählen</option>
+              <option *ngFor="let service of salonServices" [value]="service.value">
+                {{ service.label }}
+              </option>
+            </select>
+            <span class="error" *ngIf="bookingForm.get('service')?.touched && bookingForm.get('service')?.invalid">
+              Pflichtfeld.
+            </span>
           </label>
           <label>
             <span class="label">Notiz (optional)</span>
             <textarea class="textarea" formControlName="note" placeholder="Zusätzliche Hinweise"></textarea>
           </label>
           <button class="btn btn-primary" type="submit" [disabled]="isSubmitting">
-            {{ isSubmitting ? 'Senden...' : 'Reservierung senden' }}
+            {{ isSubmitting ? 'Senden...' : bookingButtonLabel }}
           </button>
           <p class="helptext" *ngIf="successMessage">{{ successMessage }}</p>
         </form>
@@ -102,11 +114,9 @@
 <div class="reservation-modal" *ngIf="showThanksModal">
   <div class="reservation-modal__backdrop" (click)="closeThanksModal()"></div>
   <div class="reservation-modal__panel" role="dialog" aria-modal="true" aria-labelledby="reservation-modal-title">
-    <div class="reservation-modal__badge">✓</div>
-    <h3 id="reservation-modal-title">Vielen Dank für Ihre Reservierung!</h3>
-    <p>
-      Wir haben Ihre Anfrage erhalten. Eine Bestätigung wird Ihnen per E-Mail zugesendet.
-    </p>
+  <div class="reservation-modal__badge">✓</div>
+  <h3 id="reservation-modal-title">{{ bookingSuccessHeadline }}</h3>
+  <p>{{ bookingConfirmText }}</p>
     <div class="reservation-modal__details">
       <div>
         <span>Datum</span>

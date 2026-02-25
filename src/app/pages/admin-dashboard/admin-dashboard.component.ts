@@ -23,7 +23,8 @@ export class AdminDashboardComponent implements OnInit {
     address: ['Beispielstraße 12, 12345 Musterstadt', Validators.required],
     hours: ['Mo–So 12:00–20:00', Validators.required],
     breakHours: [''],
-    email: ['kontakt@example.com', [Validators.required, Validators.email]]
+    email: ['kontakt@example.com', [Validators.required, Validators.email]],
+    serviceType: ['restaurant', Validators.required]
   });
 
   constructor(
@@ -53,7 +54,8 @@ export class AdminDashboardComponent implements OnInit {
       address: value.address || 'Beispielstraße 12, 12345 Musterstadt',
       hours: value.hours || 'Mo–So 12:00–20:00',
       breakHours: value.breakHours || undefined,
-      email: value.email || 'kontakt@example.com'
+      email: value.email || 'kontakt@example.com',
+      serviceType: (value.serviceType || 'restaurant') as 'restaurant' | 'friseur'
     };
 
     const request$ = this.editingSlug
@@ -74,7 +76,8 @@ export class AdminDashboardComponent implements OnInit {
       address: company.address,
       hours: company.hours,
       breakHours: company.breakHours || '',
-      email: company.email
+      email: company.email,
+      serviceType: company.serviceType || 'restaurant'
     });
   }
 
@@ -107,7 +110,8 @@ export class AdminDashboardComponent implements OnInit {
       address: 'Beispielstraße 12, 12345 Musterstadt',
       hours: 'Mo–So 12:00–20:00',
       breakHours: '',
-      email: 'kontakt@example.com'
+      email: 'kontakt@example.com',
+      serviceType: 'restaurant'
     });
     this.companyForm.markAsPristine();
   }

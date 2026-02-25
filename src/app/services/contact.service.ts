@@ -5,6 +5,7 @@ import { Observable, of, delay } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface ContactPayload {
+  serviceType?: 'restaurant' | 'friseur';
   companyName?: string;
   contactName: string;
   email: string;

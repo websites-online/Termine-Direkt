@@ -6,6 +6,7 @@ type CompanyRow = {
   hours: string;
   break_hours?: string | null;
   email: string;
+  service_type?: string | null;
   created_at: string;
 };
 
@@ -25,6 +26,7 @@ const toCompanyResponse = (row: CompanyRow) => ({
   hours: row.hours,
   breakHours: row.break_hours || undefined,
   email: row.email,
+  serviceType: row.service_type || 'restaurant',
   createdAt: row.created_at
 });
 
@@ -89,7 +91,8 @@ module.exports = async function handler(req: any, res: any) {
         address: body.address,
         hours: body.hours,
         break_hours: body.breakHours || null,
-        email: body.email
+        email: body.email,
+        service_type: body.serviceType || 'restaurant'
       };
       const { data, error } = await supabase.from('companies').insert(insert).select('*').single();
       if (error) {
@@ -134,7 +137,8 @@ module.exports = async function handler(req: any, res: any) {
         address: body.address,
         hours: body.hours,
         break_hours: body.breakHours || null,
-        email: body.email
+        email: body.email,
+        service_type: body.serviceType || 'restaurant'
       };
       const { data, error } = await supabase.from('companies').update(updates).eq('slug', slug).select('*').single();
       if (error) {

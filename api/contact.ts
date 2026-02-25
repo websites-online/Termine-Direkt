@@ -1,4 +1,5 @@
 type ContactBody = {
+  serviceType?: 'restaurant' | 'friseur';
   companyName?: string;
   contactName?: string;
   email?: string;
@@ -38,6 +39,7 @@ module.exports = async function handler(req: any, res: any) {
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
 
     const lines = [
+      { label: 'Betriebsart', value: body.serviceType === 'friseur' ? 'Friseur' : 'Restaurant' },
       { label: 'Name', value: body.contactName },
       { label: 'E-Mail', value: body.email },
       { label: 'Telefon', value: body.phone },

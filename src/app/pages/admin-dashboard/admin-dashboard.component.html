@@ -16,12 +16,18 @@
     <div class="card admin-card admin-form-card">
       <div class="admin-card-header">
         <h2>{{ editingSlug ? 'Unternehmen bearbeiten' : 'Neues Unternehmen' }}</h2>
-        <span class="admin-badge">Empfohlen</span>
       </div>
       <form class="admin-form" [formGroup]="companyForm" (ngSubmit)="submitCompany()">
         <label>
           <span class="label">Name*</span>
           <input class="input" type="text" formControlName="name" placeholder="Max Grill" />
+        </label>
+        <label>
+          <span class="label">Betriebsart*</span>
+          <select class="input" formControlName="serviceType">
+            <option value="restaurant">Restaurant</option>
+            <option value="friseur">Friseur</option>
+          </select>
         </label>
         <label>
           <span class="label">Adresse*</span>
@@ -61,7 +67,12 @@
       <div class="company-list" *ngIf="companies.length > 0">
         <div class="company-row" *ngFor="let company of companies">
           <div class="company-main">
-            <h3>{{ company.name }}</h3>
+            <h3>
+              {{ company.name }}
+              <span class="company-tag" [class.company-tag--salon]="company.serviceType === 'friseur'">
+                {{ company.serviceType === 'friseur' ? 'Friseur' : 'Restaurant' }}
+              </span>
+            </h3>
             <p class="muted">{{ company.address || '—' }}</p>
             <p class="muted">
               {{ company.hours || '—' }}

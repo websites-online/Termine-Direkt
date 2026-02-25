@@ -10,8 +10,13 @@
       <form class="contact-form" [formGroup]="contactForm" (ngSubmit)="submit()">
         <div class="form-grid">
           <label>
-            <span class="label">Firmenname (optional)</span>
-            <input class="input" type="text" formControlName="companyName" placeholder="Restaurantname" />
+            <span class="label">{{ companyLabel }}</span>
+            <input
+              class="input"
+              type="text"
+              formControlName="companyName"
+              [placeholder]="companyPlaceholder"
+            />
           </label>
           <label>
             <span class="label">Ansprechpartner*</span>
@@ -20,7 +25,7 @@
           </label>
           <label>
             <span class="label">E-Mail*</span>
-            <input class="input" type="email" formControlName="email" placeholder="name@restaurant.de" />
+            <input class="input" type="email" formControlName="email" [placeholder]="emailPlaceholder" />
             <span class="error" *ngIf="email?.touched && email?.invalid">Bitte gültige E-Mail eingeben.</span>
           </label>
           <label>
