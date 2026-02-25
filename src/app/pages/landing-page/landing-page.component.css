@@ -336,3 +336,15 @@
     align-items: stretch;
   }
 }
+
+@media (max-width: 720px) {
+  .logo-image {
+    height: 52px;
+    width: 172px;
+  }
+
+  .site-header.compact .logo-image {
+    height: 38px;
+    width: 126px;
+  }
+}
