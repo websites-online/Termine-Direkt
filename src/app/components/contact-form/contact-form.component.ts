@@ -101,15 +101,15 @@ export class ContactFormComponent {
   }
 
   get companyLabel(): string {
-    return this.isSalonLead ? 'Salonname (optional)' : 'Firmenname (optional)';
+    return 'Unternehmensname (optional)';
   }
 
   get companyPlaceholder(): string {
-    return this.isSalonLead ? 'Salonname' : 'Restaurantname';
+    return 'Unternehmensname';
   }
 
   get emailPlaceholder(): string {
-    return this.isSalonLead ? 'name@friseur.de' : 'name@restaurant.de';
+    return 'name@unternehmen.de';
   }
 
   get serviceType() {
