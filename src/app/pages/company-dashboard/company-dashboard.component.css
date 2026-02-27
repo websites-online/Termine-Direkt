@@ -39,11 +39,14 @@
 .dashboard-form {
   display: grid;
   gap: 12px;
+  min-width: 0;
 }
 
 .dashboard-form label {
   display: grid;
   gap: 6px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .dashboard-form .input,
@@ -53,6 +56,12 @@
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
+}
+
+.dashboard-form input[type='date'],
+.dashboard-form input[type='time'] {
+  width: 100%;
+  max-width: 100%;
 }
 
 .form-actions {
