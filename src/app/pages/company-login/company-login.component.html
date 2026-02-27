@@ -1,0 +1,24 @@
+<section class="section page">
+  <div class="container">
+    <div class="card auth-card">
+      <h1 class="section-title">Unternehmenslogin</h1>
+      <p class="section-lead">Loggen Sie sich ein, um Termine zu verwalten.</p>
+      <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="submit()">
+        <label>
+          <span class="label">Unternehmen / Benutzername*</span>
+          <input class="input" type="text" formControlName="slug" placeholder="z. B. max-grill" />
+        </label>
+        <label>
+          <span class="label">Login PIN*</span>
+          <input class="input" type="password" formControlName="pin" placeholder="••••••" />
+        </label>
+        <button class="btn btn-primary" type="submit" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Anmelden...' : 'Anmelden' }}
+        </button>
+        <a class="btn btn-outline back-button" routerLink="/">Zur Startseite</a>
+        <p class="helptext">Ihre Login-Daten erhalten Sie vom Betreiber.</p>
+        <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+      </form>
+    </div>
+  </div>
+</section>

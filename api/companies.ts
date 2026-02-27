@@ -7,6 +7,7 @@ type CompanyRow = {
   break_hours?: string | null;
   email: string;
   service_type?: string | null;
+  login_pin?: string | null;
   created_at: string;
 };
 
@@ -92,7 +93,8 @@ module.exports = async function handler(req: any, res: any) {
         hours: body.hours,
         break_hours: body.breakHours || null,
         email: body.email,
-        service_type: body.serviceType || 'restaurant'
+        service_type: body.serviceType || 'restaurant',
+        login_pin: body.loginPin ? String(body.loginPin).trim() : null
       };
       const { data, error } = await supabase.from('companies').insert(insert).select('*').single();
       if (error) {
@@ -131,7 +133,7 @@ module.exports = async function handler(req: any, res: any) {
         suffix += 1;
       }
 
-      const updates = {
+      const updates: Record<string, any> = {
         name: body.name,
         slug: nextSlug,
         address: body.address,
@@ -140,6 +142,9 @@ module.exports = async function handler(req: any, res: any) {
         email: body.email,
         service_type: body.serviceType || 'restaurant'
       };
+      if (body.loginPin) {
+        updates.login_pin = String(body.loginPin).trim();
+      }
       const { data, error } = await supabase.from('companies').update(updates).eq('slug', slug).select('*').single();
       if (error) {
         res.status(500).json({ error: error.message });

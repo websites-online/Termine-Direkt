@@ -1,0 +1,102 @@
+.dashboard-card {
+  max-width: 980px;
+  margin: 0 auto 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dashboard-actions .btn {
+  width: auto;
+}
+
+.dashboard-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.date-field {
+  display: grid;
+  gap: 6px;
+}
+
+.dashboard-form {
+  display: grid;
+  gap: 12px;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.reservation-list {
+  display: grid;
+  gap: 14px;
+}
+
+.reservation-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  flex-wrap: wrap;
+}
+
+.reservation-main h3 {
+  margin: 0 0 6px;
+}
+
+.reservation-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.reservation-actions .btn {
+  width: auto;
+}
+
+.btn.danger {
+  color: #b42318;
+  border-color: rgba(180, 35, 24, 0.25);
+  background: rgba(180, 35, 24, 0.06);
+}
+
+@media (max-width: 720px) {
+  .dashboard-card {
+    max-width: 100%;
+  }
+
+  .dashboard-actions,
+  .reservation-actions,
+  .form-actions {
+    width: 100%;
+  }
+
+  .dashboard-actions .btn,
+  .reservation-actions .btn,
+  .form-actions .btn {
+    width: 100%;
+  }
+}

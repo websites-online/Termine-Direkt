@@ -1,0 +1,105 @@
+<section class="section page">
+  <div class="container">
+    <div class="card dashboard-card">
+      <div class="dashboard-header">
+        <div>
+          <h1 class="section-title">Unternehmens-Dashboard</h1>
+          <p class="section-lead">Willkommen, {{ companyName }}.</p>
+        </div>
+        <div class="dashboard-actions">
+          <button class="btn btn-outline" type="button" (click)="logout()">Logout</button>
+          <a class="btn btn-outline" routerLink="/">Zur Startseite</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card dashboard-card">
+      <div class="dashboard-card-header">
+        <h2>Buchungen am ausgewählten Tag</h2>
+        <div class="date-field">
+          <label class="label">Datum</label>
+          <input
+            class="input"
+            type="date"
+            [value]="selectedDate"
+            (change)="selectedDate = $any($event.target).value; onDateChange()"
+          />
+        </div>
+      </div>
+
+      <p class="muted" *ngIf="isLoading">Lade Buchungen…</p>
+      <p class="error" *ngIf="listError">{{ listError }}</p>
+      <p class="helptext" *ngIf="!isLoading && reservations.length === 0">Keine Buchungen gefunden.</p>
+      <div class="reservation-list" *ngIf="!isLoading && reservations.length > 0">
+        <div class="reservation-row" *ngFor="let reservation of reservations">
+          <div class="reservation-main">
+            <h3>{{ reservation.time }}</h3>
+            <p class="muted">{{ reservation.guestName || 'Ohne Namen' }}</p>
+            <p class="muted">{{ reservation.guestEmail || 'Keine E-Mail' }}</p>
+            <p class="muted" *ngIf="reservation.phone">{{ reservation.phone }}</p>
+            <p class="muted" *ngIf="isSalon && reservation.service">Service: {{ reservation.service }}</p>
+            <p class="muted" *ngIf="!isSalon && reservation.people">Personen: {{ reservation.people }}</p>
+            <p class="muted" *ngIf="reservation.note">{{ reservation.note }}</p>
+          </div>
+          <div class="reservation-actions">
+            <button class="btn btn-outline danger" type="button" (click)="deleteReservation(reservation)">
+              Löschen
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card dashboard-card">
+      <div class="dashboard-card-header">
+        <h2>Termin manuell eintragen</h2>
+      </div>
+      <form class="dashboard-form" [formGroup]="bookingForm" (ngSubmit)="submitReservation()">
+        <label>
+          <span class="label">Datum*</span>
+          <input class="input" type="date" formControlName="date" />
+        </label>
+        <label>
+          <span class="label">Uhrzeit*</span>
+          <input class="input" type="time" formControlName="time" />
+        </label>
+        <label>
+          <span class="label">Name*</span>
+          <input class="input" type="text" formControlName="guestName" placeholder="Kunde" />
+        </label>
+        <label>
+          <span class="label">E-Mail (optional)</span>
+          <input class="input" type="email" formControlName="guestEmail" placeholder="kunde@mail.de" />
+        </label>
+        <label>
+          <span class="label">Telefon (optional)</span>
+          <input class="input" type="tel" formControlName="phone" placeholder="Telefonnummer" />
+        </label>
+        <label *ngIf="!isSalon">
+          <span class="label">Personen*</span>
+          <input class="input" type="number" min="1" formControlName="people" />
+        </label>
+        <label *ngIf="isSalon">
+          <span class="label">Service*</span>
+          <select class="input" formControlName="service">
+            <option value="">Bitte wählen</option>
+            <option *ngFor="let option of serviceOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </label>
+        <label class="message-field">
+          <span class="label">Notiz (optional)</span>
+          <textarea class="textarea" formControlName="note" placeholder="z. B. Telefonisch gebucht"></textarea>
+        </label>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit" [disabled]="isSubmitting">
+            {{ isSubmitting ? 'Speichern...' : 'Termin speichern' }}
+          </button>
+        </div>
+        <p class="helptext" *ngIf="successMessage">{{ successMessage }}</p>
+        <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+      </form>
+    </div>
+  </div>
+</section>

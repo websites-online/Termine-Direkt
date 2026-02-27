@@ -50,6 +50,17 @@
           <span class="label">E-Mail*</span>
           <input class="input" type="email" formControlName="email" placeholder="kontakt@maxgrill.de" />
         </label>
+        <label>
+          <span class="label">Login PIN (Unternehmenslogin)</span>
+          <div class="pin-row">
+            <input class="input" type="text" formControlName="loginPin" placeholder="z. B. 834216" />
+            <button class="btn btn-outline pin-generate" type="button" (click)="generateLoginPin()">
+              Neu generieren
+            </button>
+          </div>
+          <span class="helptext">Bitte notieren und an das Unternehmen senden.</span>
+          <span class="helptext">Leer lassen, um den bisherigen PIN beizubehalten.</span>
+        </label>
         <div class="admin-form-actions">
           <button class="btn btn-primary" type="submit">
             {{ editingSlug ? 'Änderungen speichern' : 'Unternehmen anlegen' }}
@@ -78,6 +89,7 @@
               {{ company.hours || '—' }}
               <span *ngIf="company.breakHours"> · Pause: {{ company.breakHours }}</span>
             </p>
+            <p class="muted">Login: {{ company.slug }}</p>
             <a class="company-link" [routerLink]="['/', company.slug]">/{{ company.slug }}</a>
           </div>
           <div class="company-actions">

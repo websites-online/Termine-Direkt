@@ -9,6 +9,7 @@
           <a routerLink="/demo-unternehmen">Demo</a>
           <a href="#pricing">Preise</a>
           <a href="#contact">Kontakt</a>
+          <a routerLink="/unternehmen/login">Unternehmenslogin</a>
           <a class="btn btn-primary" href="#contact">Jetzt starten</a>
         </nav>
         <button class="nav-toggle" [class.open]="isNavOpen" type="button" aria-label="Menü öffnen" (click)="toggleNav()">
@@ -65,6 +66,7 @@
     <a routerLink="/demo-unternehmen" (click)="$event.stopPropagation(); closeNav()">Demo</a>
     <a href="#pricing" (click)="$event.stopPropagation(); closeNav()">Preise</a>
     <a href="#contact" (click)="$event.stopPropagation(); closeNav()">Kontakt</a>
+    <a routerLink="/unternehmen/login" (click)="$event.stopPropagation(); closeNav()">Unternehmenslogin</a>
     <a class="btn btn-primary" href="#contact" (click)="$event.stopPropagation(); closeNav()">Jetzt starten</a>
   </div>
   <div class="nav-backdrop" [class.open]="isNavOpen" (click)="closeNav()" aria-hidden="true"></div>

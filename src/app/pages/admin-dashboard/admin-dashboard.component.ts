@@ -24,7 +24,8 @@ export class AdminDashboardComponent implements OnInit {
     hours: ['Mo–So 12:00–20:00', Validators.required],
     breakHours: [''],
     email: ['kontakt@example.com', [Validators.required, Validators.email]],
-    serviceType: ['restaurant', Validators.required]
+    serviceType: ['restaurant', Validators.required],
+    loginPin: ['']
   });
 
   constructor(
@@ -34,6 +35,7 @@ export class AdminDashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.resetForm();
     this.loadCompanies();
   }
 
@@ -55,7 +57,8 @@ export class AdminDashboardComponent implements OnInit {
       hours: value.hours || 'Mo–So 12:00–20:00',
       breakHours: value.breakHours || undefined,
       email: value.email || 'kontakt@example.com',
-      serviceType: (value.serviceType || 'restaurant') as 'restaurant' | 'friseur'
+      serviceType: (value.serviceType || 'restaurant') as 'restaurant' | 'friseur',
+      loginPin: value.loginPin?.trim() || undefined
     };
 
     const request$ = this.editingSlug
@@ -77,7 +80,8 @@ export class AdminDashboardComponent implements OnInit {
       hours: company.hours,
       breakHours: company.breakHours || '',
       email: company.email,
-      serviceType: company.serviceType || 'restaurant'
+      serviceType: company.serviceType || 'restaurant',
+      loginPin: ''
     });
   }
 
@@ -111,8 +115,18 @@ export class AdminDashboardComponent implements OnInit {
       hours: 'Mo–So 12:00–20:00',
       breakHours: '',
       email: 'kontakt@example.com',
-      serviceType: 'restaurant'
+      serviceType: 'restaurant',
+      loginPin: this.createRandomPin()
     });
     this.companyForm.markAsPristine();
+  }
+
+  generateLoginPin(): void {
+    this.companyForm.patchValue({ loginPin: this.createRandomPin() });
+    this.companyForm.markAsDirty();
+  }
+
+  private createRandomPin(): string {
+    return `${Math.floor(100000 + Math.random() * 900000)}`;
   }
 }

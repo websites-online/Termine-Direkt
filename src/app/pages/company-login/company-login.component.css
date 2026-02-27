@@ -1,0 +1,32 @@
+.auth-card {
+  max-width: 560px;
+  width: 100%;
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+}
+
+.auth-card .section-lead,
+.auth-card .label,
+.auth-card .helptext {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.back-button {
+  justify-self: start;
+}
+
+.auth-form {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-form .btn {
+  width: 100%;
+}

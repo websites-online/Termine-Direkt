@@ -43,6 +43,22 @@
   gap: 12px;
 }
 
+.pin-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.pin-row .input {
+  flex: 1 1 180px;
+}
+
+.pin-generate {
+  width: auto;
+  white-space: nowrap;
+}
+
 .admin-form-actions {
   display: flex;
   flex-wrap: wrap;
@@ -152,6 +168,10 @@
   }
 
   .company-actions .btn {
+    width: 100%;
+  }
+
+  .pin-generate {
     width: 100%;
   }
 }

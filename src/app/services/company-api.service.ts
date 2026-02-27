@@ -15,6 +15,7 @@ export interface Company {
   breakHours?: string;
   email: string;
   serviceType?: ServiceType;
+  loginPin?: string;
   createdAt?: string;
 }
 
@@ -25,6 +26,7 @@ export interface CompanyPayload {
   breakHours?: string;
   email: string;
   serviceType?: ServiceType;
+  loginPin?: string;
 }
 
 @Injectable({
@@ -84,6 +86,9 @@ export class CompanyApiService {
         ...payload,
         slug: nextSlug
       };
+      if (!payload.loginPin) {
+        updated.loginPin = companies[index].loginPin;
+      }
       companies[index] = updated;
       this.saveLocalCompanies(companies);
       return of(updated).pipe(delay(200));
