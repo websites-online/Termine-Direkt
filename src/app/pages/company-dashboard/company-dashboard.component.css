@@ -41,6 +41,20 @@
   gap: 12px;
 }
 
+.dashboard-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.dashboard-form .input,
+.dashboard-form .textarea,
+.dashboard-form select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .form-actions {
   display: flex;
   flex-wrap: wrap;

@@ -5,16 +5,17 @@
 }
 
 .footer-links,
-.footer-admin {
+.footer-auth {
   display: flex;
   align-items: center;
   gap: 10px;
   color: var(--muted);
   font-size: 0.9rem;
+  flex-wrap: wrap;
 }
 
 .footer-links a,
-.footer-admin a {
+.footer-auth a {
   text-decoration: none;
   color: inherit;
 }
@@ -28,16 +29,12 @@
   color: rgba(15, 23, 42, 0.2);
 }
 
-.mobile-only {
-  display: none;
-}
-
 @media (min-width: 720px) {
   .footer-inner {
     grid-template-columns: 1fr auto 1fr;
   }
 
-  .footer-admin {
+  .footer-auth {
     justify-content: flex-end;
   }
 }
@@ -49,16 +46,8 @@
   }
 
   .footer-links,
-  .footer-admin {
+  .footer-auth {
     justify-content: center;
-  }
-
-  .footer-admin {
-    display: none;
-  }
-
-  .mobile-only {
-    display: inline-flex;
   }
 
 }
