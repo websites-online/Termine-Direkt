@@ -116,8 +116,8 @@ module.exports = async function handler(req: any, res: any) {
       res.status(500).json({ error: 'Missing FROM_EMAIL' });
       return;
     }
-    const fromName = body.restaurantName ? `${body.restaurantName} ` : '';
-    const from = fromName ? `${fromName}<${fromAddress}>` : fromAddress;
+    const fromName = body.restaurantName ? body.restaurantName.trim() : '';
+    const from = fromName ? `${fromName} <${fromAddress}>` : `reserVino <${fromAddress}>`;
 
     const noteParts = [
       body.service ? `Service: ${body.service}` : null,
