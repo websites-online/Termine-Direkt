@@ -16,6 +16,7 @@ export interface Company {
   email: string;
   serviceType?: ServiceType;
   loginPin?: string;
+  slotCapacity?: number;
   createdAt?: string;
 }
 
@@ -27,6 +28,7 @@ export interface CompanyPayload {
   email: string;
   serviceType?: ServiceType;
   loginPin?: string;
+  slotCapacity?: number;
 }
 
 @Injectable({
@@ -88,6 +90,9 @@ export class CompanyApiService {
       };
       if (!payload.loginPin) {
         updated.loginPin = companies[index].loginPin;
+      }
+      if (payload.slotCapacity === undefined || payload.slotCapacity === null) {
+        updated.slotCapacity = companies[index].slotCapacity;
       }
       companies[index] = updated;
       this.saveLocalCompanies(companies);

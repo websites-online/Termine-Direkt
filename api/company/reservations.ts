@@ -62,7 +62,7 @@ module.exports = async function handler(req: any, res: any) {
     const supabase = getClient();
     const { data: company, error: companyError } = await supabase
       .from('companies')
-      .select('slug,name,email,service_type,login_pin')
+      .select('slug,name,email,service_type,login_pin,slot_capacity')
       .eq('slug', parsed.slug)
       .single();
 
@@ -130,7 +130,8 @@ module.exports = async function handler(req: any, res: any) {
         res.status(500).json({ error: countError.message });
         return;
       }
-      if ((count || 0) >= 3) {
+      const slotCapacity = typeof company.slot_capacity === 'number' ? company.slot_capacity : 3;
+      if ((count || 0) >= slotCapacity) {
         res.status(409).json({ error: 'Slot voll' });
         return;
       }

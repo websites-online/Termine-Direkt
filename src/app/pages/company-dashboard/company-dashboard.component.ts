@@ -222,7 +222,7 @@ export class CompanyDashboardComponent implements OnInit {
   }
 
   isSlotFull(slot: string): boolean {
-    return (this.slotCounts[slot] || 0) >= 3;
+    return (this.slotCounts[slot] || 0) >= this.getSlotCapacity();
   }
 
   isSlotTooSoon(slot: string): boolean {
@@ -245,6 +245,14 @@ export class CompanyDashboardComponent implements OnInit {
     const now = new Date();
     const minutesNow = now.getHours() * 60 + now.getMinutes();
     return minutesNow + this.bookingBufferMinutes;
+  }
+
+  private getSlotCapacity(): number {
+    const capacity = this.company?.slotCapacity;
+    if (typeof capacity !== 'number' || Number.isNaN(capacity)) {
+      return 3;
+    }
+    return Math.min(Math.max(capacity, 1), 3);
   }
 
   private generateSlots(date: Date | null): string[] {

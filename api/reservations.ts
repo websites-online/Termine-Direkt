@@ -79,6 +79,13 @@ module.exports = async function handler(req: any, res: any) {
     }
 
     const supabase = getClient();
+    const { data: company } = await supabase
+      .from('companies')
+      .select('slot_capacity')
+      .eq('slug', body.restaurantSlug)
+      .maybeSingle();
+    const slotCapacity = typeof company?.slot_capacity === 'number' ? company.slot_capacity : 3;
+
     const { count, error: countError } = await supabase
       .from('reservations')
       .select('id', { count: 'exact', head: true })
@@ -89,7 +96,7 @@ module.exports = async function handler(req: any, res: any) {
       res.status(500).json({ error: countError.message });
       return;
     }
-    if ((count || 0) >= 3) {
+    if ((count || 0) >= slotCapacity) {
       res.status(409).json({ error: 'Slot voll' });
       return;
     }

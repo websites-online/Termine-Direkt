@@ -25,7 +25,8 @@ export class AdminDashboardComponent implements OnInit {
     breakHours: [''],
     email: ['kontakt@example.com', [Validators.required, Validators.email]],
     serviceType: ['restaurant', Validators.required],
-    loginPin: ['']
+    loginPin: [''],
+    slotCapacity: [3, [Validators.required, Validators.min(1), Validators.max(3)]]
   });
 
   constructor(
@@ -58,7 +59,8 @@ export class AdminDashboardComponent implements OnInit {
       breakHours: value.breakHours || undefined,
       email: value.email || 'kontakt@example.com',
       serviceType: (value.serviceType || 'restaurant') as 'restaurant' | 'friseur',
-      loginPin: value.loginPin?.trim() || undefined
+      loginPin: value.loginPin?.trim() || undefined,
+      slotCapacity: Number(value.slotCapacity || 3)
     };
 
     const request$ = this.editingSlug
@@ -81,7 +83,8 @@ export class AdminDashboardComponent implements OnInit {
       breakHours: company.breakHours || '',
       email: company.email,
       serviceType: company.serviceType || 'restaurant',
-      loginPin: ''
+      loginPin: '',
+      slotCapacity: company.slotCapacity ?? 3
     });
   }
 
@@ -116,7 +119,8 @@ export class AdminDashboardComponent implements OnInit {
       breakHours: '',
       email: 'kontakt@example.com',
       serviceType: 'restaurant',
-      loginPin: this.createRandomPin()
+      loginPin: this.createRandomPin(),
+      slotCapacity: 3
     });
     this.companyForm.markAsPristine();
   }

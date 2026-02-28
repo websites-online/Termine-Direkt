@@ -8,6 +8,7 @@ type CompanyRow = {
   email: string;
   service_type?: string | null;
   login_pin?: string | null;
+  slot_capacity?: number | null;
   created_at: string;
 };
 
@@ -28,6 +29,7 @@ const toCompanyResponse = (row: CompanyRow) => ({
   breakHours: row.break_hours || undefined,
   email: row.email,
   serviceType: row.service_type || 'restaurant',
+  slotCapacity: row.slot_capacity ?? 3,
   createdAt: row.created_at
 });
 
@@ -94,7 +96,8 @@ module.exports = async function handler(req: any, res: any) {
         break_hours: body.breakHours || null,
         email: body.email,
         service_type: body.serviceType || 'restaurant',
-        login_pin: body.loginPin ? String(body.loginPin).trim() : null
+        login_pin: body.loginPin ? String(body.loginPin).trim() : null,
+        slot_capacity: typeof body.slotCapacity === 'number' ? body.slotCapacity : 3
       };
       const { data, error } = await supabase.from('companies').insert(insert).select('*').single();
       if (error) {
@@ -144,6 +147,9 @@ module.exports = async function handler(req: any, res: any) {
       };
       if (body.loginPin) {
         updates.login_pin = String(body.loginPin).trim();
+      }
+      if (typeof body.slotCapacity === 'number') {
+        updates.slot_capacity = body.slotCapacity;
       }
       const { data, error } = await supabase.from('companies').update(updates).eq('slug', slug).select('*').single();
       if (error) {
