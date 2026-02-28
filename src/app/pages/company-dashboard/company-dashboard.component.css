@@ -62,6 +62,12 @@
 .dashboard-form input[type='time'] {
   width: 100%;
   max-width: 100%;
+  padding-right: 2.6rem;
+}
+
+.dashboard-form input[type='date']::-webkit-calendar-picker-indicator,
+.dashboard-form input[type='time']::-webkit-calendar-picker-indicator {
+  margin-right: 6px;
 }
 
 .form-actions {
