@@ -22,7 +22,7 @@
             class="input"
             type="date"
             [value]="selectedDate"
-            (change)="selectedDate = $any($event.target).value; onDateChange()"
+            (change)="onDateChange($any($event.target).value)"
           />
         </div>
       </div>
@@ -57,11 +57,16 @@
       <form class="dashboard-form" [formGroup]="bookingForm" (ngSubmit)="submitReservation()">
         <label>
           <span class="label">Datum*</span>
-          <input class="input" type="date" formControlName="date" />
+          <input class="input" type="date" formControlName="date" (change)="onDateChange($any($event.target).value)" />
         </label>
         <label>
           <span class="label">Uhrzeit*</span>
-          <input class="input" type="time" formControlName="time" />
+          <select class="input" formControlName="time">
+            <option value="">Bitte wählen</option>
+            <option *ngFor="let slot of slots" [value]="slot" [disabled]="isSlotFull(slot) || isSlotTooSoon(slot)">
+              {{ slot }}
+            </option>
+          </select>
         </label>
         <label>
           <span class="label">Name*</span>
