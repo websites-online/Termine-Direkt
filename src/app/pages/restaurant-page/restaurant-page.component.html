@@ -64,7 +64,7 @@
             {{ slot }}
           </button>
         </div>
-        <p class="helptext">Datum: {{ selectedDate }} · Zeit: {{ bookingForm.value.time }}</p>
+        <p class="helptext">Datum: {{ selectedDateLabel }} · Zeit: {{ bookingForm.value.time }}</p>
         <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
         <form class="demo-form" [formGroup]="bookingForm" (ngSubmit)="submit()">
           <label>

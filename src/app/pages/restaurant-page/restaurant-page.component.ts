@@ -52,7 +52,8 @@ export class RestaurantPageComponent implements OnInit {
     this.baseDate.getMonth(),
     this.baseDate.getDate()
   );
-  selectedDate = this.formatDate(this.baseDate);
+  selectedDate = this.formatDateISO(this.baseDate);
+  selectedDateLabel = this.formatDate(this.baseDate);
   private selectedDateObj = new Date(
     this.baseDate.getFullYear(),
     this.baseDate.getMonth(),
@@ -122,7 +123,7 @@ export class RestaurantPageComponent implements OnInit {
       note: this.bookingForm.value.note ?? ''
     };
 
-    const reservationDate = this.selectedDate;
+    const reservationDate = this.selectedDateLabel;
     const reservationTime = requestedTime;
 
     this.isSubmitting = true;
@@ -230,7 +231,8 @@ export class RestaurantPageComponent implements OnInit {
       return;
     }
     this.selectedDateObj = day.date;
-    this.selectedDate = this.formatDate(day.date);
+    this.selectedDate = this.formatDateISO(day.date);
+    this.selectedDateLabel = this.formatDate(day.date);
     this.calendarDays.forEach((entry) => {
       entry.active = !entry.muted && entry.date?.getTime() === day.date?.getTime();
     });
@@ -295,7 +297,8 @@ export class RestaurantPageComponent implements OnInit {
     const firstActive = this.calendarDays.find((entry) => !entry.muted && entry.date);
     if (firstActive?.date) {
       this.selectedDateObj = firstActive.date;
-      this.selectedDate = this.formatDate(firstActive.date);
+      this.selectedDate = this.formatDateISO(firstActive.date);
+      this.selectedDateLabel = this.formatDate(firstActive.date);
       this.calendarDays.forEach((entry) => {
         entry.active =
           !entry.muted && entry.date?.getTime() === this.selectedDateObj.getTime();
@@ -584,6 +587,13 @@ export class RestaurantPageComponent implements OnInit {
       month: 'long',
       year: 'numeric'
     });
+  }
+
+  private formatDateISO(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private loadCompany(): void {
