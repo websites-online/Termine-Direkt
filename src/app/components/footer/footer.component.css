@@ -50,4 +50,16 @@
     justify-content: center;
   }
 
+  .footer-auth {
+    order: 1;
+  }
+
+  .footer-brand {
+    order: 2;
+  }
+
+  .footer-links {
+    order: 3;
+  }
+
 }
