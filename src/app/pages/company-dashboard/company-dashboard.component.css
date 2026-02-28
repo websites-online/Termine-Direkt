@@ -36,6 +36,16 @@
   gap: 6px;
 }
 
+.date-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.date-actions .btn {
+  width: auto;
+}
+
 .dashboard-form {
   display: grid;
   gap: 12px;

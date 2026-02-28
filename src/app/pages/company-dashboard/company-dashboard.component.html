@@ -25,6 +25,10 @@
             (change)="onDateChange($any($event.target).value)"
           />
         </div>
+        <div class="date-actions">
+          <button class="btn btn-outline" type="button" (click)="setQuickDate(0)">Heute</button>
+          <button class="btn btn-outline" type="button" (click)="setQuickDate(1)">Morgen</button>
+        </div>
       </div>
 
       <p class="muted" *ngIf="isLoading">Lade Buchungen…</p>

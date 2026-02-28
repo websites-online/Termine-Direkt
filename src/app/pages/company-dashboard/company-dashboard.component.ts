@@ -111,11 +111,12 @@ export class CompanyDashboardComponent implements OnInit {
     if (!value) {
       return;
     }
-    this.selectedDate = value;
-    this.selectedDateObj = this.parseDate(value);
-    this.bookingForm.patchValue({ date: value }, { emitEvent: false });
-    this.refreshSlots();
-    this.loadReservations();
+    this.applySelectedDate(value);
+  }
+
+  setQuickDate(offsetDays: number): void {
+    const target = this.getDateOffset(offsetDays);
+    this.applySelectedDate(target);
   }
 
   submitReservation(): void {
@@ -473,6 +474,20 @@ export class CompanyDashboardComponent implements OnInit {
 
   private getToday(): string {
     return new Date().toISOString().slice(0, 10);
+  }
+
+  private getDateOffset(days: number): string {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return date.toISOString().slice(0, 10);
+  }
+
+  private applySelectedDate(value: string): void {
+    this.selectedDate = value;
+    this.selectedDateObj = this.parseDate(value);
+    this.bookingForm.patchValue({ date: value }, { emitEvent: false });
+    this.refreshSlots();
+    this.loadReservations();
   }
 
   private parseDate(value: string): Date {
