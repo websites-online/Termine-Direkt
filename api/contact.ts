@@ -51,7 +51,7 @@ module.exports = async function handler(req: any, res: any) {
     const html = `
       <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.5;color:#0f172a;background:#f8fafc;padding:24px">
         <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:24px">
-          <h2 style="margin:0 0 8px;font-size:20px;color:#0f172a">Neue Anfrage über reserVino</h2>
+          <h2 style="margin:0 0 8px;font-size:20px;color:#0f172a">Neue Anfrage über NexTime</h2>
           <p style="margin:0 0 16px;color:#475569">Eine neue Anfrage ist eingegangen.</p>
           <div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-top:12px">
             ${lines
@@ -72,7 +72,7 @@ module.exports = async function handler(req: any, res: any) {
     await resend.emails.send({
       from,
       to: adminEmail,
-      subject: 'Neue Anfrage von reserVino',
+      subject: 'Neue Anfrage von NexTime',
       replyTo: body.email,
       text: [
         `Name: ${body.contactName}`,

@@ -117,7 +117,7 @@ module.exports = async function handler(req: any, res: any) {
       return;
     }
     const fromName = body.restaurantName ? body.restaurantName.trim() : '';
-    const from = fromName ? `${fromName} <${fromAddress}>` : `reserVino <${fromAddress}>`;
+    const from = fromName ? `${fromName} <${fromAddress}>` : `NexTime <${fromAddress}>`;
 
     const noteParts = [
       body.service ? `Service: ${body.service}` : null,
