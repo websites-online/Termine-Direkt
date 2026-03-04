@@ -13,6 +13,96 @@ type ReservationBody = {
   note?: string;
 };
 
+const escapeHtml = (value: unknown): string =>
+  String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const renderRows = (rows: Array<{ label: string; value: string }>): string =>
+  rows
+    .map(
+      (row) => `
+      <tr>
+        <td style="padding:8px 0;color:#64748b;font-size:14px;vertical-align:top">${escapeHtml(row.label)}</td>
+        <td style="padding:8px 0;color:#0f172a;font-size:14px;font-weight:600;text-align:right;vertical-align:top">${escapeHtml(
+          row.value
+        )}</td>
+      </tr>
+    `
+    )
+    .join('');
+
+const platformUrl =
+  process.env.PUBLIC_SITE_URL?.trim() ||
+  process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+  'https://nextime-booking.de';
+
+const buildEmailLayout = ({
+  brand,
+  title,
+  intro,
+  rows,
+  footer,
+  footerLink
+}: {
+  brand: string;
+  title: string;
+  intro: string;
+  rows: Array<{ label: string; value: string }>;
+  footer: string;
+  footerLink?: string;
+}): string => `
+  <div style="margin:0;padding:0;background:#f1f5f9">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:24px 12px">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden">
+            <tr>
+              <td style="background:linear-gradient(90deg,#4338ca,#4f46e5);padding:18px 24px">
+                <div style="font-family:Arial,Helvetica,sans-serif;color:#ffffff;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700">${escapeHtml(
+                  brand
+                )}</div>
+                <div style="font-family:Arial,Helvetica,sans-serif;color:#ffffff;font-size:24px;font-weight:700;margin-top:4px">${escapeHtml(
+                  title
+                )}</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 24px 8px;font-family:Arial,Helvetica,sans-serif;color:#334155;font-size:15px;line-height:1.5">
+                ${escapeHtml(intro)}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:4px 24px 8px">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e2e8f0">
+                  ${renderRows(rows)}
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:14px 24px 24px;font-family:Arial,Helvetica,sans-serif;color:#64748b;font-size:13px;line-height:1.5">
+                ${escapeHtml(footer)}
+                ${
+                  footerLink
+                    ? `<div style="margin-top:6px"><a href="${escapeHtml(
+                        footerLink
+                      )}" style="color:#4338ca;text-decoration:none;font-weight:600">${escapeHtml(
+                        footerLink
+                      )}</a></div>`
+                    : ''
+                }
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </div>
+`;
+
 const getClient = () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { createClient } = require('@supabase/supabase-js');
@@ -117,7 +207,7 @@ module.exports = async function handler(req: any, res: any) {
       return;
     }
     const fromName = body.restaurantName ? body.restaurantName.trim() : '';
-    const from = fromName ? `${fromName} <${fromAddress}>` : `NexTime <${fromAddress}>`;
+    const from = fromName ? `${fromName} <${fromAddress}>` : `Reservierungsservice <${fromAddress}>`;
 
     const noteParts = [
       body.service ? `Service: ${body.service}` : null,
@@ -143,32 +233,31 @@ module.exports = async function handler(req: any, res: any) {
 
     const isSalon = body.serviceType === 'friseur';
     const businessLabel = isSalon ? 'Salon' : 'Restaurant';
+    const businessName = body.restaurantName?.trim() || (isSalon ? 'Ihr Salon' : 'Ihr Betrieb');
+    const guestName = body.guestName?.trim() || 'Gast';
+    const bookingNounLower = isSalon ? 'Termin' : 'Reservierung';
     const bookingCopy = isSalon
       ? {
           newTitle: 'Neuer Termin',
-          newSentence: 'Ein neuer Termin ist eingegangen.',
+          newSentence: 'Ein neuer Termin ist eingegangen. Alle Details finden Sie unten.',
           confirmTitle: 'Termin bestätigt',
-          confirmThanks: `Danke für Ihren Termin${body.restaurantName ? ` bei ${body.restaurantName}` : ''}.`,
-          subjectNew: 'Neuer Termin',
-          subjectYour: 'Ihr Termin',
-          thanksLine: 'Danke für Ihren Termin!'
+          confirmThanks: `Guten Tag ${guestName}, Ihr Termin bei ${businessName} wurde erfolgreich bestätigt.`,
+          thanksLine: 'Vielen Dank für Ihre Buchung.'
         }
       : {
           newTitle: 'Neue Reservierung',
-          newSentence: 'Eine neue Reservierung ist eingegangen.',
+          newSentence: 'Eine neue Reservierung ist eingegangen. Alle Details finden Sie unten.',
           confirmTitle: 'Reservierung bestätigt',
-          confirmThanks: `Danke für Ihre Reservierung${body.restaurantName ? ` bei ${body.restaurantName}` : ''}.`,
-          subjectNew: 'Neue Reservierung',
-          subjectYour: 'Ihre Reservierung',
-          thanksLine: 'Danke für Ihre Reservierung!'
+          confirmThanks: `Guten Tag ${guestName}, Ihre Reservierung bei ${businessName} wurde erfolgreich bestätigt.`,
+          thanksLine: 'Vielen Dank für Ihre Buchung.'
         };
 
     const details = [
       { label: businessLabel, value: body.restaurantName || '-' },
-      { label: 'Datum', value: body.date },
-      { label: 'Uhrzeit', value: body.time },
+      { label: 'Datum', value: body.date || '-' },
+      { label: 'Uhrzeit', value: body.time || '-' },
       { label: 'Name', value: body.guestName || '-' },
-      { label: 'E-Mail', value: body.guestEmail },
+      { label: 'E-Mail', value: body.guestEmail || '-' },
       { label: 'Telefon', value: body.phone || '-' },
       ...(isSalon
         ? [{ label: 'Service', value: body.service || '-' }]
@@ -176,62 +265,53 @@ module.exports = async function handler(req: any, res: any) {
       { label: 'Notiz', value: body.note || '-' }
     ];
 
-    const restaurantHtml = `
-      <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.5;color:#0f172a;background:#f8fafc;padding:24px">
-        <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:24px">
-          <h2 style="margin:0 0 8px;font-size:20px;color:#0f172a">${bookingCopy.newTitle}</h2>
-          <p style="margin:0 0 16px;color:#475569">${bookingCopy.newSentence}</p>
-          <div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-top:12px">
-            ${details
-              .map(
-                (item) =>
-                  `<div style="margin:6px 0"><strong style="display:inline-block;min-width:120px;color:#0f172a">${item.label}:</strong> <span style="color:#334155">${item.value}</span></div>`
-              )
-              .join('')}
-          </div>
-        </div>
-      </div>
-    `;
+    const restaurantHtml = buildEmailLayout({
+      brand: businessName,
+      title: bookingCopy.newTitle,
+      intro: bookingCopy.newSentence,
+      rows: details,
+      footer: 'NexTime – einfache Terminplanung.',
+      footerLink: platformUrl
+    });
 
-    const guestHtml = `
-      <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.5;color:#0f172a;background:#f8fafc;padding:24px">
-        <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:24px">
-          <h2 style="margin:0 0 8px;font-size:20px;color:#0f172a">${bookingCopy.confirmTitle}</h2>
-          <p style="margin:0 0 16px;color:#475569">${bookingCopy.confirmThanks}</p>
-          <div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-top:12px">
-            <div style="margin:6px 0"><strong style="display:inline-block;min-width:120px;color:#0f172a">Datum:</strong> <span style="color:#334155">${body.date}</span></div>
-            <div style="margin:6px 0"><strong style="display:inline-block;min-width:120px;color:#0f172a">Uhrzeit:</strong> <span style="color:#334155">${body.time}</span></div>
-            ${
-              isSalon
-                ? body.service
-                  ? `<div style="margin:6px 0"><strong style="display:inline-block;min-width:120px;color:#0f172a">Service:</strong> <span style="color:#334155">${body.service}</span></div>`
-                  : ''
-                : body.people
-                  ? `<div style="margin:6px 0"><strong style="display:inline-block;min-width:120px;color:#0f172a">Personen:</strong> <span style="color:#334155">${body.people}</span></div>`
-                  : ''
-            }
-          </div>
-          <p style="margin:16px 0 0;color:#475569">Wir freuen uns auf Ihren Besuch.</p>
-        </div>
-      </div>
-    `;
+    const guestRows = [
+      { label: businessLabel, value: body.restaurantName || '-' },
+      { label: 'Datum', value: body.date || '-' },
+      { label: 'Uhrzeit', value: body.time || '-' },
+      ...(isSalon
+        ? [{ label: 'Service', value: body.service || '-' }]
+        : [{ label: 'Personen', value: body.people ? String(body.people) : '-' }])
+    ];
+
+    const guestHtml = buildEmailLayout({
+      brand: businessName,
+      title: bookingCopy.confirmTitle,
+      intro: bookingCopy.confirmThanks,
+      rows: guestRows,
+      footer: `Bei Rückfragen können Sie direkt auf diese E-Mail antworten. ${bookingCopy.thanksLine} NexTime – einfache Terminplanung.`,
+      footerLink: platformUrl
+    });
 
     await resend.emails.send({
       from,
       to: body.restaurantEmail,
-      subject: `${bookingCopy.subjectNew}: ${body.date} ${body.time}`,
+      subject: `${bookingCopy.newTitle} | ${businessName} | ${body.date} um ${body.time}`,
       replyTo: body.guestEmail,
       text: [
-        `${businessLabel}: ${body.restaurantName || '-'}`,
-        `Datum: ${body.date}`,
-        `Uhrzeit: ${body.time}`,
-        `Name: ${body.guestName || '-'}`,
-        `E-Mail: ${body.guestEmail}`,
+        `Neue ${bookingNounLower}`,
+        '',
+        `${businessLabel}: ${businessName}`,
+        `Datum: ${body.date || '-'}`,
+        `Uhrzeit: ${body.time || '-'}`,
+        `Name: ${guestName}`,
+        `E-Mail: ${body.guestEmail || '-'}`,
         body.phone ? `Telefon: ${body.phone}` : null,
         isSalon ? (body.service ? `Service: ${body.service}` : null) : body.people ? `Personen: ${body.people}` : null,
         body.note ? `Notiz: ${body.note}` : null
       ]
         .filter(Boolean)
+        .concat(['', 'Sie können auf diese E-Mail antworten, um direkt mit dem Gast zu kommunizieren.'])
+        .concat(['', 'NexTime – einfache Terminplanung.', platformUrl])
         .join('\n'),
       html: restaurantHtml
     });
@@ -239,15 +319,24 @@ module.exports = async function handler(req: any, res: any) {
     await resend.emails.send({
       from,
       to: body.guestEmail,
-      subject: `${bookingCopy.subjectYour} bei ${body.restaurantName || 'dem Betrieb'}`,
+      subject: `${bookingCopy.confirmTitle} – ${businessName} (${body.date}, ${body.time})`,
       replyTo: body.restaurantEmail,
       text: [
-        bookingCopy.thanksLine,
-        `Datum: ${body.date}`,
-        `Uhrzeit: ${body.time}`,
-        isSalon ? (body.service ? `Service: ${body.service}` : null) : body.people ? `Personen: ${body.people}` : null
+        `Guten Tag ${guestName},`,
+        '',
+        `Ihre ${bookingNounLower} bei ${businessName} wurde erfolgreich bestätigt.`,
+        '',
+        `Datum: ${body.date || '-'}`,
+        `Uhrzeit: ${body.time || '-'}`,
+        isSalon ? (body.service ? `Service: ${body.service}` : null) : body.people ? `Personen: ${body.people}` : null,
+        '',
+        'Bei Rückfragen antworten Sie direkt auf diese E-Mail.',
+        '',
+        'Beste Grüße',
+        `${businessName}`
       ]
         .filter(Boolean)
+        .concat(['', 'NexTime – einfache Terminplanung.', platformUrl])
         .join('\n'),
       html: guestHtml
     });
