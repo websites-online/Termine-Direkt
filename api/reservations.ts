@@ -61,6 +61,17 @@ const getTimeBasedGreeting = (): string => {
   }
 };
 
+const formatDisplayDate = (dateValue?: string): string => {
+  if (!dateValue) {
+    return '-';
+  }
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateValue.trim());
+  if (isoMatch) {
+    return `${isoMatch[3]}.${isoMatch[2]}.${isoMatch[1]}`;
+  }
+  return dateValue;
+};
+
 const buildEmailLayout = ({
   brand,
   title,
@@ -107,7 +118,7 @@ const buildEmailLayout = ({
             </tr>
             <tr>
               <td style="padding:14px 24px 24px;font-family:Arial,Helvetica,sans-serif;color:#64748b;font-size:13px;line-height:1.5">
-                <div style="white-space:pre-line">${escapeHtml(footer)}</div>
+                <div style="white-space:pre-line;text-align:center">${escapeHtml(footer)}</div>
                 ${
                   footerLink
                     ? `<div style="margin-top:16px;text-align:center"><a href="${escapeHtml(
@@ -259,6 +270,7 @@ module.exports = async function handler(req: any, res: any) {
     const businessName = body.restaurantName?.trim() || (isSalon ? 'Ihr Salon' : 'Ihr Betrieb');
     const guestName = body.guestName?.trim() || 'Gast';
     const greeting = getTimeBasedGreeting();
+    const displayDate = formatDisplayDate(body.date);
     const bookingNounLower = isSalon ? 'Termin' : 'Reservierung';
     const bookingCopy = isSalon
       ? {
@@ -278,7 +290,7 @@ module.exports = async function handler(req: any, res: any) {
 
     const details = [
       { label: businessLabel, value: body.restaurantName || '-' },
-      { label: 'Datum', value: body.date || '-' },
+      { label: 'Datum', value: displayDate },
       { label: 'Uhrzeit', value: body.time || '-' },
       { label: 'Name', value: body.guestName || '-' },
       { label: 'E-Mail', value: body.guestEmail || '-' },
@@ -296,12 +308,12 @@ module.exports = async function handler(req: any, res: any) {
       rows: details,
       footer: 'Sie können auf diese E-Mail antworten, um direkt mit dem Gast zu kommunizieren.',
       footerLink: platformUrl,
-      footerLinkLabel: 'NexTime - einfache Terminplanung.'
+      footerLinkLabel: 'NexTime - einfache Terminplanung'
     });
 
     const guestRows = [
       { label: businessLabel, value: body.restaurantName || '-' },
-      { label: 'Datum', value: body.date || '-' },
+      { label: 'Datum', value: displayDate },
       { label: 'Uhrzeit', value: body.time || '-' },
       ...(body.note ? [{ label: 'Notiz', value: body.note }] : []),
       ...(isSalon
@@ -316,19 +328,19 @@ module.exports = async function handler(req: any, res: any) {
       rows: guestRows,
       footer: `Bei Rückfragen können Sie direkt auf diese E-Mail antworten. ${bookingCopy.thanksLine}`,
       footerLink: platformUrl,
-      footerLinkLabel: 'NexTime - einfache Terminplanung.'
+      footerLinkLabel: 'NexTime - einfache Terminplanung'
     });
 
     await resend.emails.send({
       from,
       to: body.restaurantEmail,
-      subject: `${bookingCopy.newTitle} | ${businessName} | ${body.date} um ${body.time}`,
+      subject: `${bookingCopy.newTitle} | ${displayDate} um ${body.time}`,
       replyTo: body.guestEmail,
       text: [
         `Neue ${bookingNounLower}`,
         '',
         `${businessLabel}: ${businessName}`,
-        `Datum: ${body.date || '-'}`,
+        `Datum: ${displayDate}`,
         `Uhrzeit: ${body.time || '-'}`,
         `Name: ${guestName}`,
         `E-Mail: ${body.guestEmail || '-'}`,
@@ -338,7 +350,7 @@ module.exports = async function handler(req: any, res: any) {
       ]
         .filter(Boolean)
         .concat(['', 'Sie können auf diese E-Mail antworten, um direkt mit dem Gast zu kommunizieren.'])
-        .concat(['', 'NexTime - einfache Terminplanung.', platformUrl])
+        .concat(['', 'NexTime - einfache Terminplanung', platformUrl])
         .join('\n'),
       html: restaurantHtml
     });
@@ -346,14 +358,14 @@ module.exports = async function handler(req: any, res: any) {
     await resend.emails.send({
       from,
       to: body.guestEmail,
-      subject: `${bookingCopy.confirmTitle} – ${businessName} (${body.date}, ${body.time})`,
+      subject: `${bookingCopy.confirmTitle} – ${businessName} (${displayDate}, ${body.time})`,
       replyTo: body.restaurantEmail,
       text: [
         `${greeting} ${guestName},`,
         '',
         `Ihre ${bookingNounLower} bei ${businessName} wurde erfolgreich bestätigt.`,
         '',
-        `Datum: ${body.date || '-'}`,
+        `Datum: ${displayDate}`,
         `Uhrzeit: ${body.time || '-'}`,
         body.note ? `Notiz: ${body.note}` : null,
         isSalon ? (body.service ? `Service: ${body.service}` : null) : body.people ? `Personen: ${body.people}` : null,
@@ -364,7 +376,7 @@ module.exports = async function handler(req: any, res: any) {
         `${businessName}`
       ]
         .filter(Boolean)
-        .concat(['', 'NexTime - einfache Terminplanung.', platformUrl])
+        .concat(['', 'NexTime - einfache Terminplanung', platformUrl])
         .join('\n'),
       html: guestHtml
     });
