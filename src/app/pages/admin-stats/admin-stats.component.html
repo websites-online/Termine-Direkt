@@ -1,0 +1,75 @@
+<section class="section page">
+  <div class="container">
+    <div class="card stats-card">
+      <div class="stats-header">
+        <div>
+          <h1 class="section-title">Statistiken</h1>
+          <p class="section-lead">Übersicht über Unternehmen und Buchungen.</p>
+        </div>
+        <div class="stats-actions">
+          <a class="btn btn-outline" routerLink="/admin">Zum Dashboard</a>
+          <a class="btn btn-outline" routerLink="/">Zur Startseite</a>
+          <button class="btn btn-outline" type="button" (click)="logout()">Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card stats-card filter-card">
+      <label>
+        <span class="label">Zeitraum</span>
+        <select class="input" [(ngModel)]="period" (change)="onPeriodChange()">
+          <option *ngFor="let option of periodOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </label>
+      <label *ngIf="period === 'month'">
+        <span class="label">Monat</span>
+        <input class="input" type="month" [(ngModel)]="month" (change)="onMonthChange()" />
+      </label>
+      <button class="btn btn-primary" type="button" (click)="loadStats()">Aktualisieren</button>
+    </div>
+
+    <div class="card stats-card" *ngIf="stats">
+      <p class="helptext">{{ formatRangeLabel() }}</p>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <p>Unternehmen</p>
+          <strong>{{ stats.companiesTotal }}</strong>
+        </div>
+        <div class="summary-item">
+          <p>Buchungen</p>
+          <strong>{{ stats.bookingsTotal }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="card stats-card">
+      <h2>Buchungen nach Unternehmen</h2>
+      <p class="helptext" *ngIf="isLoading">Lade Daten…</p>
+      <p class="helptext error" *ngIf="!isLoading && error">{{ error }}</p>
+      <p class="helptext" *ngIf="!isLoading && !error && stats && stats.rows.length === 0">
+        Keine Daten im ausgewählten Zeitraum.
+      </p>
+      <div class="table-wrap" *ngIf="!isLoading && !error && stats && stats.rows.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>Unternehmen</th>
+              <th>Art</th>
+              <th>Slug</th>
+              <th class="col-number">Buchungen</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of stats.rows">
+              <td>{{ row.name }}</td>
+              <td>{{ row.serviceType === 'friseur' ? 'Friseur' : 'Restaurant' }}</td>
+              <td>/{{ row.slug }}</td>
+              <td class="col-number">{{ row.bookings }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+

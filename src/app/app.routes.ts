@@ -7,6 +7,7 @@ import { ImpressumComponent } from './pages/impressum/impressum.component';
 import { DatenschutzComponent } from './pages/datenschutz/datenschutz.component';
 import { AdminLoginComponent } from './pages/admin-login/admin-login.component';
 import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard.component';
+import { AdminStatsComponent } from './pages/admin-stats/admin-stats.component';
 import { adminGuard } from './guards/admin.guard';
 import { CompanyLoginComponent } from './pages/company-login/company-login.component';
 import { CompanyDashboardComponent } from './pages/company-dashboard/company-dashboard.component';
@@ -37,6 +38,11 @@ export const routes: Routes = [
   {
     path: 'admin',
     component: AdminDashboardComponent,
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'admin/statistiken',
+    component: AdminStatsComponent,
     canActivate: [adminGuard]
   },
   {
