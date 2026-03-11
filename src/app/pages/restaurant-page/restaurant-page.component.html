@@ -87,16 +87,12 @@
             <input class="input" type="number" min="1" formControlName="people" />
           </label>
           <label *ngIf="hasSeatingChoice">
-            <span class="label">Sitzplatz*</span>
+            <span class="label">Sitzplatz (optional)</span>
             <select class="input" formControlName="seating">
-              <option value="" disabled>Bitte wählen</option>
               <option *ngFor="let option of seatingOptions" [value]="option.value">
                 {{ option.label }}
               </option>
             </select>
-            <span class="error" *ngIf="bookingForm.get('seating')?.touched && bookingForm.get('seating')?.invalid">
-              Pflichtfeld.
-            </span>
           </label>
           <label *ngIf="isSalon">
             <span class="label">Service*</span>

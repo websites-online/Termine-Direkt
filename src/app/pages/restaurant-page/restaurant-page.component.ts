@@ -71,7 +71,7 @@ export class RestaurantPageComponent implements OnInit {
     email: ['', [Validators.required, Validators.email]],
     phone: ['', Validators.required],
     people: [2, [Validators.required, Validators.min(1)]],
-    seating: [''],
+    seating: ['egal'],
     service: [''],
     note: [''],
     time: ['18:00', Validators.required]
@@ -98,11 +98,6 @@ export class RestaurantPageComponent implements OnInit {
       return;
     }
     const seatingValue = this.getSeatingLabel(this.bookingForm.value.seating ?? '');
-    if (this.hasSeatingChoice && seatingValue.length === 0) {
-      this.errorMessage = 'Bitte wählen Sie aus, ob Sie drinnen oder draußen sitzen möchten.';
-      this.bookingForm.get('seating')?.markAsTouched();
-      return;
-    }
 
     if (!this.company?.email) {
       this.errorMessage = 'Restaurant-E-Mail fehlt. Bitte später erneut versuchen.';
@@ -148,7 +143,7 @@ export class RestaurantPageComponent implements OnInit {
           email: '',
           phone: '',
           people: 2,
-          seating: '',
+          seating: 'egal',
           service: '',
           note: '',
           time: '18:00'
@@ -236,6 +231,7 @@ export class RestaurantPageComponent implements OnInit {
 
   get seatingOptions(): Array<{ value: string; label: string }> {
     return [
+      { value: 'egal', label: 'Beliebig (Standard)' },
       { value: 'inside', label: 'Tisch drinnen' },
       { value: 'outside', label: 'Tisch draußen' }
     ];
@@ -260,6 +256,9 @@ export class RestaurantPageComponent implements OnInit {
     if (!this.hasSeatingChoice) {
       return '';
     }
+    if (value === 'egal' || !value) {
+      return '';
+    }
     const match = this.seatingOptions.find((item) => item.value === value);
     return match ? match.label : '';
   }
@@ -282,11 +281,11 @@ export class RestaurantPageComponent implements OnInit {
     if (!control) {
       return;
     }
-    if (this.hasSeatingChoice) {
-      control.setValidators([Validators.required]);
-    } else {
+    if (!this.hasSeatingChoice) {
       control.clearValidators();
-      control.setValue('', { emitEvent: false });
+      control.setValue('egal', { emitEvent: false });
+    } else if (!control.value) {
+      control.setValue('egal', { emitEvent: false });
     }
     control.updateValueAndValidity();
   }
