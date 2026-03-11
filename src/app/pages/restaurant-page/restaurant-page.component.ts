@@ -6,6 +6,12 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { Company, CompanyApiService } from '../../services/company-api.service';
 
+type TimeRange = { start: number; end: number };
+type ParsedSchedule = {
+  weekdays: Map<number, TimeRange[]>;
+  holidays: TimeRange[];
+};
+
 @Component({
   selector: 'app-restaurant-page',
   standalone: true,
@@ -46,6 +52,8 @@ export class RestaurantPageComponent implements OnInit {
   );
   private readonly slotIntervalMinutes = 45;
   private readonly bookingBufferMinutes = 120;
+  private parsedScheduleCache: { source: string; value: ParsedSchedule } | null = null;
+  private holidayCache = new Map<number, Set<string>>();
   monthOffset = 0;
   calendarDays = this.generateCalendar(
     this.baseDate.getFullYear(),
@@ -405,14 +413,14 @@ export class RestaurantPageComponent implements OnInit {
     return slots;
   }
 
-  private getFallbackHoursRange(): { start: number; end: number } {
+  private getFallbackHoursRange(): TimeRange {
     const fallback = { start: 12 * 60, end: 20 * 60 };
     const hours = this.company?.hours;
     if (!hours) {
       return fallback;
     }
 
-    const match = hours.match(/(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})/);
+    const match = hours.match(/(\d{1,2}(?::\d{2})?)\s*[–-]\s*(\d{1,2}(?::\d{2})?)/);
     if (!match) {
       return fallback;
     }
@@ -426,19 +434,38 @@ export class RestaurantPageComponent implements OnInit {
     return { start, end };
   }
 
-  private getHoursRangesForDate(date: Date | null): Array<{ start: number; end: number }> {
+  private getHoursRangesForDate(date: Date | null): TimeRange[] {
     const schedule = this.parseHoursSchedule();
-    if (!date || schedule.size === 0) {
+    if (
+      !date ||
+      (schedule.weekdays.size === 0 && schedule.holidays.length === 0)
+    ) {
       return [this.getFallbackHoursRange()];
     }
+
+    if (schedule.holidays.length > 0 && this.isGermanNationalHoliday(date)) {
+      return schedule.holidays;
+    }
+
     const weekdayIndex = (date.getDay() + 6) % 7;
-    return schedule.get(weekdayIndex) || [];
+    return schedule.weekdays.get(weekdayIndex) || [];
   }
 
-  private parseHoursSchedule(): Map<number, Array<{ start: number; end: number }>> {
+  private parseHoursSchedule(): ParsedSchedule {
     const hours = this.company?.hours?.trim();
-    const schedule = new Map<number, Array<{ start: number; end: number }>>();
+    const emptySchedule: ParsedSchedule = { weekdays: new Map<number, TimeRange[]>(), holidays: [] };
+    if (this.parsedScheduleCache && this.parsedScheduleCache.source === (hours || '')) {
+      return this.parsedScheduleCache.value;
+    }
+
+    const schedule: ParsedSchedule = { weekdays: new Map<number, TimeRange[]>(), holidays: [] };
     if (!hours) {
+      this.parsedScheduleCache = { source: '', value: emptySchedule };
+      return emptySchedule;
+    }
+
+    if (hours.toLowerCase() === 'geschlossen') {
+      this.parsedScheduleCache = { source: hours, value: schedule };
       return schedule;
     }
 
@@ -459,7 +486,7 @@ export class RestaurantPageComponent implements OnInit {
 
     for (const segment of segments) {
       const matches = Array.from(
-        segment.matchAll(/(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})/g)
+        segment.matchAll(/(\d{1,2}(?::\d{2})?)\s*[–-]\s*(\d{1,2}(?::\d{2})?)/g)
       );
       if (matches.length === 0) {
         continue;
@@ -467,8 +494,14 @@ export class RestaurantPageComponent implements OnInit {
 
       const firstIndex = matches[0].index ?? 0;
       const daysPart = segment.slice(0, firstIndex).trim();
-      const days = this.parseDayList(daysPart, dayMap);
-      const targetDays = days.length > 0 ? days : [0, 1, 2, 3, 4, 5, 6];
+      const includesHoliday = /feiertag|feiertage|feiertagen/i.test(daysPart);
+      const normalizedDaysPart = daysPart
+        .replace(/feiertage?n?/gi, '')
+        .replace(/\bund\b/gi, ',')
+        .replace(/\+/g, ',')
+        .trim();
+      const days = this.parseDayList(normalizedDaysPart, dayMap);
+      const targetDays = days.length > 0 ? days : includesHoliday ? [] : [0, 1, 2, 3, 4, 5, 6];
 
       for (const match of matches) {
         const start = this.toMinutes(match[1]);
@@ -477,18 +510,23 @@ export class RestaurantPageComponent implements OnInit {
           continue;
         }
         for (const day of targetDays) {
-          const existing = schedule.get(day) || [];
+          const existing = schedule.weekdays.get(day) || [];
           existing.push({ start, end });
-          schedule.set(day, existing);
+          schedule.weekdays.set(day, existing);
+        }
+        if (includesHoliday) {
+          schedule.holidays.push({ start, end });
         }
       }
     }
 
-    schedule.forEach((ranges, day) => {
+    schedule.weekdays.forEach((ranges, day) => {
       ranges.sort((a, b) => a.start - b.start);
-      schedule.set(day, this.mergeRanges(ranges));
+      schedule.weekdays.set(day, this.mergeRanges(ranges));
     });
+    schedule.holidays = this.mergeRanges(schedule.holidays.sort((a, b) => a.start - b.start));
 
+    this.parsedScheduleCache = { source: hours, value: schedule };
     return schedule;
   }
 
@@ -529,7 +567,7 @@ export class RestaurantPageComponent implements OnInit {
       }
 
       const singleKey = this.normalizeDayKey(part);
-      const single = dayMap[singleKey];
+      const single = dayMap[singleKey] ?? dayMap[singleKey.slice(0, 2)];
       if (single !== undefined) {
         result.add(single);
       }
@@ -539,14 +577,27 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   private normalizeDayKey(value: string): string {
-    const trimmed = value.trim();
-    if (trimmed.length < 2) {
-      return trimmed;
-    }
-    return trimmed[0].toUpperCase() + trimmed[1].toLowerCase();
+    const trimmed = value.trim().toLowerCase();
+    const map: Record<string, string> = {
+      mo: 'Mo',
+      montag: 'Mo',
+      di: 'Di',
+      dienstag: 'Di',
+      mi: 'Mi',
+      mittwoch: 'Mi',
+      do: 'Do',
+      donnerstag: 'Do',
+      fr: 'Fr',
+      freitag: 'Fr',
+      sa: 'Sa',
+      samstag: 'Sa',
+      so: 'So',
+      sonntag: 'So'
+    };
+    return map[trimmed] || (trimmed.length >= 2 ? trimmed[0].toUpperCase() + trimmed[1] : trimmed);
   }
 
-  private mergeRanges(ranges: Array<{ start: number; end: number }>) {
+  private mergeRanges(ranges: TimeRange[]): TimeRange[] {
     if (ranges.length <= 1) {
       return ranges;
     }
@@ -565,7 +616,7 @@ export class RestaurantPageComponent implements OnInit {
     return merged;
   }
 
-  private getBreakRanges(): Array<{ start: number; end: number }> {
+  private getBreakRanges(): TimeRange[] {
     const raw = this.company?.breakHours;
     if (!raw) {
       return [];
@@ -573,7 +624,7 @@ export class RestaurantPageComponent implements OnInit {
     return raw
       .split(',')
       .map((value) => value.trim())
-      .map((value) => value.match(/(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})/))
+      .map((value) => value.match(/(\d{1,2}(?::\d{2})?)\s*[–-]\s*(\d{1,2}(?::\d{2})?)/))
       .filter((match): match is RegExpMatchArray => Boolean(match))
       .map((match) => ({
         start: this.toMinutes(match[1]),
@@ -582,13 +633,18 @@ export class RestaurantPageComponent implements OnInit {
       .filter((range) => !Number.isNaN(range.start) && !Number.isNaN(range.end));
   }
 
-  private isInBreak(minutes: number, ranges: Array<{ start: number; end: number }>): boolean {
+  private isInBreak(minutes: number, ranges: TimeRange[]): boolean {
     return ranges.some((range) => minutes >= range.start && minutes < range.end);
   }
 
   private toMinutes(time: string): number {
-    const [hour, minute] = time.split(':').map((value) => Number(value));
-    if (Number.isNaN(hour) || Number.isNaN(minute)) {
+    const match = time.trim().match(/^(\d{1,2})(?::(\d{2}))?$/);
+    if (!match) {
+      return NaN;
+    }
+    const hour = Number(match[1]);
+    const minute = match[2] ? Number(match[2]) : 0;
+    if (Number.isNaN(hour) || Number.isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
       return NaN;
     }
     return hour * 60 + minute;
@@ -603,7 +659,6 @@ export class RestaurantPageComponent implements OnInit {
     const startOffset = (firstDay.getDay() + 6) % 7;
     const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
     const daysInPrevMonth = new Date(year, monthIndex, 0).getDate();
-    const openDays = this.getOpenWeekdayIndexes();
     const cells: Array<{ label: number; muted: boolean; active: boolean; date?: Date; today?: boolean }> = [];
 
     for (let i = 0; i < 42; i += 1) {
@@ -618,8 +673,7 @@ export class RestaurantPageComponent implements OnInit {
         const date = new Date(year, monthIndex, dayNumber);
         const isPast = date.getTime() < this.today.getTime();
         const isToday = date.getTime() === this.today.getTime();
-        const weekdayIndex = (date.getDay() + 6) % 7;
-        const isClosed = !openDays.has(weekdayIndex);
+        const isClosed = this.getHoursRangesForDate(date).length === 0;
         cells.push({
           label: dayNumber,
           muted: isPast || isClosed,
@@ -637,14 +691,6 @@ export class RestaurantPageComponent implements OnInit {
     return cells;
   }
 
-  private getOpenWeekdayIndexes(): Set<number> {
-    const schedule = this.parseHoursSchedule();
-    if (schedule.size === 0) {
-      return new Set([0, 1, 2, 3, 4, 5, 6]);
-    }
-    return new Set(Array.from(schedule.keys()));
-  }
-
   private formatDate(date: Date): string {
     return date.toLocaleDateString('de-DE', {
       day: 'numeric',
@@ -658,6 +704,61 @@ export class RestaurantPageComponent implements OnInit {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  private isGermanNationalHoliday(date: Date): boolean {
+    const year = date.getFullYear();
+    if (!this.holidayCache.has(year)) {
+      this.holidayCache.set(year, this.getGermanNationalHolidays(year));
+    }
+    const key = this.formatDateISO(date);
+    return this.holidayCache.get(year)?.has(key) || false;
+  }
+
+  private getGermanNationalHolidays(year: number): Set<string> {
+    const holidays = new Set<string>();
+    const add = (monthIndex: number, day: number): void => {
+      holidays.add(this.formatDateISO(new Date(year, monthIndex, day)));
+    };
+
+    // Fixed national holidays (Germany-wide)
+    add(0, 1); // Neujahr
+    add(4, 1); // Tag der Arbeit
+    add(9, 3); // Tag der Deutschen Einheit
+    add(11, 25); // 1. Weihnachtstag
+    add(11, 26); // 2. Weihnachtstag
+
+    const easterSunday = this.getEasterSunday(year);
+    const addOffset = (days: number): void => {
+      const d = new Date(easterSunday);
+      d.setDate(d.getDate() + days);
+      holidays.add(this.formatDateISO(d));
+    };
+
+    addOffset(-2); // Karfreitag
+    addOffset(1); // Ostermontag
+    addOffset(39); // Christi Himmelfahrt
+    addOffset(50); // Pfingstmontag
+
+    return holidays;
+  }
+
+  private getEasterSunday(year: number): Date {
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31);
+    const day = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(year, month - 1, day);
   }
 
   private loadCompany(): void {
