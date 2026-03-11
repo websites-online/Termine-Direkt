@@ -231,7 +231,7 @@ export class RestaurantPageComponent implements OnInit {
 
   get seatingOptions(): Array<{ value: string; label: string }> {
     return [
-      { value: 'egal', label: 'Beliebig (Standard)' },
+      { value: 'egal', label: 'Beliebig' },
       { value: 'inside', label: 'Tisch drinnen' },
       { value: 'outside', label: 'Tisch draußen' }
     ];
