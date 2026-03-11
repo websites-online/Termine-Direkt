@@ -9,6 +9,7 @@ type CompanyRow = {
   service_type?: string | null;
   login_pin?: string | null;
   slot_capacity?: number | null;
+  slot_interval_minutes?: number | null;
   booking_mode?: string | null;
   seating_options_enabled?: boolean | null;
   created_at: string;
@@ -32,10 +33,22 @@ const toCompanyResponse = (row: CompanyRow) => ({
   email: row.email,
   serviceType: row.service_type || 'restaurant',
   slotCapacity: row.slot_capacity ?? 3,
+  slotIntervalMinutes:
+    row.slot_interval_minutes === 30 || row.slot_interval_minutes === 60
+      ? row.slot_interval_minutes
+      : 45,
   bookingMode: row.booking_mode || 'confirm',
   seatingOptionsEnabled: row.seating_options_enabled ?? false,
   createdAt: row.created_at
 });
+
+const normalizeSlotInterval = (value: unknown): 30 | 45 | 60 => {
+  const n = Number(value);
+  if (n === 30 || n === 60) {
+    return n;
+  }
+  return 45;
+};
 
 const getClient = () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -102,6 +115,7 @@ module.exports = async function handler(req: any, res: any) {
         service_type: body.serviceType || 'restaurant',
         login_pin: body.loginPin ? String(body.loginPin).trim() : null,
         slot_capacity: typeof body.slotCapacity === 'number' ? body.slotCapacity : 3,
+        slot_interval_minutes: normalizeSlotInterval(body.slotIntervalMinutes),
         booking_mode: body.bookingMode === 'request' ? 'request' : 'confirm',
         seating_options_enabled: body.seatingOptionsEnabled === true
       };
@@ -158,6 +172,9 @@ module.exports = async function handler(req: any, res: any) {
       }
       if (typeof body.slotCapacity === 'number') {
         updates.slot_capacity = body.slotCapacity;
+      }
+      if (body.slotIntervalMinutes !== undefined && body.slotIntervalMinutes !== null) {
+        updates.slot_interval_minutes = normalizeSlotInterval(body.slotIntervalMinutes);
       }
       const { data, error } = await supabase.from('companies').update(updates).eq('slug', slug).select('*').single();
       if (error) {

@@ -28,7 +28,8 @@ export class AdminDashboardComponent implements OnInit {
     bookingMode: ['confirm', Validators.required],
     seatingOptionsEnabled: [false],
     loginPin: [''],
-    slotCapacity: [3, [Validators.required, Validators.min(1), Validators.max(3)]]
+    slotCapacity: [3, [Validators.required, Validators.min(1), Validators.max(3)]],
+    slotIntervalMinutes: [45, Validators.required]
   });
 
   constructor(
@@ -65,7 +66,8 @@ export class AdminDashboardComponent implements OnInit {
       seatingOptionsEnabled:
         (value.serviceType || 'restaurant') === 'restaurant' && value.seatingOptionsEnabled === true,
       loginPin: value.loginPin?.trim() || undefined,
-      slotCapacity: Number(value.slotCapacity || 3)
+      slotCapacity: Number(value.slotCapacity || 3),
+      slotIntervalMinutes: Number(value.slotIntervalMinutes || 45) as 30 | 45 | 60
     };
 
     const request$ = this.editingSlug
@@ -91,7 +93,8 @@ export class AdminDashboardComponent implements OnInit {
       bookingMode: company.bookingMode || 'confirm',
       seatingOptionsEnabled: company.seatingOptionsEnabled || false,
       loginPin: '',
-      slotCapacity: company.slotCapacity ?? 3
+      slotCapacity: company.slotCapacity ?? 3,
+      slotIntervalMinutes: company.slotIntervalMinutes ?? 45
     });
   }
 
@@ -129,7 +132,8 @@ export class AdminDashboardComponent implements OnInit {
       bookingMode: 'confirm',
       seatingOptionsEnabled: false,
       loginPin: this.createRandomPin(),
-      slotCapacity: 3
+      slotCapacity: 3,
+      slotIntervalMinutes: 45
     });
     this.companyForm.markAsPristine();
   }

@@ -50,7 +50,6 @@ export class RestaurantPageComponent implements OnInit {
     this.baseDate.getMonth(),
     this.baseDate.getDate()
   );
-  private readonly slotIntervalMinutes = 45;
   private readonly bookingBufferMinutes = 120;
   private parsedScheduleCache: { source: string; value: ParsedSchedule } | null = null;
   private holidayCache = new Map<number, Set<string>>();
@@ -394,6 +393,7 @@ export class RestaurantPageComponent implements OnInit {
     const breaks = this.getBreakRanges();
     const slots: string[] = [];
 
+    const intervalMinutes = this.getSlotIntervalMinutes();
     for (const range of ranges) {
       let minutes = range.start;
       const endMinutes = range.end;
@@ -406,7 +406,7 @@ export class RestaurantPageComponent implements OnInit {
           const minute = (minutes % 60).toString().padStart(2, '0');
           slots.push(`${hour}:${minute}`);
         }
-        minutes += this.slotIntervalMinutes;
+        minutes += intervalMinutes;
       }
     }
 
@@ -829,5 +829,13 @@ export class RestaurantPageComponent implements OnInit {
       return 3;
     }
     return Math.min(Math.max(capacity, 1), 3);
+  }
+
+  private getSlotIntervalMinutes(): 30 | 45 | 60 {
+    const value = this.company?.slotIntervalMinutes;
+    if (value === 30 || value === 60) {
+      return value;
+    }
+    return 45;
   }
 }

@@ -18,6 +18,7 @@ export interface Company {
   serviceType?: ServiceType;
   loginPin?: string;
   slotCapacity?: number;
+  slotIntervalMinutes?: 30 | 45 | 60;
   bookingMode?: BookingMode;
   seatingOptionsEnabled?: boolean;
   createdAt?: string;
@@ -32,6 +33,7 @@ export interface CompanyPayload {
   serviceType?: ServiceType;
   loginPin?: string;
   slotCapacity?: number;
+  slotIntervalMinutes?: 30 | 45 | 60;
   bookingMode?: BookingMode;
   seatingOptionsEnabled?: boolean;
 }
@@ -69,6 +71,7 @@ export class CompanyApiService {
         slug,
         createdAt: new Date().toISOString(),
         ...payload,
+        slotIntervalMinutes: payload.slotIntervalMinutes || 45,
         bookingMode: payload.bookingMode || 'confirm',
         seatingOptionsEnabled: payload.seatingOptionsEnabled === true
       };
@@ -100,6 +103,9 @@ export class CompanyApiService {
       }
       if (payload.slotCapacity === undefined || payload.slotCapacity === null) {
         updated.slotCapacity = companies[index].slotCapacity;
+      }
+      if (!payload.slotIntervalMinutes) {
+        updated.slotIntervalMinutes = companies[index].slotIntervalMinutes ?? 45;
       }
       if (!payload.bookingMode) {
         updated.bookingMode = companies[index].bookingMode || 'confirm';

@@ -30,7 +30,6 @@ export class CompanyDashboardComponent implements OnInit {
   private selectedDateObj = this.parseDate(this.getToday());
   slots: string[] = [];
   slotCounts: Record<string, number> = {};
-  readonly slotIntervalMinutes = 45;
   readonly bookingBufferMinutes = 120;
   private readonly today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
   isLoading = false;
@@ -256,6 +255,14 @@ export class CompanyDashboardComponent implements OnInit {
     return Math.min(Math.max(capacity, 1), 3);
   }
 
+  private getSlotIntervalMinutes(): 30 | 45 | 60 {
+    const value = this.company?.slotIntervalMinutes;
+    if (value === 30 || value === 60) {
+      return value;
+    }
+    return 45;
+  }
+
   private generateSlots(date: Date | null): string[] {
     const ranges = this.getHoursRangesForDate(date);
     if (ranges.length === 0) {
@@ -263,6 +270,7 @@ export class CompanyDashboardComponent implements OnInit {
     }
     const breaks = this.getBreakRanges();
     const slots: string[] = [];
+    const slotIntervalMinutes = this.getSlotIntervalMinutes();
 
     for (const range of ranges) {
       let minutes = range.start;
@@ -276,7 +284,7 @@ export class CompanyDashboardComponent implements OnInit {
           const minute = (minutes % 60).toString().padStart(2, '0');
           slots.push(`${hour}:${minute}`);
         }
-        minutes += this.slotIntervalMinutes;
+        minutes += slotIntervalMinutes;
       }
     }
 
