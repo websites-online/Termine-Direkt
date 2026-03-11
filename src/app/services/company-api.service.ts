@@ -5,6 +5,7 @@ import { Observable, of, delay } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export type ServiceType = 'restaurant' | 'friseur';
+export type BookingMode = 'confirm' | 'request';
 
 export interface Company {
   id?: string;
@@ -17,6 +18,8 @@ export interface Company {
   serviceType?: ServiceType;
   loginPin?: string;
   slotCapacity?: number;
+  bookingMode?: BookingMode;
+  seatingOptionsEnabled?: boolean;
   createdAt?: string;
 }
 
@@ -29,6 +32,8 @@ export interface CompanyPayload {
   serviceType?: ServiceType;
   loginPin?: string;
   slotCapacity?: number;
+  bookingMode?: BookingMode;
+  seatingOptionsEnabled?: boolean;
 }
 
 @Injectable({
@@ -63,7 +68,9 @@ export class CompanyApiService {
         id: `${Date.now()}`,
         slug,
         createdAt: new Date().toISOString(),
-        ...payload
+        ...payload,
+        bookingMode: payload.bookingMode || 'confirm',
+        seatingOptionsEnabled: payload.seatingOptionsEnabled === true
       };
       companies.unshift(created);
       this.saveLocalCompanies(companies);
@@ -93,6 +100,12 @@ export class CompanyApiService {
       }
       if (payload.slotCapacity === undefined || payload.slotCapacity === null) {
         updated.slotCapacity = companies[index].slotCapacity;
+      }
+      if (!payload.bookingMode) {
+        updated.bookingMode = companies[index].bookingMode || 'confirm';
+      }
+      if (typeof payload.seatingOptionsEnabled !== 'boolean') {
+        updated.seatingOptionsEnabled = companies[index].seatingOptionsEnabled || false;
       }
       companies[index] = updated;
       this.saveLocalCompanies(companies);

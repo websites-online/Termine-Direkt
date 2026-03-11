@@ -31,6 +31,18 @@
           </select>
         </label>
         <label>
+          <span class="label">Buchungsmodus*</span>
+          <select class="input" formControlName="bookingMode">
+            <option value="confirm">Direkte Bestätigung</option>
+            <option value="request">Terminanfrage / Reservierungsanfrage</option>
+          </select>
+          <span class="helptext">Bei Anfrage geht nur eine Mail an den Betrieb, keine Kunden-Bestätigung.</span>
+        </label>
+        <label *ngIf="companyForm.value.serviceType === 'restaurant'" class="inline-toggle">
+          <input type="checkbox" formControlName="seatingOptionsEnabled" />
+          <span>Sitzplatz-Auswahl aktivieren (Tisch drinnen / Tisch draußen)</span>
+        </label>
+        <label>
           <span class="label">Adresse*</span>
           <input class="input" type="text" formControlName="address" placeholder="Musterstraße 12, 10115 Berlin" />
         </label>
@@ -99,6 +111,10 @@
               <span *ngIf="company.breakHours"> · Pause: {{ company.breakHours }}</span>
             </p>
             <p class="muted">Slots pro Zeit: {{ company.slotCapacity || 3 }}</p>
+            <p class="muted">Buchungsmodus: {{ company.bookingMode === 'request' ? 'Anfrage' : 'Direkt bestätigt' }}</p>
+            <p class="muted" *ngIf="company.serviceType === 'restaurant'">
+              Sitzplatz-Auswahl: {{ company.seatingOptionsEnabled ? 'Aktiv' : 'Inaktiv' }}
+            </p>
             <p class="muted">Login: {{ company.slug }}</p>
             <a class="company-link" [routerLink]="['/', company.slug]">/{{ company.slug }}</a>
           </div>

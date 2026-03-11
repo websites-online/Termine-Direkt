@@ -25,6 +25,8 @@ export class AdminDashboardComponent implements OnInit {
     breakHours: [''],
     email: ['kontakt@example.com', [Validators.required, Validators.email]],
     serviceType: ['restaurant', Validators.required],
+    bookingMode: ['confirm', Validators.required],
+    seatingOptionsEnabled: [false],
     loginPin: [''],
     slotCapacity: [3, [Validators.required, Validators.min(1), Validators.max(3)]]
   });
@@ -59,6 +61,9 @@ export class AdminDashboardComponent implements OnInit {
       breakHours: value.breakHours || undefined,
       email: value.email || 'kontakt@example.com',
       serviceType: (value.serviceType || 'restaurant') as 'restaurant' | 'friseur',
+      bookingMode: (value.bookingMode || 'confirm') as 'confirm' | 'request',
+      seatingOptionsEnabled:
+        (value.serviceType || 'restaurant') === 'restaurant' && value.seatingOptionsEnabled === true,
       loginPin: value.loginPin?.trim() || undefined,
       slotCapacity: Number(value.slotCapacity || 3)
     };
@@ -83,6 +88,8 @@ export class AdminDashboardComponent implements OnInit {
       breakHours: company.breakHours || '',
       email: company.email,
       serviceType: company.serviceType || 'restaurant',
+      bookingMode: company.bookingMode || 'confirm',
+      seatingOptionsEnabled: company.seatingOptionsEnabled || false,
       loginPin: '',
       slotCapacity: company.slotCapacity ?? 3
     });
@@ -119,6 +126,8 @@ export class AdminDashboardComponent implements OnInit {
       breakHours: '',
       email: 'kontakt@example.com',
       serviceType: 'restaurant',
+      bookingMode: 'confirm',
+      seatingOptionsEnabled: false,
       loginPin: this.createRandomPin(),
       slotCapacity: 3
     });

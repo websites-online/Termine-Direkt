@@ -71,6 +71,7 @@ export class RestaurantPageComponent implements OnInit {
     email: ['', [Validators.required, Validators.email]],
     phone: ['', Validators.required],
     people: [2, [Validators.required, Validators.min(1)]],
+    seating: [''],
     service: [''],
     note: [''],
     time: ['18:00', Validators.required]
@@ -96,6 +97,12 @@ export class RestaurantPageComponent implements OnInit {
       this.bookingForm.get('service')?.markAsTouched();
       return;
     }
+    const seatingValue = this.getSeatingLabel(this.bookingForm.value.seating ?? '');
+    if (this.hasSeatingChoice && seatingValue.length === 0) {
+      this.errorMessage = 'Bitte wählen Sie aus, ob Sie drinnen oder draußen sitzen möchten.';
+      this.bookingForm.get('seating')?.markAsTouched();
+      return;
+    }
 
     if (!this.company?.email) {
       this.errorMessage = 'Restaurant-E-Mail fehlt. Bitte später erneut versuchen.';
@@ -115,6 +122,7 @@ export class RestaurantPageComponent implements OnInit {
       serviceType: this.company.serviceType || 'restaurant',
       guestEmail: this.bookingForm.value.email ?? '',
       guestName: this.bookingForm.value.name ?? '',
+      seating: this.hasSeatingChoice ? seatingValue : undefined,
       service: this.isSalon ? serviceValue : undefined,
       date: this.selectedDate,
       time: this.bookingForm.value.time ?? '',
@@ -127,7 +135,7 @@ export class RestaurantPageComponent implements OnInit {
     const reservationTime = requestedTime;
 
     this.isSubmitting = true;
-    this.http.post('/api/reservations', payload).subscribe({
+    this.http.post<{ success: boolean; requestMode?: boolean }>('/api/reservations', payload).subscribe({
       next: () => {
         this.isSubmitting = false;
         this.lastReservationDate = reservationDate;
@@ -140,6 +148,7 @@ export class RestaurantPageComponent implements OnInit {
           email: '',
           phone: '',
           people: 2,
+          seating: '',
           service: '',
           note: '',
           time: '18:00'
@@ -165,19 +174,43 @@ export class RestaurantPageComponent implements OnInit {
     return this.company?.serviceType === 'friseur';
   }
 
+  get isRequestMode(): boolean {
+    return this.company?.bookingMode === 'request';
+  }
+
+  get hasSeatingChoice(): boolean {
+    return !this.isSalon && this.company?.seatingOptionsEnabled === true;
+  }
+
   get bookingTitle(): string {
+    if (this.isRequestMode) {
+      return this.isSalon ? 'Terminanfrage' : 'Reservierungsanfrage';
+    }
     return this.isSalon ? 'Termindetails' : 'Reservierungsdetails';
   }
 
   get bookingButtonLabel(): string {
+    if (this.isRequestMode) {
+      return this.isSalon ? 'Terminanfrage senden' : 'Reservierungsanfrage senden';
+    }
     return this.isSalon ? 'Termin buchen' : 'Reservierung senden';
   }
 
   get bookingSuccessHeadline(): string {
+    if (this.isRequestMode) {
+      return this.isSalon
+        ? 'Vielen Dank für Ihre Terminanfrage!'
+        : 'Vielen Dank für Ihre Reservierungsanfrage!';
+    }
     return this.isSalon ? 'Vielen Dank für Ihren Termin!' : 'Vielen Dank für Ihre Reservierung!';
   }
 
   get bookingConfirmText(): string {
+    if (this.isRequestMode) {
+      return this.isSalon
+        ? 'Ihre Terminanfrage wurde gesendet. Der Salon meldet sich zeitnah bei Ihnen.'
+        : 'Ihre Reservierungsanfrage wurde gesendet. Das Restaurant meldet sich zeitnah bei Ihnen.';
+    }
     return this.isSalon
       ? 'Wir haben Ihre Termin-Anfrage erhalten. Eine Bestätigung wird Ihnen per E-Mail zugesendet.'
       : 'Wir haben Ihre Reservierung erhalten. Eine Bestätigung wird Ihnen per E-Mail zugesendet.';
@@ -201,7 +234,17 @@ export class RestaurantPageComponent implements OnInit {
     ];
   }
 
+  get seatingOptions(): Array<{ value: string; label: string }> {
+    return [
+      { value: 'inside', label: 'Tisch drinnen' },
+      { value: 'outside', label: 'Tisch draußen' }
+    ];
+  }
+
   private getSuccessMessage(): string {
+    if (this.isRequestMode) {
+      return this.isSalon ? 'Terminanfrage wurde gesendet.' : 'Reservierungsanfrage wurde gesendet.';
+    }
     return this.isSalon ? 'Termin wurde gesendet.' : 'Reservierung wurde gesendet.';
   }
 
@@ -210,6 +253,14 @@ export class RestaurantPageComponent implements OnInit {
       return '';
     }
     const match = this.salonServices.find((item) => item.value === value);
+    return match ? match.label : '';
+  }
+
+  private getSeatingLabel(value: string): string {
+    if (!this.hasSeatingChoice) {
+      return '';
+    }
+    const match = this.seatingOptions.find((item) => item.value === value);
     return match ? match.label : '';
   }
 
@@ -222,6 +273,20 @@ export class RestaurantPageComponent implements OnInit {
       control.setValidators([Validators.required]);
     } else {
       control.clearValidators();
+    }
+    control.updateValueAndValidity();
+  }
+
+  private updateSeatingValidators(): void {
+    const control = this.bookingForm.get('seating');
+    if (!control) {
+      return;
+    }
+    if (this.hasSeatingChoice) {
+      control.setValidators([Validators.required]);
+    } else {
+      control.clearValidators();
+      control.setValue('', { emitEvent: false });
     }
     control.updateValueAndValidity();
   }
@@ -601,6 +666,7 @@ export class RestaurantPageComponent implements OnInit {
       next: (company) => {
         this.company = company;
         this.updateServiceValidators();
+        this.updateSeatingValidators();
         this.refreshCalendar();
         this.loadSlotAvailability();
       },

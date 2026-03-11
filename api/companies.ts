@@ -9,6 +9,8 @@ type CompanyRow = {
   service_type?: string | null;
   login_pin?: string | null;
   slot_capacity?: number | null;
+  booking_mode?: string | null;
+  seating_options_enabled?: boolean | null;
   created_at: string;
 };
 
@@ -30,6 +32,8 @@ const toCompanyResponse = (row: CompanyRow) => ({
   email: row.email,
   serviceType: row.service_type || 'restaurant',
   slotCapacity: row.slot_capacity ?? 3,
+  bookingMode: row.booking_mode || 'confirm',
+  seatingOptionsEnabled: row.seating_options_enabled ?? false,
   createdAt: row.created_at
 });
 
@@ -97,7 +101,9 @@ module.exports = async function handler(req: any, res: any) {
         email: body.email,
         service_type: body.serviceType || 'restaurant',
         login_pin: body.loginPin ? String(body.loginPin).trim() : null,
-        slot_capacity: typeof body.slotCapacity === 'number' ? body.slotCapacity : 3
+        slot_capacity: typeof body.slotCapacity === 'number' ? body.slotCapacity : 3,
+        booking_mode: body.bookingMode === 'request' ? 'request' : 'confirm',
+        seating_options_enabled: body.seatingOptionsEnabled === true
       };
       const { data, error } = await supabase.from('companies').insert(insert).select('*').single();
       if (error) {
@@ -143,7 +149,9 @@ module.exports = async function handler(req: any, res: any) {
         hours: body.hours,
         break_hours: body.breakHours || null,
         email: body.email,
-        service_type: body.serviceType || 'restaurant'
+        service_type: body.serviceType || 'restaurant',
+        booking_mode: body.bookingMode === 'request' ? 'request' : 'confirm',
+        seating_options_enabled: body.seatingOptionsEnabled === true
       };
       if (body.loginPin) {
         updates.login_pin = String(body.loginPin).trim();

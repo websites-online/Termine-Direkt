@@ -6,6 +6,7 @@ type ReservationBody = {
   service?: string;
   guestEmail?: string;
   guestName?: string;
+  seating?: string;
   date?: string;
   time?: string;
   people?: number;
@@ -205,24 +206,27 @@ module.exports = async function handler(req: any, res: any) {
     const supabase = getClient();
     const { data: company } = await supabase
       .from('companies')
-      .select('slot_capacity')
+      .select('slot_capacity,booking_mode')
       .eq('slug', body.restaurantSlug)
       .maybeSingle();
     const slotCapacity = typeof company?.slot_capacity === 'number' ? company.slot_capacity : 3;
+    const requestMode = company?.booking_mode === 'request';
 
-    const { count, error: countError } = await supabase
-      .from('reservations')
-      .select('id', { count: 'exact', head: true })
-      .eq('restaurant_slug', body.restaurantSlug)
-      .eq('date', body.date)
-      .eq('time', body.time);
-    if (countError) {
-      res.status(500).json({ error: countError.message });
-      return;
-    }
-    if ((count || 0) >= slotCapacity) {
-      res.status(409).json({ error: 'Slot voll' });
-      return;
+    if (!requestMode) {
+      const { count, error: countError } = await supabase
+        .from('reservations')
+        .select('id', { count: 'exact', head: true })
+        .eq('restaurant_slug', body.restaurantSlug)
+        .eq('date', body.date)
+        .eq('time', body.time);
+      if (countError) {
+        res.status(500).json({ error: countError.message });
+        return;
+      }
+      if ((count || 0) >= slotCapacity) {
+        res.status(409).json({ error: 'Slot voll' });
+        return;
+      }
     }
 
     console.log('reservation request', {
@@ -244,25 +248,28 @@ module.exports = async function handler(req: any, res: any) {
     const from = fromName ? `${fromName} <${fromAddress}>` : `Reservierungsservice <${fromAddress}>`;
 
     const noteParts = [
+      body.seating ? `Sitzplatz: ${body.seating}` : null,
       body.service ? `Service: ${body.service}` : null,
       body.note ? `Notiz: ${body.note}` : null
     ].filter(Boolean);
 
-    const { error: insertError } = await supabase.from('reservations').insert({
-      restaurant_slug: body.restaurantSlug,
-      restaurant_name: body.restaurantName || null,
-      restaurant_email: body.restaurantEmail,
-      guest_name: body.guestName || null,
-      guest_email: body.guestEmail,
-      phone: body.phone || null,
-      people: body.people || null,
-      note: noteParts.length > 0 ? noteParts.join(' | ') : null,
-      date: body.date,
-      time: body.time
-    });
-    if (insertError) {
-      res.status(500).json({ error: insertError.message });
-      return;
+    if (!requestMode) {
+      const { error: insertError } = await supabase.from('reservations').insert({
+        restaurant_slug: body.restaurantSlug,
+        restaurant_name: body.restaurantName || null,
+        restaurant_email: body.restaurantEmail,
+        guest_name: body.guestName || null,
+        guest_email: body.guestEmail,
+        phone: body.phone || null,
+        people: body.people || null,
+        note: noteParts.length > 0 ? noteParts.join(' | ') : null,
+        date: body.date,
+        time: body.time
+      });
+      if (insertError) {
+        res.status(500).json({ error: insertError.message });
+        return;
+      }
     }
 
     const isSalon = body.serviceType === 'friseur';
@@ -274,15 +281,19 @@ module.exports = async function handler(req: any, res: any) {
     const bookingNounLower = isSalon ? 'Termin' : 'Reservierung';
     const bookingCopy = isSalon
       ? {
-          newTitle: 'Neuer Termin',
-          newSentence: 'Ein neuer Termin ist eingegangen. Alle Details finden Sie unten.',
+          newTitle: requestMode ? 'Neue Terminanfrage' : 'Neuer Termin',
+          newSentence: requestMode
+            ? 'Eine neue Terminanfrage ist eingegangen. Alle Details finden Sie unten.'
+            : 'Ein neuer Termin ist eingegangen. Alle Details finden Sie unten.',
           confirmTitle: 'Termin bestätigt',
           confirmThanks: `${greeting} ${guestName}, Ihr Termin bei ${businessName} wurde erfolgreich bestätigt.`,
           thanksLine: 'Vielen Dank für Ihre Buchung.'
         }
       : {
-          newTitle: 'Neue Reservierung',
-          newSentence: 'Eine neue Reservierung ist eingegangen. Alle Details finden Sie unten.',
+          newTitle: requestMode ? 'Neue Reservierungsanfrage' : 'Neue Reservierung',
+          newSentence: requestMode
+            ? 'Eine neue Reservierungsanfrage ist eingegangen. Alle Details finden Sie unten.'
+            : 'Eine neue Reservierung ist eingegangen. Alle Details finden Sie unten.',
           confirmTitle: 'Reservierung bestätigt',
           confirmThanks: `${greeting} ${guestName}, Ihre Reservierung bei ${businessName} wurde erfolgreich bestätigt.`,
           thanksLine: 'Vielen Dank für Ihre Buchung.'
@@ -295,6 +306,7 @@ module.exports = async function handler(req: any, res: any) {
       { label: 'Name', value: body.guestName || '-' },
       { label: 'E-Mail', value: body.guestEmail || '-' },
       { label: 'Telefon', value: body.phone || '-' },
+      ...(!isSalon && body.seating ? [{ label: 'Sitzplatz', value: body.seating }] : []),
       ...(isSalon
         ? [{ label: 'Service', value: body.service || '-' }]
         : [{ label: 'Personen', value: body.people ? String(body.people) : '-' }]),
@@ -316,6 +328,7 @@ module.exports = async function handler(req: any, res: any) {
       { label: 'Datum', value: displayDate },
       { label: 'Uhrzeit', value: body.time || '-' },
       ...(body.note ? [{ label: 'Notiz', value: body.note }] : []),
+      ...(!isSalon && body.seating ? [{ label: 'Sitzplatz', value: body.seating }] : []),
       ...(isSalon
         ? [{ label: 'Service', value: body.service || '-' }]
         : [{ label: 'Personen', value: body.people ? String(body.people) : '-' }])
@@ -345,6 +358,7 @@ module.exports = async function handler(req: any, res: any) {
         `Name: ${guestName}`,
         `E-Mail: ${body.guestEmail || '-'}`,
         body.phone ? `Telefon: ${body.phone}` : null,
+        !isSalon && body.seating ? `Sitzplatz: ${body.seating}` : null,
         isSalon ? (body.service ? `Service: ${body.service}` : null) : body.people ? `Personen: ${body.people}` : null,
         body.note ? `Notiz: ${body.note}` : null
       ]
@@ -355,33 +369,36 @@ module.exports = async function handler(req: any, res: any) {
       html: restaurantHtml
     });
 
-    await resend.emails.send({
-      from,
-      to: body.guestEmail,
-      subject: `${bookingCopy.confirmTitle} – ${businessName} (${displayDate}, ${body.time})`,
-      replyTo: body.restaurantEmail,
-      text: [
-        `${greeting} ${guestName},`,
-        '',
-        `Ihre ${bookingNounLower} bei ${businessName} wurde erfolgreich bestätigt.`,
-        '',
-        `Datum: ${displayDate}`,
-        `Uhrzeit: ${body.time || '-'}`,
-        body.note ? `Notiz: ${body.note}` : null,
-        isSalon ? (body.service ? `Service: ${body.service}` : null) : body.people ? `Personen: ${body.people}` : null,
-        '',
-        'Bei Rückfragen antworten Sie direkt auf diese E-Mail.',
-        '',
-        'Beste Grüße',
-        `${businessName}`
-      ]
-        .filter(Boolean)
-        .concat(['', 'NexTime - einfache Terminplanung', platformUrl])
-        .join('\n'),
-      html: guestHtml
-    });
+    if (!requestMode) {
+      await resend.emails.send({
+        from,
+        to: body.guestEmail,
+        subject: `${bookingCopy.confirmTitle} – ${businessName} (${displayDate}, ${body.time})`,
+        replyTo: body.restaurantEmail,
+        text: [
+          `${greeting} ${guestName},`,
+          '',
+          `Ihre ${bookingNounLower} bei ${businessName} wurde erfolgreich bestätigt.`,
+          '',
+          `Datum: ${displayDate}`,
+          `Uhrzeit: ${body.time || '-'}`,
+          body.note ? `Notiz: ${body.note}` : null,
+          !isSalon && body.seating ? `Sitzplatz: ${body.seating}` : null,
+          isSalon ? (body.service ? `Service: ${body.service}` : null) : body.people ? `Personen: ${body.people}` : null,
+          '',
+          'Bei Rückfragen antworten Sie direkt auf diese E-Mail.',
+          '',
+          'Beste Grüße',
+          `${businessName}`
+        ]
+          .filter(Boolean)
+          .concat(['', 'NexTime - einfache Terminplanung', platformUrl])
+          .join('\n'),
+        html: guestHtml
+      });
+    }
 
-    res.status(200).json({ success: true });
+    res.status(200).json({ success: true, requestMode });
   } catch (error) {
     console.error('reservations api error', error);
     res.status(500).json({ error: 'Email send failed' });
