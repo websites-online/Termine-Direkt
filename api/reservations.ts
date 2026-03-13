@@ -377,7 +377,7 @@ module.exports = async function handler(req: any, res: any) {
         'NexTime - einfache Terminplanung',
         platformUrl
       ]
-        .filter(Boolean)
+        .filter((line): line is string => line !== null && line !== undefined)
         .join('\r\n')
     );
     const declineMailto = createMailtoLink(
@@ -405,7 +405,7 @@ module.exports = async function handler(req: any, res: any) {
         'Beste Grüße',
         businessName
       ]
-        .filter(Boolean)
+        .filter((line): line is string => line !== null && line !== undefined)
         .join('\r\n')
     );
 
