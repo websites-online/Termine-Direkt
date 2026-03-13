@@ -360,13 +360,17 @@ module.exports = async function handler(req: any, res: any) {
           ? `Ihr Termin bei ${businessName} wurde erfolgreich bestätigt.`
           : `Ihre Reservierung bei ${businessName} wurde erfolgreich bestätigt.`,
         '',
-        `Datum: ${displayDate}`,
-        `Uhrzeit: ${body.time || '-'}`,
-        body.note ? `Notiz: ${body.note}` : null,
-        !isSalon && body.seating ? `Sitzplatz: ${body.seating}` : null,
-        isSalon ? (body.service ? `Service: ${body.service}` : null) : body.people ? `Personen: ${body.people}` : null,
+        'Details:',
+        `  Datum: ${displayDate}`,
+        `  Uhrzeit: ${body.time || '-'}`,
+        !isSalon && body.seating ? `  Sitzplatz: ${body.seating}` : null,
+        isSalon ? (body.service ? `  Service: ${body.service}` : null) : body.people ? `  Personen: ${body.people}` : null,
+        body.note ? `  Notiz: ${body.note}` : null,
         '',
         'Bei Rückfragen antworten Sie direkt auf diese E-Mail.',
+        '',
+        'Beste Grüße',
+        businessName,
         '',
         'NexTime - einfache Terminplanung',
         platformUrl
@@ -377,7 +381,27 @@ module.exports = async function handler(req: any, res: any) {
     const declineMailto = createMailtoLink(
       body.guestEmail || '',
       `${isSalon ? 'Terminanfrage' : 'Reservierungsanfrage'} zu ${displayDate} ${body.time ? `(${body.time})` : ''}`.trim(),
-      `Guten Tag ${guestName},\n\nleider passt der angefragte Termin aktuell nicht.\n\nAlternative:\n\nBeste Grüße\n${businessName}`
+      [
+        `Guten Tag ${guestName},`,
+        '',
+        isSalon
+          ? 'leider passt der angefragte Termin aktuell nicht.'
+          : 'leider passt die angefragte Reservierung aktuell nicht.',
+        '',
+        'Angefragte Daten:',
+        `  Datum: ${displayDate}`,
+        `  Uhrzeit: ${body.time || '-'}`,
+        !isSalon && body.seating ? `  Sitzplatz: ${body.seating}` : null,
+        isSalon ? (body.service ? `  Service: ${body.service}` : null) : body.people ? `  Personen: ${body.people}` : null,
+        '',
+        'Mögliche Alternative:',
+        '  [Bitte hier einen Alternativtermin eintragen]',
+        '',
+        'Beste Grüße',
+        businessName
+      ]
+        .filter(Boolean)
+        .join('\n')
     );
 
     const actionsHtml =
