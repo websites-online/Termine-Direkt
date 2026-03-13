@@ -124,80 +124,12 @@ const extractFromNote = (note: string | null, key: string): string => {
   return match?.[1]?.trim() || '';
 };
 
-const renderRows = (rows: Array<{ label: string; value: string }>): string =>
-  rows
-    .map(
-      (row) => `
-      <tr>
-        <td style="padding:8px 0;color:#64748b;font-size:14px;vertical-align:top">${escapeHtml(row.label)}</td>
-        <td style="padding:8px 0;color:#0f172a;font-size:14px;font-weight:600;text-align:right;vertical-align:top">${escapeHtml(
-          row.value
-        )}</td>
-      </tr>
-    `
-    )
-    .join('');
-
-const buildEmailLayout = ({
-  brand,
-  title,
-  intro,
-  rows,
-  footer
-}: {
-  brand: string;
-  title: string;
-  intro: string;
-  rows: Array<{ label: string; value: string }>;
-  footer: string;
-}): string => `
-  <div style="margin:0;padding:0;background:#f1f5f9">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:24px 12px">
-      <tr>
-        <td align="center">
-          <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden">
-            <tr>
-              <td style="background:linear-gradient(90deg,#4338ca,#4f46e5);padding:18px 24px">
-                <div style="font-family:Arial,Helvetica,sans-serif;color:#ffffff;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700">${escapeHtml(
-                  brand
-                )}</div>
-                <div style="font-family:Arial,Helvetica,sans-serif;color:#ffffff;font-size:24px;font-weight:700;margin-top:4px">${escapeHtml(
-                  title
-                )}</div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:20px 24px 8px;font-family:Arial,Helvetica,sans-serif;color:#334155;font-size:15px;line-height:1.5">
-                ${escapeHtml(intro)}
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:4px 24px 8px">
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e2e8f0">
-                  ${renderRows(rows)}
-                </table>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:14px 24px 24px;font-family:Arial,Helvetica,sans-serif;color:#64748b;font-size:13px;line-height:1.5">
-                <div style="white-space:pre-line;text-align:center">${escapeHtml(footer)}</div>
-                <div style="margin-top:16px;text-align:center">
-                  <a href="${escapeHtml(normalizedPlatformUrl)}" style="color:#4338ca;text-decoration:none;font-weight:700">NexTime - einfache Terminplanung</a>
-                </div>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </div>
-`;
-
 const renderResultPage = (
   title: string,
   message: string,
   status: 'ok' | 'error',
-  actions?: Array<{ href: string; label: string; variant?: 'primary' | 'secondary' }>
+  actions?: Array<{ href: string; label: string; variant?: 'primary' | 'secondary' }>,
+  autoOpenHref?: string
 ) => `
 <!doctype html>
 <html lang="de">
@@ -249,6 +181,13 @@ const renderResultPage = (
         </div>
       </div>
     </div>
+    ${
+      autoOpenHref
+        ? `<script>setTimeout(function(){window.location.href=${JSON.stringify(
+            autoOpenHref
+          )};},120);</script>`
+        : ''
+    }
   </body>
 </html>`;
 
@@ -481,101 +420,45 @@ module.exports = async function handler(req: any, res: any) {
       console.error('booking request status update failed', updateRequestError);
     }
 
-    if (!process.env.RESEND_API_KEY || !process.env.FROM_EMAIL) {
-      sendHtmlResponse(
-        res,
-        200,
-        renderResultPage(
-          'Anfrage bestätigt',
-          'Die Buchung wurde gespeichert. Kundenmail konnte nicht versendet werden (Mail-Konfiguration fehlt).',
-          'ok'
-        )
-      );
-      return;
-    }
-
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { Resend } = require('resend');
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      const fromNameSafe =
-        businessName
-          .replace(/[^\p{L}\p{N}\s&\-'.]/gu, '')
-          .trim()
-          .slice(0, 60) || 'Terminservice';
-      const from = `${fromNameSafe} <${process.env.FROM_EMAIL}>`;
-      const title = isSalon ? 'Termin bestätigt' : 'Reservierung bestätigt';
-      const greeting = getTimeBasedGreeting();
-      const rows = [
-        { label: isSalon ? 'Salon' : 'Restaurant', value: businessName },
-        { label: 'Datum', value: displayDate },
-        { label: 'Uhrzeit', value: requestRow.time || '-' },
-        ...(customerNote ? [{ label: 'Notiz', value: customerNote }] : []),
-        ...(!isSalon && seating ? [{ label: 'Sitzplatz', value: seating }] : []),
-        ...(isSalon
-          ? [{ label: 'Service', value: service || '-' }]
-          : [{ label: 'Personen', value: requestRow.people ? String(requestRow.people) : '-' }])
-      ];
-      const intro = isSalon
-        ? `${greeting} ${guestName}, Ihr Termin bei ${businessName} wurde erfolgreich bestätigt.`
-        : `${greeting} ${guestName}, Ihre Reservierung bei ${businessName} wurde erfolgreich bestätigt.`;
-      const html = buildEmailLayout({
-        brand: businessName,
-        title,
-        intro,
-        rows,
-        footer:
-          'Bei Rückfragen können Sie direkt auf diese E-Mail antworten.\nDiese Bestätigung wurde auf Ihre Anfrage hin erstellt.'
-      });
-
-      await resend.emails.send({
-        from,
-        to: requestRow.guest_email,
-        subject: `${title} | ${displayDate} ${requestRow.time ? `um ${requestRow.time}` : ''}`.trim(),
-        replyTo: requestRow.restaurant_email,
-        text: [
-          `${greeting} ${guestName},`,
-          '',
-          isSalon
-            ? `Ihr Termin bei ${businessName} wurde erfolgreich bestätigt.`
-            : `Ihre Reservierung bei ${businessName} wurde erfolgreich bestätigt.`,
-          '',
-          `Datum: ${displayDate}`,
-          `Uhrzeit: ${requestRow.time || '-'}`,
-          customerNote ? `Notiz: ${customerNote}` : null,
-          !isSalon && seating ? `Sitzplatz: ${seating}` : null,
-          isSalon ? (service ? `Service: ${service}` : null) : requestRow.people ? `Personen: ${requestRow.people}` : null,
-          '',
-          'Bei Rückfragen antworten Sie direkt auf diese E-Mail.',
-          '',
-          'NexTime - einfache Terminplanung',
-          normalizedPlatformUrl
-        ]
-          .filter(Boolean)
-          .join('\n'),
-        html
-      });
-    } catch (mailError: any) {
-      console.error('approval confirmation mail failed', mailError);
-      sendHtmlResponse(
-        res,
-        200,
-        renderResultPage(
-          'Anfrage bestätigt',
-          'Die Buchung wurde gespeichert. Die Mail an den Gast konnte nicht gesendet werden.',
-          'ok'
-        )
-      );
-      return;
-    }
+    const greeting = getTimeBasedGreeting();
+    const confirmationSubject = `${isSalon ? 'Termin bestätigt' : 'Reservierung bestätigt'} | ${displayDate} ${
+      requestRow.time ? `um ${requestRow.time}` : ''
+    }`.trim();
+    const confirmationBody = [
+      `${greeting} ${guestName},`,
+      '',
+      isSalon
+        ? `Ihr Termin bei ${businessName} wurde erfolgreich bestätigt.`
+        : `Ihre Reservierung bei ${businessName} wurde erfolgreich bestätigt.`,
+      '',
+      `Datum: ${displayDate}`,
+      `Uhrzeit: ${requestRow.time || '-'}`,
+      customerNote ? `Notiz: ${customerNote}` : null,
+      !isSalon && seating ? `Sitzplatz: ${seating}` : null,
+      isSalon ? (service ? `Service: ${service}` : null) : requestRow.people ? `Personen: ${requestRow.people}` : null,
+      '',
+      'Bei Rückfragen antworten Sie direkt auf diese E-Mail.',
+      '',
+      'NexTime - einfache Terminplanung',
+      normalizedPlatformUrl
+    ]
+      .filter(Boolean)
+      .join('\n');
+    const confirmMailto = createMailtoLink(
+      requestRow.guest_email || '',
+      confirmationSubject,
+      confirmationBody
+    );
 
     sendHtmlResponse(
       res,
       200,
       renderResultPage(
         'Anfrage bestätigt',
-        'Die Anfrage wurde als Buchung übernommen und der Gast wurde automatisch informiert.',
-        'ok'
+        'Die Anfrage wurde als Buchung übernommen. Senden Sie jetzt die Bestätigung manuell an den Gast.',
+        'ok',
+        [{ href: confirmMailto, label: 'Bestätigungsmail öffnen', variant: 'secondary' }],
+        confirmMailto
       )
     );
   } catch (error: any) {
