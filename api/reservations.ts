@@ -360,6 +360,7 @@ module.exports = async function handler(req: any, res: any) {
           ? `Ihr Termin bei ${businessName} wurde erfolgreich bestätigt.`
           : `Ihre Reservierung bei ${businessName} wurde erfolgreich bestätigt.`,
         '',
+        '',
         'Details:',
         `  Datum: ${displayDate}`,
         `  Uhrzeit: ${body.time || '-'}`,
@@ -368,6 +369,7 @@ module.exports = async function handler(req: any, res: any) {
         body.note ? `  Notiz: ${body.note}` : null,
         '',
         'Bei Rückfragen antworten Sie direkt auf diese E-Mail.',
+        '',
         '',
         'Beste Grüße',
         businessName,
@@ -388,6 +390,7 @@ module.exports = async function handler(req: any, res: any) {
           ? 'leider passt der angefragte Termin aktuell nicht.'
           : 'leider passt die angefragte Reservierung aktuell nicht.',
         '',
+        '',
         'Angefragte Daten:',
         `  Datum: ${displayDate}`,
         `  Uhrzeit: ${body.time || '-'}`,
@@ -395,7 +398,9 @@ module.exports = async function handler(req: any, res: any) {
         isSalon ? (body.service ? `  Service: ${body.service}` : null) : body.people ? `  Personen: ${body.people}` : null,
         '',
         'Mögliche Alternative:',
+        '',
         '  [Bitte hier einen Alternativtermin eintragen]',
+        '',
         '',
         'Beste Grüße',
         businessName
