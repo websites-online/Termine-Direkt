@@ -338,7 +338,7 @@ module.exports = async function handler(req: any, res: any) {
             .status(500)
             .json({
               error:
-                'DB table "booking_requests" fehlt. Bitte SQL-Migration ausfuehren und erneut versuchen.'
+                'DB table "booking_requests" fehlt. Bitte SQL-Migration ausführen und erneut versuchen.'
             });
           return;
         }
@@ -402,16 +402,16 @@ module.exports = async function handler(req: any, res: any) {
     const declineMailto = createMailtoLink(
       body.guestEmail || '',
       `${isSalon ? 'Terminanfrage' : 'Reservierungsanfrage'} zu ${displayDate} ${body.time ? `(${body.time})` : ''}`.trim(),
-      `Guten Tag ${guestName},\n\nleider passt der angefragte Termin aktuell nicht.\n\nAlternative:\n\nBeste Gruesse\n${businessName}`
+      `Guten Tag ${guestName},\n\nleider passt der angefragte Termin aktuell nicht.\n\nAlternative:\n\nBeste Grüße\n${businessName}`
     );
 
     const actionsHtml =
       requestMode && approveUrl
-        ? `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%"><tr><td style="padding:0 0 10px"><a href="${escapeHtml(
+        ? `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%"><tr><td style="padding:0 0 10px;text-align:center"><a href="${escapeHtml(
             approveUrl
-          )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#4338ca;color:#ffffff;text-decoration:none;font-weight:700">Anfrage bestaetigen</a></td></tr><tr><td><a href="${escapeHtml(
+          )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#4338ca;color:#ffffff;text-decoration:none;font-weight:700">Anfrage bestätigen</a></td></tr><tr><td style="text-align:center"><a href="${escapeHtml(
             declineMailto
-          )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#ffffff;color:#4338ca;text-decoration:none;font-weight:700;border:1px solid #c7d2fe">Anfrage beantworten</a></td></tr><tr><td style="padding-top:10px;color:#64748b;font-size:12px;line-height:1.4">Wenn der Termin nicht passt, klicken Sie auf "Anfrage beantworten" und senden Sie eine passende Rueckmeldung manuell.</td></tr></table>`
+          )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#ffffff;color:#4338ca;text-decoration:none;font-weight:700;border:1px solid #c7d2fe">Anfrage beantworten</a></td></tr><tr><td style="padding-top:10px;color:#64748b;font-size:12px;line-height:1.4;text-align:center">Wenn der Termin nicht passt, klicken Sie auf "Anfrage beantworten" und senden Sie eine passende Rückmeldung manuell.</td></tr></table>`
         : undefined;
 
     const restaurantHtml = buildEmailLayout({
@@ -469,7 +469,7 @@ module.exports = async function handler(req: any, res: any) {
           requestMode && approveUrl
             ? [
                 '',
-                `Anfrage bestaetigen: ${approveUrl}`,
+                `Anfrage bestätigen: ${approveUrl}`,
                 `Anfrage beantworten: ${declineMailto}`
               ]
             : []

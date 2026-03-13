@@ -252,7 +252,8 @@ const renderConfirmPage = ({
       td { padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
       td:first-child { color: #64748b; }
       td:last-child { color: #0f172a; font-weight: 600; text-align: right; }
-      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; justify-content: center; }
+      .actions form { margin: 0; }
       button, .secondary { display: inline-block; border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 700; text-decoration: none; cursor: pointer; }
       button { border: none; background: #4338ca; color: #fff; }
       .secondary { border: 1px solid #c7d2fe; color: #4338ca; background: #fff; }
@@ -262,7 +263,7 @@ const renderConfirmPage = ({
   <body>
     <div class="card">
       <h1>Anfrage pruefen</h1>
-      <p class="muted">Bitte bestaetigen Sie nur, wenn dieser Termin fix angenommen wird. Diese Aktion speichert die Buchung verbindlich und informiert den Gast automatisch.</p>
+      <p class="muted">Bitte bestätigen Sie nur, wenn dieser Termin fix angenommen wird. Diese Aktion speichert die Buchung verbindlich und informiert den Gast automatisch.</p>
       <table>
         <tr><td>Betrieb</td><td>${escapeHtml(businessName)}</td></tr>
         <tr><td>Name</td><td>${escapeHtml(guestName)}</td></tr>
@@ -277,11 +278,11 @@ const renderConfirmPage = ({
       </table>
       <div class="actions">
         <form method="post" action="${escapeHtml(postUrl)}">
-          <button type="submit">Anfrage jetzt bestaetigen</button>
+          <button type="submit">Anfrage jetzt bestätigen</button>
         </form>
         <a class="secondary" href="${escapeHtml(declineMailto)}">Anfrage beantworten</a>
       </div>
-      <p class="hint">Hinweis: Wenn der Termin nicht passt, nutzen Sie "Anfrage beantworten" und senden Sie eine manuelle Rueckmeldung an den Gast.</p>
+      <p class="hint">Hinweis: Wenn der Termin nicht passt, nutzen Sie "Anfrage beantworten" und senden Sie eine manuelle Rückmeldung an den Gast.</p>
     </div>
   </body>
 </html>`;
@@ -324,8 +325,8 @@ module.exports = async function handler(req: any, res: any) {
         res,
         400,
         renderResultPage(
-          'Link ungueltig oder abgelaufen',
-          'Bitte oeffnen Sie die aktuelle Anfrage-Mail erneut und klicken Sie auf den Bestaetigungslink.',
+          'Link ungültig oder abgelaufen',
+          'Bitte öffnen Sie die aktuelle Anfrage-Mail erneut und klicken Sie auf den Bestätigungslink.',
           'error'
         )
       );
@@ -406,7 +407,7 @@ module.exports = async function handler(req: any, res: any) {
     const declineMailto = createMailtoLink(
       requestRow.guest_email || '',
       `${isSalon ? 'Terminanfrage' : 'Reservierungsanfrage'} zu ${displayDate} ${requestRow.time ? `(${requestRow.time})` : ''}`.trim(),
-      `Guten Tag ${guestName},\n\nleider passt der angefragte Termin aktuell nicht.\n\nAlternative:\n\nBeste Gruesse\n${businessName}`
+      `Guten Tag ${guestName},\n\nleider passt der angefragte Termin aktuell nicht.\n\nAlternative:\n\nBeste Grüße\n${businessName}`
     );
 
     if (req.method === 'GET') {
@@ -415,8 +416,8 @@ module.exports = async function handler(req: any, res: any) {
           res,
           200,
           renderResultPage(
-            'Bereits bestaetigt',
-            'Diese Anfrage wurde bereits bestaetigt und als Buchung uebernommen.',
+            'Bereits bestätigt',
+            'Diese Anfrage wurde bereits bestätigt und als Buchung übernommen.',
             'ok'
           )
         );
@@ -429,7 +430,7 @@ module.exports = async function handler(req: any, res: any) {
           200,
           renderResultPage(
             'Anfrage bereits beantwortet',
-            'Diese Anfrage wurde bereits als nicht verfuegbar markiert.',
+            'Diese Anfrage wurde bereits als nicht verfügbar markiert.',
             'ok'
           )
         );
@@ -476,8 +477,8 @@ module.exports = async function handler(req: any, res: any) {
         res,
         200,
         renderResultPage(
-          'Bereits bestaetigt',
-          'Diese Anfrage wurde bereits als Buchung uebernommen.',
+          'Bereits bestätigt',
+          'Diese Anfrage wurde bereits als Buchung übernommen.',
           'ok'
         )
       );
@@ -495,7 +496,7 @@ module.exports = async function handler(req: any, res: any) {
       sendHtmlResponse(
         res,
         500,
-        renderResultPage('Fehler beim Pruefen', countError.message, 'error')
+        renderResultPage('Fehler beim Prüfen', countError.message, 'error')
       );
       return;
     }
@@ -506,7 +507,7 @@ module.exports = async function handler(req: any, res: any) {
         409,
         renderResultPage(
           'Slot ist bereits voll',
-          'Der gewaehlte Slot ist inzwischen ausgebucht. Bitte antworten Sie dem Gast mit einem Alternativtermin.',
+          'Der gewählte Slot ist inzwischen ausgebucht. Bitte antworten Sie dem Gast mit einem Alternativtermin.',
           'error'
         )
       );
@@ -533,8 +534,8 @@ module.exports = async function handler(req: any, res: any) {
           res,
           200,
           renderResultPage(
-            'Bereits bestaetigt',
-            'Diese Anfrage wurde bereits als Buchung uebernommen.',
+            'Bereits bestätigt',
+            'Diese Anfrage wurde bereits als Buchung übernommen.',
             'ok'
           )
         );
@@ -546,7 +547,7 @@ module.exports = async function handler(req: any, res: any) {
           500,
           renderResultPage(
             'Migration fehlt',
-            'Die Spalte booking_request_id in reservations fehlt noch. Bitte SQL-Migration ausfuehren.',
+            'Die Spalte booking_request_id in reservations fehlt noch. Bitte SQL-Migration ausführen.',
             'error'
           )
         );
@@ -555,7 +556,7 @@ module.exports = async function handler(req: any, res: any) {
       sendHtmlResponse(
         res,
         500,
-        renderResultPage('Bestaetigung fehlgeschlagen', insertError.message, 'error')
+        renderResultPage('Bestätigung fehlgeschlagen', insertError.message, 'error')
       );
       return;
     }
@@ -582,7 +583,7 @@ module.exports = async function handler(req: any, res: any) {
         res,
         200,
         renderResultPage(
-          'Anfrage bestaetigt',
+          'Anfrage bestätigt',
           'Die Buchung wurde gespeichert. Kundenmail konnte nicht versendet werden (Mail-Konfiguration fehlt).',
           'ok'
         )
@@ -596,7 +597,7 @@ module.exports = async function handler(req: any, res: any) {
       const resend = new Resend(process.env.RESEND_API_KEY);
 
       const from = `${businessName} <${process.env.FROM_EMAIL}>`;
-      const title = isSalon ? 'Termin bestaetigt' : 'Reservierung bestaetigt';
+      const title = isSalon ? 'Termin bestätigt' : 'Reservierung bestätigt';
       const greeting = getTimeBasedGreeting();
       const rows = [
         { label: isSalon ? 'Salon' : 'Restaurant', value: businessName },
@@ -609,14 +610,14 @@ module.exports = async function handler(req: any, res: any) {
           : [{ label: 'Personen', value: requestRow.people ? String(requestRow.people) : '-' }])
       ];
       const intro = isSalon
-        ? `${greeting} ${guestName}, Ihr Termin bei ${businessName} wurde erfolgreich bestaetigt.`
-        : `${greeting} ${guestName}, Ihre Reservierung bei ${businessName} wurde erfolgreich bestaetigt.`;
+        ? `${greeting} ${guestName}, Ihr Termin bei ${businessName} wurde erfolgreich bestätigt.`
+        : `${greeting} ${guestName}, Ihre Reservierung bei ${businessName} wurde erfolgreich bestätigt.`;
       const html = buildEmailLayout({
         brand: businessName,
         title,
         intro,
         rows,
-        footer: 'Bei Rueckfragen koennen Sie direkt auf diese E-Mail antworten.\nVielen Dank fuer Ihre Buchung.'
+        footer: 'Bei Rückfragen können Sie direkt auf diese E-Mail antworten.\nVielen Dank für Ihre Buchung.'
       });
 
       await resend.emails.send({
@@ -628,8 +629,8 @@ module.exports = async function handler(req: any, res: any) {
           `${greeting} ${guestName},`,
           '',
           isSalon
-            ? `Ihr Termin bei ${businessName} wurde erfolgreich bestaetigt.`
-            : `Ihre Reservierung bei ${businessName} wurde erfolgreich bestaetigt.`,
+            ? `Ihr Termin bei ${businessName} wurde erfolgreich bestätigt.`
+            : `Ihre Reservierung bei ${businessName} wurde erfolgreich bestätigt.`,
           '',
           `Datum: ${displayDate}`,
           `Uhrzeit: ${requestRow.time || '-'}`,
@@ -637,7 +638,7 @@ module.exports = async function handler(req: any, res: any) {
           !isSalon && seating ? `Sitzplatz: ${seating}` : null,
           isSalon ? (service ? `Service: ${service}` : null) : requestRow.people ? `Personen: ${requestRow.people}` : null,
           '',
-          'Bei Rueckfragen antworten Sie direkt auf diese E-Mail.',
+          'Bei Rückfragen antworten Sie direkt auf diese E-Mail.',
           '',
           'NexTime - einfache Terminplanung',
           normalizedPlatformUrl
@@ -652,7 +653,7 @@ module.exports = async function handler(req: any, res: any) {
         res,
         200,
         renderResultPage(
-          'Anfrage bestaetigt',
+          'Anfrage bestätigt',
           'Die Buchung wurde gespeichert. Die Mail an den Gast konnte nicht gesendet werden.',
           'ok'
         )
@@ -664,8 +665,8 @@ module.exports = async function handler(req: any, res: any) {
       res,
       200,
       renderResultPage(
-        'Anfrage bestaetigt',
-        'Die Anfrage wurde als Buchung uebernommen und der Gast wurde automatisch informiert.',
+        'Anfrage bestätigt',
+        'Die Anfrage wurde als Buchung übernommen und der Gast wurde automatisch informiert.',
         'ok'
       )
     );
@@ -676,7 +677,7 @@ module.exports = async function handler(req: any, res: any) {
       500,
       renderResultPage(
         'Interner Fehler',
-        error?.message || 'Unbekannter Fehler beim Bestaetigen der Anfrage.',
+        error?.message || 'Unbekannter Fehler beim Bestätigen der Anfrage.',
         'error'
       )
     );
