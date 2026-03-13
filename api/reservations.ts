@@ -14,10 +14,6 @@ type ReservationBody = {
   note?: string;
 };
 
-type BookingRequestInsertResult = {
-  id: string;
-};
-
 const escapeHtml = (value: unknown): string =>
   String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -44,36 +40,6 @@ const platformUrl =
   process.env.PUBLIC_SITE_URL?.trim() ||
   process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
   'https://nextime-booking.de';
-
-const normalizedPlatformUrl = platformUrl.replace(/\/+$/, '');
-
-const getActionSecret = (): string => {
-  const secret = process.env.BOOKING_ACTION_SECRET?.trim();
-  if (!secret) {
-    throw new Error('Missing BOOKING_ACTION_SECRET');
-  }
-  return secret;
-};
-
-const toBase64Url = (value: string): string =>
-  Buffer.from(value, 'utf8')
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/g, '');
-
-const createApprovalToken = (requestId: string): string => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const crypto = require('crypto');
-  const expiresAt = Date.now() + 1000 * 60 * 60 * 72; // 72 Stunden
-  const payload = JSON.stringify({ requestId, exp: expiresAt });
-  const payloadPart = toBase64Url(payload);
-  const signature = crypto
-    .createHmac('sha256', getActionSecret())
-    .update(payloadPart)
-    .digest('hex');
-  return `${payloadPart}.${signature}`;
-};
 
 const createMailtoLink = (email: string, subject: string, body: string): string =>
   `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
@@ -265,10 +231,6 @@ module.exports = async function handler(req: any, res: any) {
       .maybeSingle();
     const slotCapacity = typeof company?.slot_capacity === 'number' ? company.slot_capacity : 3;
     const requestMode = company?.booking_mode === 'request';
-    if (requestMode && !process.env.BOOKING_ACTION_SECRET?.trim()) {
-      res.status(500).json({ error: 'Missing BOOKING_ACTION_SECRET' });
-      return;
-    }
 
     if (!requestMode) {
       const { count, error: countError } = await supabase
@@ -324,14 +286,8 @@ module.exports = async function handler(req: any, res: any) {
       time: body.time
     };
 
-    let requestId: string | null = null;
-
     if (requestMode) {
-      const { data: requestInsertData, error: requestInsertError } = await supabase
-        .from('booking_requests')
-        .insert(bookingRecord)
-        .select('id')
-        .single();
+      const { error: requestInsertError } = await supabase.from('booking_requests').insert(bookingRecord);
       if (requestInsertError) {
         if (isMissingTableError(requestInsertError, 'booking_requests')) {
           res
@@ -345,7 +301,6 @@ module.exports = async function handler(req: any, res: any) {
         res.status(500).json({ error: requestInsertError.message });
         return;
       }
-      requestId = (requestInsertData as BookingRequestInsertResult)?.id || null;
     } else {
       const { error: insertError } = await supabase.from('reservations').insert(bookingRecord);
       if (insertError) {
@@ -395,10 +350,30 @@ module.exports = async function handler(req: any, res: any) {
       { label: 'Notiz', value: body.note || '-' }
     ];
 
-    const approvalToken = requestMode && requestId ? createApprovalToken(requestId) : '';
-    const approveUrl = approvalToken
-      ? `${normalizedPlatformUrl}/api/booking-requests/approve?token=${encodeURIComponent(approvalToken)}`
-      : '';
+    const approveMailto = createMailtoLink(
+      body.guestEmail || '',
+      `${bookingCopy.confirmTitle} | ${displayDate} ${body.time ? `um ${body.time}` : ''}`.trim(),
+      [
+        `${greeting} ${guestName},`,
+        '',
+        isSalon
+          ? `Ihr Termin bei ${businessName} wurde erfolgreich bestätigt.`
+          : `Ihre Reservierung bei ${businessName} wurde erfolgreich bestätigt.`,
+        '',
+        `Datum: ${displayDate}`,
+        `Uhrzeit: ${body.time || '-'}`,
+        body.note ? `Notiz: ${body.note}` : null,
+        !isSalon && body.seating ? `Sitzplatz: ${body.seating}` : null,
+        isSalon ? (body.service ? `Service: ${body.service}` : null) : body.people ? `Personen: ${body.people}` : null,
+        '',
+        'Bei Rückfragen antworten Sie direkt auf diese E-Mail.',
+        '',
+        'NexTime - einfache Terminplanung',
+        platformUrl
+      ]
+        .filter(Boolean)
+        .join('\n')
+    );
     const declineMailto = createMailtoLink(
       body.guestEmail || '',
       `${isSalon ? 'Terminanfrage' : 'Reservierungsanfrage'} zu ${displayDate} ${body.time ? `(${body.time})` : ''}`.trim(),
@@ -406,12 +381,12 @@ module.exports = async function handler(req: any, res: any) {
     );
 
     const actionsHtml =
-      requestMode && approveUrl
+      requestMode
         ? `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%"><tr><td style="padding:0 0 10px;text-align:center"><a href="${escapeHtml(
-            approveUrl
-          )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#4338ca;color:#ffffff;text-decoration:none;font-weight:700">Anfrage bestätigen</a></td></tr><tr><td style="text-align:center"><a href="${escapeHtml(
+            approveMailto
+          )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#4338ca;color:#ffffff;text-decoration:none;font-weight:700">Anfrage annehmen</a></td></tr><tr><td style="text-align:center"><a href="${escapeHtml(
             declineMailto
-          )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#ffffff;color:#4338ca;text-decoration:none;font-weight:700;border:1px solid #c7d2fe">Anfrage beantworten</a></td></tr><tr><td style="padding-top:10px;color:#64748b;font-size:12px;line-height:1.4;text-align:center">Wenn der Termin nicht passt, klicken Sie auf "Anfrage beantworten" und senden Sie eine passende Rückmeldung manuell.</td></tr></table>`
+          )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#ffffff;color:#4338ca;text-decoration:none;font-weight:700;border:1px solid #c7d2fe">Anfrage ablehnen</a></td></tr><tr><td style="padding-top:10px;color:#64748b;font-size:12px;line-height:1.4;text-align:center">Beide Aktionen öffnen direkt eine Mailvorlage in Ihrem Mailprogramm.</td></tr></table>`
         : undefined;
 
     const restaurantHtml = buildEmailLayout({
@@ -466,11 +441,11 @@ module.exports = async function handler(req: any, res: any) {
       ]
         .filter(Boolean)
         .concat(
-          requestMode && approveUrl
+          requestMode
             ? [
                 '',
-                `Anfrage bestätigen: ${approveUrl}`,
-                `Anfrage beantworten: ${declineMailto}`
+                `Anfrage annehmen: ${approveMailto}`,
+                `Anfrage ablehnen: ${declineMailto}`
               ]
             : []
         )
