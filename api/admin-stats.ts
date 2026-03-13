@@ -9,6 +9,11 @@ type ReservationRow = {
   date?: string | null;
 };
 
+type BookingRequestRow = {
+  restaurant_slug?: string | null;
+  date?: string | null;
+};
+
 const getClient = () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { createClient } = require('@supabase/supabase-js');
@@ -109,6 +114,14 @@ const fmt = (date: Date | null): string | null => {
   return `${y}-${m}-${d}`;
 };
 
+const isMissingTableError = (error: any, tableName: string): boolean => {
+  const message = String(error?.message || '').toLowerCase();
+  return (
+    error?.code === '42P01' ||
+    (message.includes('does not exist') && message.includes(tableName.toLowerCase()))
+  );
+};
+
 module.exports = async function handler(req: any, res: any) {
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -130,8 +143,8 @@ module.exports = async function handler(req: any, res: any) {
       return;
     }
 
-    const reservations: ReservationRow[] = [];
     const pageSize = 1000;
+    const reservations: ReservationRow[] = [];
     let fromIndex = 0;
     while (true) {
       const { data, error } = await supabase
@@ -144,6 +157,30 @@ module.exports = async function handler(req: any, res: any) {
       }
       const rows = (data || []) as ReservationRow[];
       reservations.push(...rows);
+      if (rows.length < pageSize) {
+        break;
+      }
+      fromIndex += pageSize;
+    }
+
+    const bookingRequests: BookingRequestRow[] = [];
+    let requestsTableAvailable = true;
+    fromIndex = 0;
+    while (true) {
+      const { data, error } = await supabase
+        .from('booking_requests')
+        .select('restaurant_slug,date')
+        .range(fromIndex, fromIndex + pageSize - 1);
+      if (error) {
+        if (isMissingTableError(error, 'booking_requests')) {
+          requestsTableAvailable = false;
+          break;
+        }
+        res.status(500).json({ error: error.message });
+        return;
+      }
+      const rows = (data || []) as BookingRequestRow[];
+      bookingRequests.push(...rows);
       if (rows.length < pageSize) {
         break;
       }
@@ -177,14 +214,29 @@ module.exports = async function handler(req: any, res: any) {
       bookingCounts.set(slug, (bookingCounts.get(slug) || 0) + 1);
     });
 
+    const requestCounts = new Map<string, number>();
+    bookingRequests.forEach((row) => {
+      const slug = row.restaurant_slug || '';
+      if (!slug || !isInRange(row.date)) {
+        return;
+      }
+      requestCounts.set(slug, (requestCounts.get(slug) || 0) + 1);
+    });
+
     const rows = Array.from(companyMap.values())
-      .map((company) => ({
-        slug: company.slug,
-        name: company.name,
-        serviceType: company.service_type || 'restaurant',
-        bookings: bookingCounts.get(company.slug) || 0
-      }))
-      .sort((a, b) => b.bookings - a.bookings || a.name.localeCompare(b.name, 'de'));
+      .map((company) => {
+        const bookings = bookingCounts.get(company.slug) || 0;
+        const requests = requestCounts.get(company.slug) || 0;
+        return {
+          slug: company.slug,
+          name: company.name,
+          serviceType: company.service_type || 'restaurant',
+          bookings,
+          requests,
+          total: bookings + requests
+        };
+      })
+      .sort((a, b) => b.total - a.total || b.bookings - a.bookings || a.name.localeCompare(b.name, 'de'));
 
     res.status(200).json({
       period,
@@ -192,6 +244,9 @@ module.exports = async function handler(req: any, res: any) {
       to: fmt(range.to),
       companiesTotal: companyMap.size,
       bookingsTotal: rows.reduce((sum, row) => sum + row.bookings, 0),
+      requestsTotal: rows.reduce((sum, row) => sum + row.requests, 0),
+      interactionsTotal: rows.reduce((sum, row) => sum + row.total, 0),
+      requestsTableAvailable,
       rows
     });
   } catch (error: any) {
@@ -199,4 +254,3 @@ module.exports = async function handler(req: any, res: any) {
     res.status(500).json({ error: error.message || 'Server error' });
   }
 };
-

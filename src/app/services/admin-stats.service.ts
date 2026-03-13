@@ -11,6 +11,8 @@ export interface AdminStatsRow {
   name: string;
   serviceType: 'restaurant' | 'friseur';
   bookings: number;
+  requests: number;
+  total: number;
 }
 
 export interface AdminStatsResponse {
@@ -19,6 +21,9 @@ export interface AdminStatsResponse {
   to: string | null;
   companiesTotal: number;
   bookingsTotal: number;
+  requestsTotal: number;
+  interactionsTotal: number;
+  requestsTableAvailable?: boolean;
   rows: AdminStatsRow[];
 }
 
@@ -92,15 +97,18 @@ export class AdminStatsService {
         }
       }
       const bookings = reservations.filter((item) => inRange(item.date)).length;
+      const requests = 0;
       return {
         slug: company.slug,
         name: company.name,
         serviceType: company.serviceType || 'restaurant',
-        bookings
+        bookings,
+        requests,
+        total: bookings + requests
       };
     });
 
-    rows.sort((a, b) => b.bookings - a.bookings || a.name.localeCompare(b.name, 'de'));
+    rows.sort((a, b) => b.total - a.total || b.bookings - a.bookings || a.name.localeCompare(b.name, 'de'));
 
     return {
       period,
@@ -108,6 +116,8 @@ export class AdminStatsService {
       to: this.formatDate(range.to),
       companiesTotal: companies.length,
       bookingsTotal: rows.reduce((sum, row) => sum + row.bookings, 0),
+      requestsTotal: rows.reduce((sum, row) => sum + row.requests, 0),
+      interactionsTotal: rows.reduce((sum, row) => sum + row.total, 0),
       rows
     };
   }
@@ -208,4 +218,3 @@ export class AdminStatsService {
     return `${y}-${m}-${d}`;
   }
 }
-

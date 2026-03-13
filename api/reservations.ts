@@ -149,6 +149,14 @@ const getClient = () => {
   return createClient(url, key);
 };
 
+const isMissingTableError = (error: any, tableName: string): boolean => {
+  const message = String(error?.message || '').toLowerCase();
+  return (
+    error?.code === '42P01' ||
+    (message.includes('does not exist') && message.includes(tableName.toLowerCase()))
+  );
+};
+
 module.exports = async function handler(req: any, res: any) {
   if (req.method === 'GET') {
     try {
@@ -253,19 +261,36 @@ module.exports = async function handler(req: any, res: any) {
       body.note ? `Notiz: ${body.note}` : null
     ].filter(Boolean);
 
-    if (!requestMode) {
-      const { error: insertError } = await supabase.from('reservations').insert({
-        restaurant_slug: body.restaurantSlug,
-        restaurant_name: body.restaurantName || null,
-        restaurant_email: body.restaurantEmail,
-        guest_name: body.guestName || null,
-        guest_email: body.guestEmail,
-        phone: body.phone || null,
-        people: body.people || null,
-        note: noteParts.length > 0 ? noteParts.join(' | ') : null,
-        date: body.date,
-        time: body.time
-      });
+    const bookingRecord = {
+      restaurant_slug: body.restaurantSlug,
+      restaurant_name: body.restaurantName || null,
+      restaurant_email: body.restaurantEmail,
+      guest_name: body.guestName || null,
+      guest_email: body.guestEmail,
+      phone: body.phone || null,
+      people: body.people || null,
+      note: noteParts.length > 0 ? noteParts.join(' | ') : null,
+      date: body.date,
+      time: body.time
+    };
+
+    if (requestMode) {
+      const { error: requestInsertError } = await supabase.from('booking_requests').insert(bookingRecord);
+      if (requestInsertError) {
+        if (isMissingTableError(requestInsertError, 'booking_requests')) {
+          res
+            .status(500)
+            .json({
+              error:
+                'DB table "booking_requests" fehlt. Bitte SQL-Migration ausfuehren und erneut versuchen.'
+            });
+          return;
+        }
+        res.status(500).json({ error: requestInsertError.message });
+        return;
+      }
+    } else {
+      const { error: insertError } = await supabase.from('reservations').insert(bookingRecord);
       if (insertError) {
         res.status(500).json({ error: insertError.message });
         return;
