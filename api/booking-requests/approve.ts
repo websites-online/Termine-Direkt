@@ -193,7 +193,12 @@ const buildEmailLayout = ({
   </div>
 `;
 
-const renderResultPage = (title: string, message: string, status: 'ok' | 'error') => `
+const renderResultPage = (
+  title: string,
+  message: string,
+  status: 'ok' | 'error',
+  actions?: Array<{ href: string; label: string; variant?: 'primary' | 'secondary' }>
+) => `
 <!doctype html>
 <html lang="de">
   <head>
@@ -201,21 +206,48 @@ const renderResultPage = (title: string, message: string, status: 'ok' | 'error'
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${escapeHtml(title)}</title>
     <style>
-      body { font-family: Arial, Helvetica, sans-serif; background: #f1f5f9; margin: 0; padding: 24px; }
-      .card { max-width: 720px; margin: 20px auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; }
-      h1 { margin: 0 0 10px; font-size: 24px; color: #0f172a; }
-      p { margin: 0; color: #334155; line-height: 1.5; }
+      :root { color-scheme: light; }
+      body { font-family: Arial, Helvetica, sans-serif; background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%); margin: 0; padding: 24px; }
+      .wrap { max-width: 760px; margin: 26px auto; }
+      .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; box-shadow: 0 18px 50px rgba(15, 23, 42, 0.10); }
+      .head { padding: 18px 22px; background: linear-gradient(95deg, #4338ca 0%, #4f46e5 100%); color: #fff; }
+      .badge { display: inline-block; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; background: rgba(255,255,255,0.18); margin-bottom: 10px; }
+      .body { padding: 24px 22px 22px; }
+      h1 { margin: 0 0 10px; font-size: 28px; color: #0f172a; }
+      p { margin: 0; color: #334155; line-height: 1.55; }
       .ok { color: #166534; }
       .error { color: #991b1b; }
-      a { color: #4338ca; text-decoration: none; font-weight: 700; }
-      .mt { margin-top: 14px; }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+      .btn { display: inline-block; border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 700; text-decoration: none; }
+      .btn-primary { background: #4338ca; color: #fff; }
+      .btn-secondary { border: 1px solid #c7d2fe; color: #4338ca; background: #fff; }
+      .meta { margin-top: 16px; font-size: 12px; color: #64748b; }
     </style>
   </head>
   <body>
-    <div class="card">
-      <h1 class="${status === 'ok' ? 'ok' : 'error'}">${escapeHtml(title)}</h1>
-      <p>${escapeHtml(message)}</p>
-      <p class="mt"><a href="${escapeHtml(normalizedPlatformUrl)}">Zur Website</a></p>
+    <div class="wrap">
+      <div class="card">
+        <div class="head">
+          <span class="badge">${status === 'ok' ? 'Bestätigt' : 'Hinweis'}</span>
+          <div>NexTime Anfrage-Service</div>
+        </div>
+        <div class="body">
+          <h1 class="${status === 'ok' ? 'ok' : 'error'}">${escapeHtml(title)}</h1>
+          <p>${escapeHtml(message)}</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="${escapeHtml(normalizedPlatformUrl)}">Zur Website</a>
+            ${(actions || [])
+              .map(
+                (action) =>
+                  `<a class="btn ${action.variant === 'secondary' ? 'btn-secondary' : 'btn-primary'}" href="${escapeHtml(
+                    action.href
+                  )}">${escapeHtml(action.label)}</a>`
+              )
+              .join('')}
+          </div>
+          <div class="meta">Sie können dieses Fenster nach dem Prüfen schließen.</div>
+        </div>
+      </div>
     </div>
   </body>
 </html>`;
@@ -377,8 +409,9 @@ module.exports = async function handler(req: any, res: any) {
         409,
         renderResultPage(
           'Slot ist bereits voll',
-          `Der gewählte Slot ist inzwischen ausgebucht. Bitte antworten Sie dem Gast mit einem Alternativtermin: ${declineMailto}`,
-          'error'
+          'Der gewählte Slot ist inzwischen ausgebucht. Bitte senden Sie dem Gast einen Alternativtermin.',
+          'error',
+          [{ href: declineMailto, label: 'Gast antworten', variant: 'secondary' }]
         )
       );
       return;
@@ -465,8 +498,12 @@ module.exports = async function handler(req: any, res: any) {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { Resend } = require('resend');
       const resend = new Resend(process.env.RESEND_API_KEY);
-
-      const from = `${businessName} <${process.env.FROM_EMAIL}>`;
+      const fromNameSafe =
+        businessName
+          .replace(/[^\p{L}\p{N}\s&\-'.]/gu, '')
+          .trim()
+          .slice(0, 60) || 'Terminservice';
+      const from = `${fromNameSafe} <${process.env.FROM_EMAIL}>`;
       const title = isSalon ? 'Termin bestätigt' : 'Reservierung bestätigt';
       const greeting = getTimeBasedGreeting();
       const rows = [
@@ -487,13 +524,14 @@ module.exports = async function handler(req: any, res: any) {
         title,
         intro,
         rows,
-        footer: 'Bei Rückfragen können Sie direkt auf diese E-Mail antworten.\nVielen Dank für Ihre Buchung.'
+        footer:
+          'Bei Rückfragen können Sie direkt auf diese E-Mail antworten.\nDiese Bestätigung wurde auf Ihre Anfrage hin erstellt.'
       });
 
       await resend.emails.send({
         from,
         to: requestRow.guest_email,
-        subject: `${title} – ${businessName} (${displayDate}, ${requestRow.time})`,
+        subject: `${title} | ${displayDate} ${requestRow.time ? `um ${requestRow.time}` : ''}`.trim(),
         replyTo: requestRow.restaurant_email,
         text: [
           `${greeting} ${guestName},`,
