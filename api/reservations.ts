@@ -14,6 +14,10 @@ type ReservationBody = {
   note?: string;
 };
 
+type BookingRequestInsertResult = {
+  id: string;
+};
+
 const escapeHtml = (value: unknown): string =>
   String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -40,6 +44,41 @@ const platformUrl =
   process.env.PUBLIC_SITE_URL?.trim() ||
   process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
   'https://nextime-booking.de';
+
+const normalizedPlatformUrl = platformUrl.replace(/\/+$/, '');
+
+const getActionSecret = (): string => {
+  const secret = process.env.BOOKING_ACTION_SECRET?.trim();
+  if (!secret) {
+    throw new Error('Missing BOOKING_ACTION_SECRET');
+  }
+  return secret;
+};
+
+const toBase64Url = (value: string): string =>
+  Buffer.from(value, 'utf8')
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+
+const createApprovalToken = (requestId: string): string => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const crypto = require('crypto');
+  const expiresAt = Date.now() + 1000 * 60 * 60 * 72; // 72 Stunden
+  const payload = JSON.stringify({ requestId, exp: expiresAt });
+  const payloadPart = toBase64Url(payload);
+  const signature = crypto
+    .createHmac('sha256', getActionSecret())
+    .update(payloadPart)
+    .digest('hex');
+  return `${payloadPart}.${signature}`;
+};
+
+const createMailtoLink = (email: string, subject: string, body: string): string =>
+  `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
+    body
+  )}`;
 
 const getTimeBasedGreeting = (): string => {
   try {
@@ -79,6 +118,7 @@ const buildEmailLayout = ({
   intro,
   rows,
   footer,
+  actionsHtml,
   footerLink,
   footerLinkLabel
 }: {
@@ -87,6 +127,7 @@ const buildEmailLayout = ({
   intro: string;
   rows: Array<{ label: string; value: string }>;
   footer: string;
+  actionsHtml?: string;
   footerLink?: string;
   footerLinkLabel?: string;
 }): string => `
@@ -117,6 +158,11 @@ const buildEmailLayout = ({
                 </table>
               </td>
             </tr>
+            ${
+              actionsHtml
+                ? `<tr><td style="padding:8px 24px 4px;font-family:Arial,Helvetica,sans-serif">${actionsHtml}</td></tr>`
+                : ''
+            }
             <tr>
               <td style="padding:14px 24px 24px;font-family:Arial,Helvetica,sans-serif;color:#64748b;font-size:13px;line-height:1.5">
                 <div style="white-space:pre-line;text-align:center">${escapeHtml(footer)}</div>
@@ -219,6 +265,10 @@ module.exports = async function handler(req: any, res: any) {
       .maybeSingle();
     const slotCapacity = typeof company?.slot_capacity === 'number' ? company.slot_capacity : 3;
     const requestMode = company?.booking_mode === 'request';
+    if (requestMode && !process.env.BOOKING_ACTION_SECRET?.trim()) {
+      res.status(500).json({ error: 'Missing BOOKING_ACTION_SECRET' });
+      return;
+    }
 
     if (!requestMode) {
       const { count, error: countError } = await supabase
@@ -274,8 +324,14 @@ module.exports = async function handler(req: any, res: any) {
       time: body.time
     };
 
+    let requestId: string | null = null;
+
     if (requestMode) {
-      const { error: requestInsertError } = await supabase.from('booking_requests').insert(bookingRecord);
+      const { data: requestInsertData, error: requestInsertError } = await supabase
+        .from('booking_requests')
+        .insert(bookingRecord)
+        .select('id')
+        .single();
       if (requestInsertError) {
         if (isMissingTableError(requestInsertError, 'booking_requests')) {
           res
@@ -289,6 +345,7 @@ module.exports = async function handler(req: any, res: any) {
         res.status(500).json({ error: requestInsertError.message });
         return;
       }
+      requestId = (requestInsertData as BookingRequestInsertResult)?.id || null;
     } else {
       const { error: insertError } = await supabase.from('reservations').insert(bookingRecord);
       if (insertError) {
@@ -338,11 +395,31 @@ module.exports = async function handler(req: any, res: any) {
       { label: 'Notiz', value: body.note || '-' }
     ];
 
+    const approvalToken = requestMode && requestId ? createApprovalToken(requestId) : '';
+    const approveUrl = approvalToken
+      ? `${normalizedPlatformUrl}/api/booking-requests/approve?token=${encodeURIComponent(approvalToken)}`
+      : '';
+    const declineMailto = createMailtoLink(
+      body.guestEmail || '',
+      `${isSalon ? 'Terminanfrage' : 'Reservierungsanfrage'} zu ${displayDate} ${body.time ? `(${body.time})` : ''}`.trim(),
+      `Guten Tag ${guestName},\n\nleider passt der angefragte Termin aktuell nicht.\n\nAlternative:\n\nBeste Gruesse\n${businessName}`
+    );
+
+    const actionsHtml =
+      requestMode && approveUrl
+        ? `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%"><tr><td style="padding:0 0 10px"><a href="${escapeHtml(
+            approveUrl
+          )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#4338ca;color:#ffffff;text-decoration:none;font-weight:700">Anfrage bestaetigen</a></td></tr><tr><td><a href="${escapeHtml(
+            declineMailto
+          )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#ffffff;color:#4338ca;text-decoration:none;font-weight:700;border:1px solid #c7d2fe">Anfrage beantworten</a></td></tr><tr><td style="padding-top:10px;color:#64748b;font-size:12px;line-height:1.4">Wenn der Termin nicht passt, klicken Sie auf "Anfrage beantworten" und senden Sie eine passende Rueckmeldung manuell.</td></tr></table>`
+        : undefined;
+
     const restaurantHtml = buildEmailLayout({
       brand: businessName,
       title: bookingCopy.newTitle,
       intro: bookingCopy.newSentence,
       rows: details,
+      actionsHtml,
       footer: 'Sie können auf diese E-Mail antworten, um direkt mit dem Gast zu kommunizieren.',
       footerLink: platformUrl,
       footerLinkLabel: 'NexTime - einfache Terminplanung'
@@ -388,6 +465,15 @@ module.exports = async function handler(req: any, res: any) {
         body.note ? `Notiz: ${body.note}` : null
       ]
         .filter(Boolean)
+        .concat(
+          requestMode && approveUrl
+            ? [
+                '',
+                `Anfrage bestaetigen: ${approveUrl}`,
+                `Anfrage beantworten: ${declineMailto}`
+              ]
+            : []
+        )
         .concat(['', 'Sie können auf diese E-Mail antworten, um direkt mit dem Gast zu kommunizieren.'])
         .concat(['', 'NexTime - einfache Terminplanung', platformUrl])
         .join('\n'),
