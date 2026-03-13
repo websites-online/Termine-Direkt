@@ -43,7 +43,7 @@ const platformUrl =
 
 const createMailtoLink = (email: string, subject: string, body: string): string =>
   `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
-    body
+    body.replace(/\r?\n/g, '\r\n')
   )}`;
 
 const getTimeBasedGreeting = (): string => {
@@ -376,7 +376,7 @@ module.exports = async function handler(req: any, res: any) {
         platformUrl
       ]
         .filter(Boolean)
-        .join('\n')
+        .join('\r\n')
     );
     const declineMailto = createMailtoLink(
       body.guestEmail || '',
@@ -401,7 +401,7 @@ module.exports = async function handler(req: any, res: any) {
         businessName
       ]
         .filter(Boolean)
-        .join('\n')
+        .join('\r\n')
     );
 
     const actionsHtml =

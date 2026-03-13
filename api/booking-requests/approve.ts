@@ -33,7 +33,9 @@ const escapeHtml = (value: unknown): string =>
     .replace(/'/g, '&#39;');
 
 const createMailtoLink = (email: string, subject: string, body: string): string =>
-  `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
+    body.replace(/\r?\n/g, '\r\n')
+  )}`;
 
 const fromBase64Url = (value: string): string => {
   const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
