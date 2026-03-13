@@ -220,73 +220,6 @@ const renderResultPage = (title: string, message: string, status: 'ok' | 'error'
   </body>
 </html>`;
 
-const renderConfirmPage = ({
-  businessName,
-  guestName,
-  displayDate,
-  time,
-  infoRows,
-  postUrl,
-  declineMailto
-}: {
-  businessName: string;
-  guestName: string;
-  displayDate: string;
-  time: string;
-  infoRows: Array<{ label: string; value: string }>;
-  postUrl: string;
-  declineMailto: string;
-}): string => `
-<!doctype html>
-<html lang="de">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Anfrage pruefen</title>
-    <style>
-      body { font-family: Arial, Helvetica, sans-serif; background: #f1f5f9; margin: 0; padding: 24px; }
-      .card { max-width: 760px; margin: 20px auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; }
-      h1 { margin: 0 0 10px; font-size: 24px; color: #0f172a; }
-      .muted { color: #64748b; line-height: 1.5; margin: 0 0 16px; }
-      table { width: 100%; border-collapse: collapse; border-top: 1px solid #e2e8f0; margin-bottom: 16px; }
-      td { padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
-      td:first-child { color: #64748b; }
-      td:last-child { color: #0f172a; font-weight: 600; text-align: right; }
-      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; justify-content: center; }
-      .actions form { margin: 0; }
-      button, .secondary { display: inline-block; border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 700; text-decoration: none; cursor: pointer; }
-      button { border: none; background: #4338ca; color: #fff; }
-      .secondary { border: 1px solid #c7d2fe; color: #4338ca; background: #fff; }
-      .hint { margin-top: 14px; color: #64748b; font-size: 13px; }
-    </style>
-  </head>
-  <body>
-    <div class="card">
-      <h1>Anfrage pruefen</h1>
-      <p class="muted">Bitte bestätigen Sie nur, wenn dieser Termin fix angenommen wird. Diese Aktion speichert die Buchung verbindlich und informiert den Gast automatisch.</p>
-      <table>
-        <tr><td>Betrieb</td><td>${escapeHtml(businessName)}</td></tr>
-        <tr><td>Name</td><td>${escapeHtml(guestName)}</td></tr>
-        <tr><td>Datum</td><td>${escapeHtml(displayDate)}</td></tr>
-        <tr><td>Uhrzeit</td><td>${escapeHtml(time || '-')}</td></tr>
-        ${infoRows
-          .map(
-            (row) =>
-              `<tr><td>${escapeHtml(row.label)}</td><td>${escapeHtml(row.value)}</td></tr>`
-          )
-          .join('')}
-      </table>
-      <div class="actions">
-        <form method="post" action="${escapeHtml(postUrl)}">
-          <button type="submit">Anfrage jetzt bestätigen</button>
-        </form>
-        <a class="secondary" href="${escapeHtml(declineMailto)}">Anfrage beantworten</a>
-      </div>
-      <p class="hint">Hinweis: Wenn der Termin nicht passt, nutzen Sie "Anfrage beantworten" und senden Sie eine manuelle Rückmeldung an den Gast.</p>
-    </div>
-  </body>
-</html>`;
-
 const sendHtmlResponse = (res: any, statusCode: number, html: string) => {
   res.statusCode = statusCode;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -299,7 +232,7 @@ const isMissingColumnError = (error: any, columnName: string): boolean => {
 };
 
 module.exports = async function handler(req: any, res: any) {
-  if (req.method !== 'GET' && req.method !== 'POST') {
+  if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
@@ -403,74 +336,6 @@ module.exports = async function handler(req: any, res: any) {
     const seating = extractFromNote(requestRow.note || null, 'Sitzplatz');
     const service = extractFromNote(requestRow.note || null, 'Service');
     const customerNote = extractFromNote(requestRow.note || null, 'Notiz');
-    const postUrl = `${normalizedPlatformUrl}/api/booking-requests/approve?token=${encodeURIComponent(token)}`;
-    const declineMailto = createMailtoLink(
-      requestRow.guest_email || '',
-      `${isSalon ? 'Terminanfrage' : 'Reservierungsanfrage'} zu ${displayDate} ${requestRow.time ? `(${requestRow.time})` : ''}`.trim(),
-      `Guten Tag ${guestName},\n\nleider passt der angefragte Termin aktuell nicht.\n\nAlternative:\n\nBeste Grüße\n${businessName}`
-    );
-
-    if (req.method === 'GET') {
-      if (requestRow.status === 'approved') {
-        sendHtmlResponse(
-          res,
-          200,
-          renderResultPage(
-            'Bereits bestätigt',
-            'Diese Anfrage wurde bereits bestätigt und als Buchung übernommen.',
-            'ok'
-          )
-        );
-        return;
-      }
-
-      if (requestRow.status === 'rejected') {
-        sendHtmlResponse(
-          res,
-          200,
-          renderResultPage(
-            'Anfrage bereits beantwortet',
-            'Diese Anfrage wurde bereits als nicht verfügbar markiert.',
-            'ok'
-          )
-        );
-        return;
-      }
-
-      const infoRows: Array<{ label: string; value: string }> = [];
-      if (!isSalon && seating) {
-        infoRows.push({ label: 'Sitzplatz', value: seating });
-      }
-      if (isSalon) {
-        infoRows.push({ label: 'Service', value: service || '-' });
-      } else {
-        infoRows.push({ label: 'Personen', value: requestRow.people ? String(requestRow.people) : '-' });
-      }
-      if (customerNote) {
-        infoRows.push({ label: 'Notiz', value: customerNote });
-      }
-      if (requestRow.phone) {
-        infoRows.push({ label: 'Telefon', value: requestRow.phone });
-      }
-      if (requestRow.guest_email) {
-        infoRows.push({ label: 'E-Mail', value: requestRow.guest_email });
-      }
-
-      sendHtmlResponse(
-        res,
-        200,
-        renderConfirmPage({
-          businessName,
-          guestName,
-          displayDate,
-          time: requestRow.time || '-',
-          infoRows,
-          postUrl,
-          declineMailto
-        })
-      );
-      return;
-    }
 
     if (requestRow.status === 'approved') {
       sendHtmlResponse(
@@ -502,12 +367,17 @@ module.exports = async function handler(req: any, res: any) {
     }
 
     if ((count || 0) >= slotCapacity) {
+      const declineMailto = createMailtoLink(
+        requestRow.guest_email || '',
+        `${isSalon ? 'Terminanfrage' : 'Reservierungsanfrage'} zu ${displayDate} ${requestRow.time ? `(${requestRow.time})` : ''}`.trim(),
+        `Guten Tag ${guestName},\n\nleider passt der angefragte Termin aktuell nicht.\n\nAlternative:\n\nBeste Grüße\n${businessName}`
+      );
       sendHtmlResponse(
         res,
         409,
         renderResultPage(
           'Slot ist bereits voll',
-          'Der gewählte Slot ist inzwischen ausgebucht. Bitte antworten Sie dem Gast mit einem Alternativtermin.',
+          `Der gewählte Slot ist inzwischen ausgebucht. Bitte antworten Sie dem Gast mit einem Alternativtermin: ${declineMailto}`,
           'error'
         )
       );
