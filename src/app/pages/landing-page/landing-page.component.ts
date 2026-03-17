@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
@@ -8,7 +8,6 @@ import { PricingComponent } from '../../components/pricing/pricing.component';
 import { FaqComponent } from '../../components/faq/faq.component';
 import { FooterComponent } from '../../components/footer/footer.component';
 import { ContactFormComponent } from '../../components/contact-form/contact-form.component';
-import { HeroMonitorMode } from '../../components/hero-monitor-mockup/hero-monitor-mockup.component';
 
 @Component({
   selector: 'app-landing-page',
@@ -26,22 +25,15 @@ import { HeroMonitorMode } from '../../components/hero-monitor-mockup/hero-monit
   templateUrl: './landing-page.component.html',
   styleUrl: './landing-page.component.css'
 })
-export class LandingPageComponent {
-  screenMode: HeroMonitorMode = 'reservation-preview';
+export class LandingPageComponent implements OnInit {
   isNavOpen = false;
   isNavCompact = false;
-  @ViewChild('cursorArrow') cursorArrow?: ElementRef<HTMLElement>;
-  @ViewChild('demoBtn') demoBtn?: ElementRef<HTMLElement>;
-  private targetX = 0;
-  private targetY = 0;
-  private currentX = 0;
-  private currentY = 0;
-  private targetAngle = 0;
-  private currentAngle = 0;
-  private rafId?: number;
+  scrollProgress = 0;
+  pointerTiltX = 0;
+  pointerTiltY = 0;
 
-  setScreenMode(mode: HeroMonitorMode): void {
-    this.screenMode = mode;
+  ngOnInit(): void {
+    this.updateViewportEffects();
   }
 
   toggleNav(): void {
@@ -53,53 +45,28 @@ export class LandingPageComponent {
   }
 
   @HostListener('window:scroll')
-  onScroll(): void {
+  @HostListener('window:resize')
+  updateViewportEffects(): void {
+    const scrollRange = Math.max(window.innerHeight * 1.8, 1200);
+    const normalized = Math.min(window.scrollY / scrollRange, 1);
+    this.scrollProgress = Number(normalized.toFixed(4));
     this.isNavCompact = window.scrollY > 24;
+
+    if (window.innerWidth < 900) {
+      this.pointerTiltX = Number((Math.sin(normalized * Math.PI * 2) * 0.22).toFixed(4));
+      this.pointerTiltY = Number(((normalized - 0.5) * 0.5).toFixed(4));
+    }
   }
 
-  @HostListener('document:mousemove', ['$event'])
+  @HostListener('window:mousemove', ['$event'])
   onMouseMove(event: MouseEvent): void {
-    this.targetX = event.clientX;
-    this.targetY = event.clientY;
-    this.updateTargetAngle(event.clientX, event.clientY);
-    this.startBallFollow();
-  }
-
-  private startBallFollow(): void {
-    const arrow = this.cursorArrow?.nativeElement;
-    if (!arrow || this.rafId) {
+    if (window.innerWidth < 900) {
       return;
     }
 
-    const animate = () => {
-      const dx = this.targetX - this.currentX;
-      const dy = this.targetY - this.currentY;
-      this.currentX += dx * 0.12;
-      this.currentY += dy * 0.12;
-      this.currentAngle += (this.targetAngle - this.currentAngle) * 0.18;
-      arrow.style.left = `${this.currentX}px`;
-      arrow.style.top = `${this.currentY}px`;
-      arrow.style.opacity = '0.8';
-      arrow.style.transform = `translate(-50%, -50%) rotate(${this.currentAngle}deg)`;
-      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
-        this.rafId = undefined;
-        return;
-      }
-      this.rafId = requestAnimationFrame(animate);
-    };
-
-    this.rafId = requestAnimationFrame(animate);
-  }
-
-  private updateTargetAngle(mouseX: number, mouseY: number): void {
-    const button = this.demoBtn?.nativeElement;
-    if (!button) {
-      return;
-    }
-    const rect = button.getBoundingClientRect();
-    const targetX = rect.left + rect.width / 2;
-    const targetY = rect.top + rect.height / 2;
-    const angle = Math.atan2(targetY - mouseY, targetX - mouseX) * (180 / Math.PI);
-    this.targetAngle = angle;
+    const x = event.clientX / window.innerWidth;
+    const y = event.clientY / window.innerHeight;
+    this.pointerTiltX = Number(((x - 0.5) * 2).toFixed(4));
+    this.pointerTiltY = Number(((y - 0.5) * 2).toFixed(4));
   }
 }

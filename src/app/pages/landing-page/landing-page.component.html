@@ -1,4 +1,10 @@
-<div class="page landing-page" [class.nav-open]="isNavOpen">
+<div
+  class="page landing-page"
+  [class.nav-open]="isNavOpen"
+  [style.--scroll-progress]="scrollProgress"
+  [style.--tilt-x]="pointerTiltX"
+  [style.--tilt-y]="pointerTiltY"
+>
   <div class="page-shell">
     <header class="site-header" [class.compact]="isNavCompact">
       <div class="container header-inner">
@@ -22,6 +28,11 @@
 
     <main>
       <section class="section hero hero-bg">
+        <div class="hero-backdrop" aria-hidden="true">
+          <span class="hero-orb hero-orb-one"></span>
+          <span class="hero-orb hero-orb-two"></span>
+          <span class="hero-grid-lines"></span>
+        </div>
         <div class="container grid-2 hero-grid">
           <div class="hero-copy">
             <span class="badge">Reservierungen ohne App</span>
@@ -31,31 +42,74 @@
               Sie erhalten jede Reservierung sofort per E-Mail.
             </p>
             <div class="hero-actions">
-              <a #demoBtn class="btn btn-primary" routerLink="/demo-unternehmen">Beispiel ansehen</a>
+              <a class="btn btn-primary" routerLink="/demo-unternehmen">Beispiel ansehen</a>
               <a class="btn btn-outline" href="#contact">Kontakt aufnehmen</a>
             </div>
-            <p class="hero-trust">Monatlich kündbar · In wenigen Minuten eingerichtet</p>
+            <p class="hero-trust">Monatlich kündbar · Einrichtung in Minuten</p>
           </div>
           <div class="hero-visual">
-            <img class="hero-monitor" src="monitor-mockup.png" alt="Monitor mit Demo-Reservierung" />
+            <div class="hero-stage">
+              <div class="hero-floor"></div>
+              <article class="hero-card hero-card-main">
+                <img class="hero-monitor" src="monitor-mockup.png" alt="Monitor mit Demo-Reservierung" />
+              </article>
+              <article class="hero-card hero-card-status">
+                <h3>Live-Status</h3>
+                <ul>
+                  <li><span>Heute</span><strong>14 Buchungen</strong></li>
+                  <li><span>Anfragen</span><strong>3 offen</strong></li>
+                  <li><span>Bestätigt</span><strong>11 gesendet</strong></li>
+                </ul>
+              </article>
+              <article class="hero-card hero-card-alert">
+                <p>Neue Anfrage um 18:45 Uhr</p>
+                <small>Direkt aus Google-Profil</small>
+              </article>
+            </div>
           </div>
         </div>
       </section>
 
-      <div class="section-band band-light">
-        <app-benefits></app-benefits>
+      <div class="section-band band-light section-interactive stage-benefits">
+        <div class="section-stage">
+          <span class="stage-shape stage-shape-one" aria-hidden="true"></span>
+          <span class="stage-shape stage-shape-two" aria-hidden="true"></span>
+          <div class="depth-wrap depth-left">
+            <app-benefits></app-benefits>
+          </div>
+        </div>
       </div>
-      <div class="section-band band-muted">
-        <app-how-it-works></app-how-it-works>
+      <div class="section-band band-muted stage-how">
+        <div class="section-stage">
+          <div class="depth-wrap depth-right">
+            <app-how-it-works></app-how-it-works>
+          </div>
+        </div>
       </div>
-      <div class="section-band band-light">
-        <app-pricing></app-pricing>
+      <div class="section-band band-light section-interactive stage-pricing">
+        <div class="section-stage">
+          <span class="stage-shape stage-shape-one" aria-hidden="true"></span>
+          <span class="stage-shape stage-shape-two" aria-hidden="true"></span>
+          <div class="depth-wrap depth-left">
+            <app-pricing></app-pricing>
+          </div>
+        </div>
       </div>
-      <div class="section-band band-muted">
-        <app-faq></app-faq>
+      <div class="section-band band-muted stage-faq">
+        <div class="section-stage">
+          <div class="depth-wrap depth-right">
+            <app-faq></app-faq>
+          </div>
+        </div>
       </div>
-      <div class="section-band band-light">
-        <app-contact-form></app-contact-form>
+      <div class="section-band band-light section-interactive stage-contact">
+        <div class="section-stage">
+          <span class="stage-shape stage-shape-one" aria-hidden="true"></span>
+          <span class="stage-shape stage-shape-two" aria-hidden="true"></span>
+          <div class="depth-wrap depth-left">
+            <app-contact-form></app-contact-form>
+          </div>
+        </div>
       </div>
     </main>
 
@@ -70,6 +124,4 @@
     <a class="btn btn-primary" href="#contact" (click)="$event.stopPropagation(); closeNav()">Jetzt starten</a>
   </div>
   <div class="nav-backdrop" [class.open]="isNavOpen" (click)="closeNav()" aria-hidden="true"></div>
-
-  <span #cursorArrow class="cursor-arrow" aria-hidden="true"></span>
 </div>
