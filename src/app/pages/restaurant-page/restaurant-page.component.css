@@ -180,13 +180,33 @@
   display: grid;
   gap: 6px;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
+  overflow: hidden;
 }
 
 .free-time-row .input[type='time'] {
+  display: block;
+  inline-size: 100%;
   width: 100%;
   max-width: 100%;
+  max-inline-size: 100%;
+  min-inline-size: 0;
   min-width: 0;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 2.25rem;
+  background-color: #fff;
+  background-repeat: no-repeat;
+  background-position: right 0.72rem center;
+  background-size: 15px 15px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpolyline points='12,7 12,12 15,15'/%3E%3C/svg%3E");
+}
+
+.free-time-row .input[type='time']::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .slot {

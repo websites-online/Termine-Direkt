@@ -157,15 +157,8 @@
 
   .dashboard-form input[type='date'],
   .dashboard-form input[type='time'] {
-    padding-right: 0.95rem;
-    background-image: none;
-    -webkit-appearance: auto;
-    appearance: auto;
-  }
-
-  .dashboard-form input[type='date']::-webkit-calendar-picker-indicator,
-  .dashboard-form input[type='time']::-webkit-calendar-picker-indicator {
-    opacity: 1;
-    pointer-events: auto;
+    padding-right: 2.2rem;
+    background-position: right 0.65rem center;
+    background-size: 14px 14px;
   }
 }
