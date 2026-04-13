@@ -69,11 +69,12 @@
           <input
             class="input"
             type="time"
-            step="60"
+            step="300"
             [value]="bookingForm.value.time || ''"
+            [min]="freeTimeMin"
+            [max]="freeTimeMax"
             (input)="onTimeInput($any($event.target).value)"
           />
-          <span class="helptext">Freie Uhrzeit-Eingabe innerhalb der Öffnungszeiten.</span>
         </label>
         <p class="helptext">Datum: {{ selectedDateLabel }} · Zeit: {{ bookingForm.value.time }}</p>
         <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>

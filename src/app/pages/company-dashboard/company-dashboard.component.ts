@@ -31,6 +31,7 @@ export class CompanyDashboardComponent implements OnInit {
   slots: string[] = [];
   slotCounts: Record<string, number> = {};
   readonly bookingBufferMinutes = 120;
+  private readonly freeTimeStepMinutes = 5;
   private readonly today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
   isLoading = false;
   listError = '';
@@ -114,8 +115,29 @@ export class CompanyDashboardComponent implements OnInit {
   }
 
   onTimeInput(value: string): void {
+    if (!value) {
+      this.errorMessage = '';
+      this.bookingForm.patchValue({ time: '' });
+      return;
+    }
+    if (!this.isValidTimeValue(value)) {
+      this.errorMessage = 'Bitte eine gültige Uhrzeit wählen.';
+      return;
+    }
+    if (!this.isValidFreeTimeStep(value)) {
+      this.errorMessage = 'Bitte eine Uhrzeit im 5-Minuten-Takt wählen.';
+      return;
+    }
+    if (!this.isTimeWithinOpenHours(value, this.selectedDateObj)) {
+      this.errorMessage = 'Bitte eine Uhrzeit innerhalb der Öffnungszeiten wählen.';
+      return;
+    }
+    if (this.isSlotTooSoon(value)) {
+      this.errorMessage = 'Diese Uhrzeit liegt zu nah an der aktuellen Zeit.';
+      return;
+    }
     this.errorMessage = '';
-    this.bookingForm.patchValue({ time: value || '' });
+    this.bookingForm.patchValue({ time: value });
   }
 
   setQuickDate(offsetDays: number): void {
@@ -140,8 +162,16 @@ export class CompanyDashboardComponent implements OnInit {
       this.errorMessage = 'Bitte eine gültige Uhrzeit wählen.';
       return;
     }
+    if (this.useFreeTimeInput && !this.isValidFreeTimeStep(selectedTime)) {
+      this.errorMessage = 'Bitte eine Uhrzeit im 5-Minuten-Takt wählen.';
+      return;
+    }
     if (!this.isTimeWithinOpenHours(selectedTime, this.selectedDateObj)) {
       this.errorMessage = 'Die Uhrzeit liegt außerhalb der Öffnungszeiten oder Pause.';
+      return;
+    }
+    if (this.isSlotTooSoon(selectedTime)) {
+      this.errorMessage = 'Diese Uhrzeit liegt zu nah an der aktuellen Zeit.';
       return;
     }
 
@@ -204,6 +234,23 @@ export class CompanyDashboardComponent implements OnInit {
     return this.company?.timeSelectionMode === 'free';
   }
 
+  get freeTimeMin(): string {
+    const ranges = this.getHoursRangesForDate(this.selectedDateObj);
+    if (ranges.length === 0) {
+      return '';
+    }
+    return this.formatMinutes(this.alignToStep(ranges[0].start, 'ceil'));
+  }
+
+  get freeTimeMax(): string {
+    const ranges = this.getHoursRangesForDate(this.selectedDateObj);
+    if (ranges.length === 0) {
+      return '';
+    }
+    const lastEnd = ranges[ranges.length - 1].end;
+    return this.formatMinutes(this.alignToStep(Math.max(0, lastEnd - 1), 'floor'));
+  }
+
   private updateValidators(): void {
     const peopleControl = this.bookingForm.get('people');
     const serviceControl = this.bookingForm.get('service');
@@ -238,7 +285,11 @@ export class CompanyDashboardComponent implements OnInit {
     this.slots = this.generateSlots(this.selectedDateObj);
     const current = this.bookingForm.value.time ?? '';
     if (this.useFreeTimeInput) {
-      if (!this.isValidTimeValue(current) || !this.isTimeWithinOpenHours(current, this.selectedDateObj)) {
+      if (
+        !this.isValidTimeValue(current) ||
+        !this.isValidFreeTimeStep(current) ||
+        !this.isTimeWithinOpenHours(current, this.selectedDateObj)
+      ) {
         this.bookingForm.patchValue({ time: this.getDefaultTimeForCurrentDate() }, { emitEvent: false });
       }
       return;
@@ -534,11 +585,22 @@ export class CompanyDashboardComponent implements OnInit {
     return !Number.isNaN(this.toMinutes(value));
   }
 
+  private isValidFreeTimeStep(value: string): boolean {
+    const minuteValue = this.toMinutes(value);
+    if (Number.isNaN(minuteValue)) {
+      return false;
+    }
+    return minuteValue % this.freeTimeStepMinutes === 0;
+  }
+
   private getDefaultTimeForCurrentDate(): string {
     const ranges = this.getHoursRangesForDate(this.selectedDateObj);
     const breaks = this.getBreakRanges();
     for (const range of ranges) {
       for (let minutes = range.start; minutes < range.end; minutes += 1) {
+        if (minutes % this.freeTimeStepMinutes !== 0) {
+          continue;
+        }
         if (this.isInBreak(minutes, breaks)) {
           continue;
         }
@@ -554,6 +616,13 @@ export class CompanyDashboardComponent implements OnInit {
       .padStart(2, '0');
     const minute = (totalMinutes % 60).toString().padStart(2, '0');
     return `${hour}:${minute}`;
+  }
+
+  private alignToStep(value: number, mode: 'floor' | 'ceil'): number {
+    if (mode === 'floor') {
+      return Math.floor(value / this.freeTimeStepMinutes) * this.freeTimeStepMinutes;
+    }
+    return Math.ceil(value / this.freeTimeStepMinutes) * this.freeTimeStepMinutes;
   }
 
   private getToday(): string {

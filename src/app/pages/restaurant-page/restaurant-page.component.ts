@@ -51,6 +51,7 @@ export class RestaurantPageComponent implements OnInit {
     this.baseDate.getDate()
   );
   private readonly bookingBufferMinutes = 120;
+  private readonly freeTimeStepMinutes = 5;
   private parsedScheduleCache: { source: string; value: ParsedSchedule } | null = null;
   private holidayCache = new Map<number, Set<string>>();
   monthOffset = 0;
@@ -117,6 +118,10 @@ export class RestaurantPageComponent implements OnInit {
     const requestedTime = this.bookingForm.value.time ?? '';
     if (!this.isValidTimeValue(requestedTime)) {
       this.errorMessage = 'Bitte wählen Sie eine gültige Uhrzeit.';
+      return;
+    }
+    if (this.useFreeTimeInput && !this.isValidFreeTimeStep(requestedTime)) {
+      this.errorMessage = 'Bitte wählen Sie eine Uhrzeit im 5-Minuten-Takt.';
       return;
     }
     if (!this.isTimeWithinOpenHours(requestedTime, this.selectedDateObj)) {
@@ -197,6 +202,23 @@ export class RestaurantPageComponent implements OnInit {
 
   get useFreeTimeInput(): boolean {
     return this.company?.timeSelectionMode === 'free';
+  }
+
+  get freeTimeMin(): string {
+    const ranges = this.getHoursRangesForDate(this.selectedDateObj);
+    if (ranges.length === 0) {
+      return '';
+    }
+    return this.formatMinutes(this.alignToStep(ranges[0].start, 'ceil'));
+  }
+
+  get freeTimeMax(): string {
+    const ranges = this.getHoursRangesForDate(this.selectedDateObj);
+    if (ranges.length === 0) {
+      return '';
+    }
+    const lastEnd = ranges[ranges.length - 1].end;
+    return this.formatMinutes(this.alignToStep(Math.max(0, lastEnd - 1), 'floor'));
   }
 
   get bookingTitle(): string {
@@ -337,8 +359,29 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   onTimeInput(value: string): void {
+    if (!value) {
+      this.errorMessage = '';
+      this.bookingForm.patchValue({ time: '' });
+      return;
+    }
+    if (!this.isValidTimeValue(value)) {
+      this.errorMessage = 'Bitte wählen Sie eine gültige Uhrzeit.';
+      return;
+    }
+    if (!this.isValidFreeTimeStep(value)) {
+      this.errorMessage = 'Bitte wählen Sie eine Uhrzeit im 5-Minuten-Takt.';
+      return;
+    }
+    if (!this.isTimeWithinOpenHours(value, this.selectedDateObj)) {
+      this.errorMessage = 'Bitte wählen Sie eine Uhrzeit innerhalb der Öffnungszeiten.';
+      return;
+    }
+    if (this.isSlotTooSoon(value)) {
+      this.errorMessage = 'Bitte beachten Sie: Reservierungen sind frühestens 2 Stunden im Voraus möglich.';
+      return;
+    }
     this.errorMessage = '';
-    this.bookingForm.patchValue({ time: value || '' });
+    this.bookingForm.patchValue({ time: value });
   }
 
   get currentMonthLabel(): string {
@@ -846,6 +889,7 @@ export class RestaurantPageComponent implements OnInit {
     if (this.useFreeTimeInput) {
       if (
         !this.isValidTimeValue(current) ||
+        !this.isValidFreeTimeStep(current) ||
         !this.isTimeWithinOpenHours(current, this.selectedDateObj) ||
         this.isSlotTooSoon(current)
       ) {
@@ -869,6 +913,9 @@ export class RestaurantPageComponent implements OnInit {
 
     for (const range of ranges) {
       for (let minutes = range.start; minutes < range.end; minutes += 1) {
+        if (minutes % this.freeTimeStepMinutes !== 0) {
+          continue;
+        }
         if (this.isInBreak(minutes, breaks)) {
           continue;
         }
@@ -901,6 +948,21 @@ export class RestaurantPageComponent implements OnInit {
 
   private isValidTimeValue(value: string): boolean {
     return !Number.isNaN(this.toMinutes(value));
+  }
+
+  private isValidFreeTimeStep(value: string): boolean {
+    const minuteValue = this.toMinutes(value);
+    if (Number.isNaN(minuteValue)) {
+      return false;
+    }
+    return minuteValue % this.freeTimeStepMinutes === 0;
+  }
+
+  private alignToStep(value: number, mode: 'floor' | 'ceil'): number {
+    if (mode === 'floor') {
+      return Math.floor(value / this.freeTimeStepMinutes) * this.freeTimeStepMinutes;
+    }
+    return Math.ceil(value / this.freeTimeStepMinutes) * this.freeTimeStepMinutes;
   }
 
   private formatMinutes(totalMinutes: number): string {
