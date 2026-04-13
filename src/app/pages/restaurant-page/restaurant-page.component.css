@@ -192,11 +192,13 @@
   max-width: 100%;
   max-inline-size: 100%;
   min-inline-size: 0;
+  min-height: 31px;
   min-width: 0;
   box-sizing: border-box;
   -webkit-appearance: none;
   appearance: none;
-  padding-right: 2.25rem;
+  line-height: 1.2;
+  padding: 6px 2.25rem 6px 8px;
   background-color: #fff;
   background-repeat: no-repeat;
   background-position: right 0.72rem center;
