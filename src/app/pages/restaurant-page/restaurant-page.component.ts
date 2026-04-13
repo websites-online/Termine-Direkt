@@ -81,7 +81,7 @@ export class RestaurantPageComponent implements OnInit {
     seating: ['egal'],
     service: [''],
     note: [''],
-    time: ['18:00', Validators.required]
+    time: ['', Validators.required]
   });
 
   ngOnInit(): void {
@@ -95,6 +95,9 @@ export class RestaurantPageComponent implements OnInit {
 
     if (this.bookingForm.invalid) {
       this.bookingForm.markAllAsTouched();
+      if (this.bookingForm.get('time')?.invalid) {
+        this.errorMessage = 'Bitte wählen Sie eine Uhrzeit.';
+      }
       return;
     }
 
@@ -112,6 +115,14 @@ export class RestaurantPageComponent implements OnInit {
     }
 
     const requestedTime = this.bookingForm.value.time ?? '';
+    if (!this.isValidTimeValue(requestedTime)) {
+      this.errorMessage = 'Bitte wählen Sie eine gültige Uhrzeit.';
+      return;
+    }
+    if (!this.isTimeWithinOpenHours(requestedTime, this.selectedDateObj)) {
+      this.errorMessage = 'Die gewählte Uhrzeit liegt außerhalb der Öffnungszeiten oder Pause.';
+      return;
+    }
     if (this.isSlotTooSoon(requestedTime)) {
       this.errorMessage = 'Bitte beachten Sie: Reservierungen sind frühestens 2 Stunden im Voraus möglich.';
       return;
@@ -153,7 +164,7 @@ export class RestaurantPageComponent implements OnInit {
           seating: 'egal',
           service: '',
           note: '',
-          time: '18:00'
+          time: this.getDefaultTimeForCurrentDate()
         });
       },
       error: (error) => {
@@ -182,6 +193,10 @@ export class RestaurantPageComponent implements OnInit {
 
   get hasSeatingChoice(): boolean {
     return !this.isSalon && this.company?.seatingOptionsEnabled === true;
+  }
+
+  get useFreeTimeInput(): boolean {
+    return this.company?.timeSelectionMode === 'free';
   }
 
   get bookingTitle(): string {
@@ -308,13 +323,7 @@ export class RestaurantPageComponent implements OnInit {
       entry.active = !entry.muted && entry.date?.getTime() === day.date?.getTime();
     });
     this.slots = this.generateSlots(this.selectedDateObj);
-    const currentTime = this.bookingForm.value.time ?? '';
-    if (!this.slots.includes(currentTime) || this.isSlotTooSoon(currentTime)) {
-      const nextSlot = this.slots.find(
-        (slot) => !this.isSlotFull(slot) && !this.isSlotTooSoon(slot)
-      );
-      this.bookingForm.patchValue({ time: nextSlot || '' });
-    }
+    this.syncSelectedTimeWithMode();
     this.loadSlotAvailability();
   }
 
@@ -325,6 +334,11 @@ export class RestaurantPageComponent implements OnInit {
     }
     this.errorMessage = '';
     this.bookingForm.patchValue({ time: slot });
+  }
+
+  onTimeInput(value: string): void {
+    this.errorMessage = '';
+    this.bookingForm.patchValue({ time: value || '' });
   }
 
   get currentMonthLabel(): string {
@@ -375,13 +389,7 @@ export class RestaurantPageComponent implements OnInit {
           !entry.muted && entry.date?.getTime() === this.selectedDateObj.getTime();
       });
       this.slots = this.generateSlots(this.selectedDateObj);
-      const currentTime = this.bookingForm.value.time ?? '';
-      if (!this.slots.includes(currentTime) || this.isSlotTooSoon(currentTime)) {
-        const nextSlot = this.slots.find(
-          (slot) => !this.isSlotFull(slot) && !this.isSlotTooSoon(slot)
-        );
-        this.bookingForm.patchValue({ time: nextSlot || '' });
-      }
+      this.syncSelectedTimeWithMode();
     }
   }
 
@@ -786,13 +794,7 @@ export class RestaurantPageComponent implements OnInit {
     this.http.get<{ slots: Record<string, number> }>(`/api/reservations?${query}`).subscribe({
       next: (response) => {
         this.slotCounts = response.slots || {};
-        const current = this.bookingForm.value.time || '';
-        if (current && (this.isSlotFull(current) || this.isSlotTooSoon(current))) {
-          const nextSlot = this.slots.find(
-            (slot) => !this.isSlotFull(slot) && !this.isSlotTooSoon(slot)
-          );
-          this.bookingForm.patchValue({ time: nextSlot || '' });
-        }
+        this.syncSelectedTimeWithMode();
       }
     });
   }
@@ -837,5 +839,75 @@ export class RestaurantPageComponent implements OnInit {
       return value;
     }
     return 45;
+  }
+
+  private syncSelectedTimeWithMode(): void {
+    const current = this.bookingForm.value.time || '';
+    if (this.useFreeTimeInput) {
+      if (
+        !this.isValidTimeValue(current) ||
+        !this.isTimeWithinOpenHours(current, this.selectedDateObj) ||
+        this.isSlotTooSoon(current)
+      ) {
+        this.bookingForm.patchValue({ time: this.getDefaultTimeForCurrentDate() }, { emitEvent: false });
+      }
+      return;
+    }
+
+    const nextSlot = this.slots.find((slot) => !this.isSlotFull(slot) && !this.isSlotTooSoon(slot));
+    if (!current || !this.slots.includes(current) || this.isSlotFull(current) || this.isSlotTooSoon(current)) {
+      this.bookingForm.patchValue({ time: nextSlot || '' }, { emitEvent: false });
+    }
+  }
+
+  private getDefaultTimeForCurrentDate(): string {
+    const ranges = this.getHoursRangesForDate(this.selectedDateObj);
+    const breaks = this.getBreakRanges();
+    if (ranges.length === 0) {
+      return '';
+    }
+
+    for (const range of ranges) {
+      for (let minutes = range.start; minutes < range.end; minutes += 1) {
+        if (this.isInBreak(minutes, breaks)) {
+          continue;
+        }
+        const time = this.formatMinutes(minutes);
+        if (!this.isSlotTooSoon(time)) {
+          return time;
+        }
+      }
+    }
+
+    return '';
+  }
+
+  private isTimeWithinOpenHours(time: string, date: Date | null): boolean {
+    const minute = this.toMinutes(time);
+    if (Number.isNaN(minute)) {
+      return false;
+    }
+    const ranges = this.getHoursRangesForDate(date);
+    if (ranges.length === 0) {
+      return false;
+    }
+    const breaks = this.getBreakRanges();
+    const inRange = ranges.some((range) => minute >= range.start && minute < range.end);
+    if (!inRange) {
+      return false;
+    }
+    return !this.isInBreak(minute, breaks);
+  }
+
+  private isValidTimeValue(value: string): boolean {
+    return !Number.isNaN(this.toMinutes(value));
+  }
+
+  private formatMinutes(totalMinutes: number): string {
+    const hour = Math.floor(totalMinutes / 60)
+      .toString()
+      .padStart(2, '0');
+    const minute = (totalMinutes % 60).toString().padStart(2, '0');
+    return `${hour}:${minute}`;
   }
 }

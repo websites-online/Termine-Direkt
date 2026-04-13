@@ -49,7 +49,7 @@
           {{ company.hours || 'Öffnungszeiten folgen' }}
           <span *ngIf="company.breakHours"> · Pause: {{ company.breakHours }}</span>
         </p>
-        <div class="slot-row">
+        <div class="slot-row" *ngIf="!useFreeTimeInput">
           <button
             class="slot"
             type="button"
@@ -64,6 +64,17 @@
             {{ slot }}
           </button>
         </div>
+        <label *ngIf="useFreeTimeInput">
+          <span class="label">Uhrzeit*</span>
+          <input
+            class="input"
+            type="time"
+            step="60"
+            [value]="bookingForm.value.time || ''"
+            (input)="onTimeInput($any($event.target).value)"
+          />
+          <span class="helptext">Freie Uhrzeit-Eingabe innerhalb der Öffnungszeiten.</span>
+        </label>
         <p class="helptext">Datum: {{ selectedDateLabel }} · Zeit: {{ bookingForm.value.time }}</p>
         <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
         <form class="demo-form" [formGroup]="bookingForm" (ngSubmit)="submit()">

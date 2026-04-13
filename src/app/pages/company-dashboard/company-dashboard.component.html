@@ -63,7 +63,7 @@
           <span class="label">Datum*</span>
           <input class="input" type="date" formControlName="date" (change)="onDateChange($any($event.target).value)" />
         </label>
-        <label>
+        <label *ngIf="!useFreeTimeInput">
           <span class="label">Uhrzeit*</span>
           <select class="input" formControlName="time">
             <option value="">Bitte wählen</option>
@@ -71,6 +71,11 @@
               {{ slot }}
             </option>
           </select>
+        </label>
+        <label *ngIf="useFreeTimeInput">
+          <span class="label">Uhrzeit*</span>
+          <input class="input" type="time" step="60" [value]="bookingForm.value.time || ''" (input)="onTimeInput($any($event.target).value)" />
+          <span class="helptext">Freie Uhrzeit-Eingabe innerhalb der Öffnungszeiten.</span>
         </label>
         <label>
           <span class="label">Name*</span>

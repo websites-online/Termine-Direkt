@@ -72,6 +72,14 @@
           </select>
         </label>
         <label>
+          <span class="label">Zeitauswahl für Kunden*</span>
+          <select class="input" formControlName="timeSelectionMode">
+            <option value="slots">Zeitslots (wie bisher)</option>
+            <option value="free">Freie Uhrzeit-Eingabe</option>
+          </select>
+          <span class="helptext">Bei freier Eingabe kann der Kunde z. B. 18:15 oder 18:20 direkt wählen.</span>
+        </label>
+        <label>
           <span class="label">Mittagspause (optional)</span>
           <input class="input" type="text" formControlName="breakHours" placeholder="13:00–16:00" />
         </label>
@@ -120,6 +128,9 @@
             </p>
             <p class="muted">Slots pro Zeit: {{ company.slotCapacity || 3 }}</p>
             <p class="muted">Abstand pro Slot: {{ company.slotIntervalMinutes || 45 }} Minuten</p>
+            <p class="muted">
+              Zeitauswahl: {{ company.timeSelectionMode === 'free' ? 'Freie Uhrzeit-Eingabe' : 'Zeitslots' }}
+            </p>
             <p class="muted">Buchungsmodus: {{ company.bookingMode === 'request' ? 'Anfrage' : 'Direkt bestätigt' }}</p>
             <p class="muted" *ngIf="company.serviceType === 'restaurant'">
               Sitzplatz-Auswahl: {{ company.seatingOptionsEnabled ? 'Aktiv' : 'Inaktiv' }}

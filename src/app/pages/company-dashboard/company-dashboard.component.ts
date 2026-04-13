@@ -113,6 +113,11 @@ export class CompanyDashboardComponent implements OnInit {
     this.applySelectedDate(value);
   }
 
+  onTimeInput(value: string): void {
+    this.errorMessage = '';
+    this.bookingForm.patchValue({ time: value || '' });
+  }
+
   setQuickDate(offsetDays: number): void {
     const target = this.getDateOffset(offsetDays);
     this.applySelectedDate(target);
@@ -124,6 +129,19 @@ export class CompanyDashboardComponent implements OnInit {
 
     if (this.bookingForm.invalid) {
       this.bookingForm.markAllAsTouched();
+      if (this.bookingForm.get('time')?.invalid) {
+        this.errorMessage = 'Bitte eine Uhrzeit auswählen.';
+      }
+      return;
+    }
+
+    const selectedTime = (this.bookingForm.value.time || '').trim();
+    if (!this.isValidTimeValue(selectedTime)) {
+      this.errorMessage = 'Bitte eine gültige Uhrzeit wählen.';
+      return;
+    }
+    if (!this.isTimeWithinOpenHours(selectedTime, this.selectedDateObj)) {
+      this.errorMessage = 'Die Uhrzeit liegt außerhalb der Öffnungszeiten oder Pause.';
       return;
     }
 
@@ -132,7 +150,7 @@ export class CompanyDashboardComponent implements OnInit {
     const value = this.bookingForm.value;
     const payload: CompanyReservationPayload = {
       date: value.date ?? this.getToday(),
-      time: value.time ?? '',
+      time: selectedTime,
       guestName: value.guestName ?? '',
       guestEmail: value.guestEmail || undefined,
       phone: value.phone || undefined,
@@ -182,6 +200,10 @@ export class CompanyDashboardComponent implements OnInit {
     return this.session?.name || 'Unternehmen';
   }
 
+  get useFreeTimeInput(): boolean {
+    return this.company?.timeSelectionMode === 'free';
+  }
+
   private updateValidators(): void {
     const peopleControl = this.bookingForm.get('people');
     const serviceControl = this.bookingForm.get('service');
@@ -215,6 +237,12 @@ export class CompanyDashboardComponent implements OnInit {
   private refreshSlots(): void {
     this.slots = this.generateSlots(this.selectedDateObj);
     const current = this.bookingForm.value.time ?? '';
+    if (this.useFreeTimeInput) {
+      if (!this.isValidTimeValue(current) || !this.isTimeWithinOpenHours(current, this.selectedDateObj)) {
+        this.bookingForm.patchValue({ time: this.getDefaultTimeForCurrentDate() }, { emitEvent: false });
+      }
+      return;
+    }
     const available = this.slots.filter((slot) => !this.isSlotFull(slot) && !this.isSlotTooSoon(slot));
     if (!current || !this.slots.includes(current) || this.isSlotFull(current) || this.isSlotTooSoon(current)) {
       this.bookingForm.patchValue({ time: available[0] || '' }, { emitEvent: false });
@@ -298,7 +326,7 @@ export class CompanyDashboardComponent implements OnInit {
       return fallback;
     }
 
-    const match = hours.match(/(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})/);
+    const match = hours.match(/(\d{1,2}(?::\d{2})?)\s*[–-]\s*(\d{1,2}(?::\d{2})?)/);
     if (!match) {
       return fallback;
     }
@@ -345,7 +373,7 @@ export class CompanyDashboardComponent implements OnInit {
 
     for (const segment of segments) {
       const matches = Array.from(
-        segment.matchAll(/(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})/g)
+        segment.matchAll(/(\d{1,2}(?::\d{2})?)\s*[–-]\s*(\d{1,2}(?::\d{2})?)/g)
       );
       if (matches.length === 0) {
         continue;
@@ -459,7 +487,7 @@ export class CompanyDashboardComponent implements OnInit {
     return raw
       .split(',')
       .map((value) => value.trim())
-      .map((value) => value.match(/(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})/))
+      .map((value) => value.match(/(\d{1,2}(?::\d{2})?)\s*[–-]\s*(\d{1,2}(?::\d{2})?)/))
       .filter((match): match is RegExpMatchArray => Boolean(match))
       .map((match) => ({
         start: this.toMinutes(match[1]),
@@ -473,11 +501,59 @@ export class CompanyDashboardComponent implements OnInit {
   }
 
   private toMinutes(time: string): number {
-    const [hour, minute] = time.split(':').map((value) => Number(value));
-    if (Number.isNaN(hour) || Number.isNaN(minute)) {
+    const match = time.trim().match(/^(\d{1,2})(?::(\d{2}))?$/);
+    if (!match) {
+      return NaN;
+    }
+    const hour = Number(match[1]);
+    const minute = match[2] ? Number(match[2]) : 0;
+    if (Number.isNaN(hour) || Number.isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
       return NaN;
     }
     return hour * 60 + minute;
+  }
+
+  private isTimeWithinOpenHours(time: string, date: Date | null): boolean {
+    const minute = this.toMinutes(time);
+    if (Number.isNaN(minute)) {
+      return false;
+    }
+    const ranges = this.getHoursRangesForDate(date);
+    if (ranges.length === 0) {
+      return false;
+    }
+    const breaks = this.getBreakRanges();
+    const inRange = ranges.some((range) => minute >= range.start && minute < range.end);
+    if (!inRange) {
+      return false;
+    }
+    return !this.isInBreak(minute, breaks);
+  }
+
+  private isValidTimeValue(value: string): boolean {
+    return !Number.isNaN(this.toMinutes(value));
+  }
+
+  private getDefaultTimeForCurrentDate(): string {
+    const ranges = this.getHoursRangesForDate(this.selectedDateObj);
+    const breaks = this.getBreakRanges();
+    for (const range of ranges) {
+      for (let minutes = range.start; minutes < range.end; minutes += 1) {
+        if (this.isInBreak(minutes, breaks)) {
+          continue;
+        }
+        return this.formatMinutes(minutes);
+      }
+    }
+    return '';
+  }
+
+  private formatMinutes(totalMinutes: number): string {
+    const hour = Math.floor(totalMinutes / 60)
+      .toString()
+      .padStart(2, '0');
+    const minute = (totalMinutes % 60).toString().padStart(2, '0');
+    return `${hour}:${minute}`;
   }
 
   private getToday(): string {

@@ -10,6 +10,7 @@ type CompanyRow = {
   login_pin?: string | null;
   slot_capacity?: number | null;
   slot_interval_minutes?: number | null;
+  time_selection_mode?: string | null;
   booking_mode?: string | null;
   seating_options_enabled?: boolean | null;
   created_at: string;
@@ -37,6 +38,7 @@ const toCompanyResponse = (row: CompanyRow) => ({
     row.slot_interval_minutes === 30 || row.slot_interval_minutes === 60
       ? row.slot_interval_minutes
       : 45,
+  timeSelectionMode: row.time_selection_mode === 'free' ? 'free' : 'slots',
   bookingMode: row.booking_mode || 'confirm',
   seatingOptionsEnabled: row.seating_options_enabled ?? false,
   createdAt: row.created_at
@@ -49,6 +51,9 @@ const normalizeSlotInterval = (value: unknown): 30 | 45 | 60 => {
   }
   return 45;
 };
+
+const normalizeTimeSelectionMode = (value: unknown): 'slots' | 'free' =>
+  value === 'free' ? 'free' : 'slots';
 
 const getClient = () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -116,6 +121,7 @@ module.exports = async function handler(req: any, res: any) {
         login_pin: body.loginPin ? String(body.loginPin).trim() : null,
         slot_capacity: typeof body.slotCapacity === 'number' ? body.slotCapacity : 3,
         slot_interval_minutes: normalizeSlotInterval(body.slotIntervalMinutes),
+        time_selection_mode: normalizeTimeSelectionMode(body.timeSelectionMode),
         booking_mode: body.bookingMode === 'request' ? 'request' : 'confirm',
         seating_options_enabled: body.seatingOptionsEnabled === true
       };
@@ -164,6 +170,7 @@ module.exports = async function handler(req: any, res: any) {
         break_hours: body.breakHours || null,
         email: body.email,
         service_type: body.serviceType || 'restaurant',
+        time_selection_mode: normalizeTimeSelectionMode(body.timeSelectionMode),
         booking_mode: body.bookingMode === 'request' ? 'request' : 'confirm',
         seating_options_enabled: body.seatingOptionsEnabled === true
       };

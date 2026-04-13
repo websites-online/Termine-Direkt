@@ -5,7 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { AdminAuthService } from '../../services/admin-auth.service';
-import { Company, CompanyApiService } from '../../services/company-api.service';
+import { Company, CompanyApiService, TimeSelectionMode } from '../../services/company-api.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -29,7 +29,8 @@ export class AdminDashboardComponent implements OnInit {
     seatingOptionsEnabled: [false],
     loginPin: [''],
     slotCapacity: [3, [Validators.required, Validators.min(1), Validators.max(3)]],
-    slotIntervalMinutes: [45, Validators.required]
+    slotIntervalMinutes: [45, Validators.required],
+    timeSelectionMode: ['slots', Validators.required]
   });
 
   constructor(
@@ -67,7 +68,8 @@ export class AdminDashboardComponent implements OnInit {
         (value.serviceType || 'restaurant') === 'restaurant' && value.seatingOptionsEnabled === true,
       loginPin: value.loginPin?.trim() || undefined,
       slotCapacity: Number(value.slotCapacity || 3),
-      slotIntervalMinutes: Number(value.slotIntervalMinutes || 45) as 30 | 45 | 60
+      slotIntervalMinutes: Number(value.slotIntervalMinutes || 45) as 30 | 45 | 60,
+      timeSelectionMode: (value.timeSelectionMode || 'slots') as TimeSelectionMode
     };
 
     const request$ = this.editingSlug
@@ -94,7 +96,8 @@ export class AdminDashboardComponent implements OnInit {
       seatingOptionsEnabled: company.seatingOptionsEnabled || false,
       loginPin: '',
       slotCapacity: company.slotCapacity ?? 3,
-      slotIntervalMinutes: company.slotIntervalMinutes ?? 45
+      slotIntervalMinutes: company.slotIntervalMinutes ?? 45,
+      timeSelectionMode: company.timeSelectionMode || 'slots'
     });
   }
 
@@ -133,7 +136,8 @@ export class AdminDashboardComponent implements OnInit {
       seatingOptionsEnabled: false,
       loginPin: this.createRandomPin(),
       slotCapacity: 3,
-      slotIntervalMinutes: 45
+      slotIntervalMinutes: 45,
+      timeSelectionMode: 'slots'
     });
     this.companyForm.markAsPristine();
   }

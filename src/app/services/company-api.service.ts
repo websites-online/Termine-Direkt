@@ -6,6 +6,7 @@ import { environment } from '../../environments/environment';
 
 export type ServiceType = 'restaurant' | 'friseur';
 export type BookingMode = 'confirm' | 'request';
+export type TimeSelectionMode = 'slots' | 'free';
 
 export interface Company {
   id?: string;
@@ -19,6 +20,7 @@ export interface Company {
   loginPin?: string;
   slotCapacity?: number;
   slotIntervalMinutes?: 30 | 45 | 60;
+  timeSelectionMode?: TimeSelectionMode;
   bookingMode?: BookingMode;
   seatingOptionsEnabled?: boolean;
   createdAt?: string;
@@ -34,6 +36,7 @@ export interface CompanyPayload {
   loginPin?: string;
   slotCapacity?: number;
   slotIntervalMinutes?: 30 | 45 | 60;
+  timeSelectionMode?: TimeSelectionMode;
   bookingMode?: BookingMode;
   seatingOptionsEnabled?: boolean;
 }
@@ -72,6 +75,7 @@ export class CompanyApiService {
         createdAt: new Date().toISOString(),
         ...payload,
         slotIntervalMinutes: payload.slotIntervalMinutes || 45,
+        timeSelectionMode: payload.timeSelectionMode || 'slots',
         bookingMode: payload.bookingMode || 'confirm',
         seatingOptionsEnabled: payload.seatingOptionsEnabled === true
       };
@@ -106,6 +110,9 @@ export class CompanyApiService {
       }
       if (!payload.slotIntervalMinutes) {
         updated.slotIntervalMinutes = companies[index].slotIntervalMinutes ?? 45;
+      }
+      if (!payload.timeSelectionMode) {
+        updated.timeSelectionMode = companies[index].timeSelectionMode || 'slots';
       }
       if (!payload.bookingMode) {
         updated.bookingMode = companies[index].bookingMode || 'confirm';
@@ -146,7 +153,15 @@ export class CompanyApiService {
       if (!raw) {
         return [];
       }
-      return JSON.parse(raw) as Company[];
+      const parsed = JSON.parse(raw) as Company[];
+      return parsed.map((company) => ({
+        ...company,
+        slotIntervalMinutes:
+          company.slotIntervalMinutes === 30 || company.slotIntervalMinutes === 60
+            ? company.slotIntervalMinutes
+            : 45,
+        timeSelectionMode: company.timeSelectionMode === 'free' ? 'free' : 'slots'
+      }));
     } catch {
       return [];
     }
