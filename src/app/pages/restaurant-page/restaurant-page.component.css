@@ -176,6 +176,19 @@
   margin: 4px 0 4px;
 }
 
+.free-time-row {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.free-time-row .input[type='time'] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .slot {
   border: 1px solid rgba(79, 70, 229, 0.2);
   background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(129, 140, 248, 0.2));
