@@ -77,10 +77,8 @@
           <input
             class="input"
             type="time"
-            step="300"
+            step="60"
             [value]="bookingForm.value.time || ''"
-            [min]="freeTimeMin"
-            [max]="freeTimeMax"
             (input)="onTimeInput($any($event.target).value)"
           />
         </label>

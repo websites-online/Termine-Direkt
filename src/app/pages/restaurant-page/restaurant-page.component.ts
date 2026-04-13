@@ -51,7 +51,6 @@ export class RestaurantPageComponent implements OnInit {
     this.baseDate.getDate()
   );
   private readonly bookingBufferMinutes = 120;
-  private readonly freeTimeStepMinutes = 5;
   private parsedScheduleCache: { source: string; value: ParsedSchedule } | null = null;
   private holidayCache = new Map<number, Set<string>>();
   monthOffset = 0;
@@ -118,10 +117,6 @@ export class RestaurantPageComponent implements OnInit {
     const requestedTime = this.bookingForm.value.time ?? '';
     if (!this.isValidTimeValue(requestedTime)) {
       this.errorMessage = 'Bitte wählen Sie eine gültige Uhrzeit.';
-      return;
-    }
-    if (this.useFreeTimeInput && !this.isValidFreeTimeStep(requestedTime)) {
-      this.errorMessage = 'Bitte wählen Sie eine Uhrzeit im 5-Minuten-Takt.';
       return;
     }
     if (!this.isTimeWithinOpenHours(requestedTime, this.selectedDateObj)) {
@@ -204,21 +199,8 @@ export class RestaurantPageComponent implements OnInit {
     return this.company?.timeSelectionMode === 'free';
   }
 
-  get freeTimeMin(): string {
-    const ranges = this.getHoursRangesForDate(this.selectedDateObj);
-    if (ranges.length === 0) {
-      return '';
-    }
-    return this.formatMinutes(this.alignToStep(ranges[0].start, 'ceil'));
-  }
-
-  get freeTimeMax(): string {
-    const ranges = this.getHoursRangesForDate(this.selectedDateObj);
-    if (ranges.length === 0) {
-      return '';
-    }
-    const lastEnd = ranges[ranges.length - 1].end;
-    return this.formatMinutes(this.alignToStep(Math.max(0, lastEnd - 1), 'floor'));
+  get freeTimeOptions(): string[] {
+    return this.generateFreeTimeOptions(this.selectedDateObj);
   }
 
   get bookingTitle(): string {
@@ -368,16 +350,8 @@ export class RestaurantPageComponent implements OnInit {
       this.errorMessage = 'Bitte wählen Sie eine gültige Uhrzeit.';
       return;
     }
-    if (!this.isValidFreeTimeStep(value)) {
-      this.errorMessage = 'Bitte wählen Sie eine Uhrzeit im 5-Minuten-Takt.';
-      return;
-    }
     if (!this.isTimeWithinOpenHours(value, this.selectedDateObj)) {
       this.errorMessage = 'Bitte wählen Sie eine Uhrzeit innerhalb der Öffnungszeiten.';
-      return;
-    }
-    if (this.isSlotTooSoon(value)) {
-      this.errorMessage = 'Bitte beachten Sie: Reservierungen sind frühestens 2 Stunden im Voraus möglich.';
       return;
     }
     this.errorMessage = '';
@@ -887,13 +861,9 @@ export class RestaurantPageComponent implements OnInit {
   private syncSelectedTimeWithMode(): void {
     const current = this.bookingForm.value.time || '';
     if (this.useFreeTimeInput) {
-      if (
-        !this.isValidTimeValue(current) ||
-        !this.isValidFreeTimeStep(current) ||
-        !this.isTimeWithinOpenHours(current, this.selectedDateObj) ||
-        this.isSlotTooSoon(current)
-      ) {
-        this.bookingForm.patchValue({ time: this.getDefaultTimeForCurrentDate() }, { emitEvent: false });
+      const available = this.freeTimeOptions;
+      if (!current || !available.includes(current)) {
+        this.bookingForm.patchValue({ time: available[0] || '' }, { emitEvent: false });
       }
       return;
     }
@@ -905,28 +875,11 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   private getDefaultTimeForCurrentDate(): string {
-    const ranges = this.getHoursRangesForDate(this.selectedDateObj);
-    const breaks = this.getBreakRanges();
-    if (ranges.length === 0) {
-      return '';
+    if (this.useFreeTimeInput) {
+      return this.freeTimeOptions[0] || '';
     }
-
-    for (const range of ranges) {
-      for (let minutes = range.start; minutes < range.end; minutes += 1) {
-        if (minutes % this.freeTimeStepMinutes !== 0) {
-          continue;
-        }
-        if (this.isInBreak(minutes, breaks)) {
-          continue;
-        }
-        const time = this.formatMinutes(minutes);
-        if (!this.isSlotTooSoon(time)) {
-          return time;
-        }
-      }
-    }
-
-    return '';
+    const nextSlot = this.slots.find((slot) => !this.isSlotFull(slot) && !this.isSlotTooSoon(slot));
+    return nextSlot || '';
   }
 
   private isTimeWithinOpenHours(time: string, date: Date | null): boolean {
@@ -950,19 +903,26 @@ export class RestaurantPageComponent implements OnInit {
     return !Number.isNaN(this.toMinutes(value));
   }
 
-  private isValidFreeTimeStep(value: string): boolean {
-    const minuteValue = this.toMinutes(value);
-    if (Number.isNaN(minuteValue)) {
-      return false;
+  private generateFreeTimeOptions(date: Date | null): string[] {
+    const ranges = this.getHoursRangesForDate(date);
+    if (ranges.length === 0) {
+      return [];
     }
-    return minuteValue % this.freeTimeStepMinutes === 0;
-  }
-
-  private alignToStep(value: number, mode: 'floor' | 'ceil'): number {
-    if (mode === 'floor') {
-      return Math.floor(value / this.freeTimeStepMinutes) * this.freeTimeStepMinutes;
+    const breaks = this.getBreakRanges();
+    const options: string[] = [];
+    for (const range of ranges) {
+      for (let minutes = range.start; minutes < range.end; minutes += 1) {
+        if (this.isInBreak(minutes, breaks)) {
+          continue;
+        }
+        const time = this.formatMinutes(minutes);
+        if (this.isSlotFull(time)) {
+          continue;
+        }
+        options.push(time);
+      }
     }
-    return Math.ceil(value / this.freeTimeStepMinutes) * this.freeTimeStepMinutes;
+    return options;
   }
 
   private formatMinutes(totalMinutes: number): string {
