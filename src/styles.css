@@ -1,4 +1,5 @@
 @import './styles/theme.css';
+@import './styles/landing.css';
 
 * {
   box-sizing: border-box;
@@ -6,6 +7,7 @@
 
 html {
   scroll-behavior: smooth;
+  background: var(--bg);
 }
 
 body {
@@ -13,6 +15,8 @@ body {
   font-family: 'Inter', 'Segoe UI', sans-serif;
   background: var(--bg);
   color: var(--text);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
@@ -26,6 +30,10 @@ img {
 
 button {
   font-family: inherit;
+}
+
+::selection {
+  background: rgba(20, 184, 166, 0.22);
 }
 
 .page {
@@ -43,7 +51,7 @@ button {
   gap: 8px;
   padding: 6px 12px;
   border-radius: 999px;
-  background: rgba(79, 70, 229, 0.08);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(20, 184, 166, 0.12));
   color: var(--primary-600);
   font-weight: 600;
   font-size: 0.85rem;
@@ -65,6 +73,52 @@ button {
 
 .back-btn {
   margin: 12px 0 18px;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 520ms;
+  animation-timing-function: var(--ease-emphatic);
+}
+
+::view-transition-old(root) {
+  animation-name: route-out;
+}
+
+::view-transition-new(root) {
+  animation-name: route-in;
+}
+
+@keyframes route-out {
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.992);
+    filter: blur(6px);
+  }
+}
+
+@keyframes route-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.992);
+    filter: blur(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
 }
 
 @media (max-width: 480px) {

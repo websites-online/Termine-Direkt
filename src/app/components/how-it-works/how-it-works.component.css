@@ -1,5 +1,5 @@
 .how-it-works {
-  background: #f8fafc;
+  background: transparent;
 }
 
 .section-header {
@@ -8,7 +8,7 @@
 
 .section-subtitle {
   margin: 8px 0 0;
-  color: #475569;
+  color: var(--muted);
 }
 
 .steps-grid {
@@ -17,16 +17,23 @@
 }
 
 .step-card {
-  border-radius: 18px;
+  border-radius: 8px;
   overflow: hidden;
-  background: #ffffff;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
   opacity: 0;
   transform: translateY(18px);
-  animation: stepFade 0.8s ease forwards;
+  animation: stepFade 0.82s var(--ease-emphatic) forwards;
+  transition: transform 0.28s var(--ease-smooth), box-shadow 0.28s ease, border-color 0.28s ease;
+}
+
+.step-card:hover {
+  border-color: rgba(20, 184, 166, 0.22);
+  box-shadow: 0 26px 48px rgba(16, 24, 40, 0.13);
+  transform: translateY(-5px);
 }
 
 .step-card:nth-child(1) {
@@ -44,7 +51,7 @@
 .step-media {
   position: relative;
   height: 200px;
-  background: #e2e8f0;
+  background: linear-gradient(135deg, #eaf1fb, #edfdf8);
 }
 
 .step-media img {
@@ -58,7 +65,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(160deg, rgba(15, 23, 42, 0.35), rgba(15, 23, 42, 0));
+  background: linear-gradient(160deg, rgba(16, 24, 40, 0.36), rgba(16, 24, 40, 0.02));
 }
 
 .step-number {
@@ -71,8 +78,8 @@
   justify-content: center;
   width: 42px;
   height: 42px;
-  border-radius: 12px;
-  background: rgba(15, 23, 42, 0.75);
+  border-radius: 8px;
+  background: rgba(16, 24, 40, 0.78);
   color: #f8fafc;
   font-weight: 700;
   font-size: 0.95rem;
@@ -89,12 +96,12 @@
 .step-copy h3 {
   margin: 0 0 8px;
   font-size: 1.15rem;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .step-copy p {
   margin: 0;
-  color: #475569;
+  color: var(--muted);
 }
 
 @keyframes stepFade {

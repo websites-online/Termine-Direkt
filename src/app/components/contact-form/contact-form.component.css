@@ -1,6 +1,16 @@
 .contact-card {
+  position: relative;
   display: grid;
   gap: 20px;
+  overflow: hidden;
+}
+
+.contact-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--accent), var(--warm));
 }
 
 .contact-form {
@@ -26,6 +36,7 @@
 }
 
 .checkbox-row input {
+  accent-color: var(--accent);
   width: 18px;
   height: 18px;
 }

@@ -31,6 +31,9 @@ export class LandingPageComponent implements OnInit {
   scrollProgress = 0;
   pointerTiltX = 0;
   pointerTiltY = 0;
+  private viewportFrame = 0;
+  private pointerFrame = 0;
+  private lastPointerEvent: MouseEvent | null = null;
 
   ngOnInit(): void {
     this.updateViewportEffects();
@@ -47,6 +50,35 @@ export class LandingPageComponent implements OnInit {
   @HostListener('window:scroll')
   @HostListener('window:resize')
   updateViewportEffects(): void {
+    if (this.viewportFrame) {
+      return;
+    }
+
+    this.viewportFrame = window.requestAnimationFrame(() => {
+      this.viewportFrame = 0;
+      this.applyViewportEffects();
+    });
+  }
+
+  @HostListener('window:mousemove', ['$event'])
+  onMouseMove(event: MouseEvent): void {
+    if (window.innerWidth < 900) {
+      return;
+    }
+
+    this.lastPointerEvent = event;
+
+    if (this.pointerFrame) {
+      return;
+    }
+
+    this.pointerFrame = window.requestAnimationFrame(() => {
+      this.pointerFrame = 0;
+      this.applyPointerTilt();
+    });
+  }
+
+  private applyViewportEffects(): void {
     const scrollRange = Math.max(window.innerHeight * 1.8, 1200);
     const normalized = Math.min(window.scrollY / scrollRange, 1);
     this.scrollProgress = Number(normalized.toFixed(4));
@@ -58,14 +90,13 @@ export class LandingPageComponent implements OnInit {
     }
   }
 
-  @HostListener('window:mousemove', ['$event'])
-  onMouseMove(event: MouseEvent): void {
-    if (window.innerWidth < 900) {
+  private applyPointerTilt(): void {
+    if (!this.lastPointerEvent) {
       return;
     }
 
-    const x = event.clientX / window.innerWidth;
-    const y = event.clientY / window.innerHeight;
+    const x = this.lastPointerEvent.clientX / window.innerWidth;
+    const y = this.lastPointerEvent.clientY / window.innerHeight;
     this.pointerTiltX = Number(((x - 0.5) * 2).toFixed(4));
     this.pointerTiltY = Number(((y - 0.5) * 2).toFixed(4));
   }
