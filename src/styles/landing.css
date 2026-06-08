@@ -424,7 +424,13 @@
 }
 
 @media (min-width: 861px) {
+  .hero {
+    min-height: min(720px, calc(82dvh - 76px));
+    padding-bottom: clamp(28px, 4vw, 54px);
+  }
+
   .hero-stage {
+    min-height: clamp(300px, 34vw, 420px);
     transform:
       perspective(1600px)
       rotateX(calc(6deg - var(--scroll-progress) * 5deg + var(--tilt-y) * -3.5deg))
