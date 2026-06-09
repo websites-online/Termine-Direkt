@@ -447,6 +447,18 @@
   transform: translateX(-2px);
 }
 
+.nav-panel a.btn.btn-primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--primary), #0f766e);
+  color: #fff;
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.2);
+}
+
+.nav-panel a.btn.btn-primary:hover {
+  background: linear-gradient(135deg, var(--primary-600), #0d9488);
+  color: #fff;
+}
+
 .nav-backdrop {
   position: fixed;
   inset: 0;
