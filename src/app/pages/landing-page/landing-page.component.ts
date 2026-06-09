@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { AfterViewInit, Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
@@ -25,9 +25,12 @@ import { ContactFormComponent } from '../../components/contact-form/contact-form
   templateUrl: './landing-page.component.html',
   styleUrl: './landing-page.component.css'
 })
-export class LandingPageComponent implements OnInit {
+export class LandingPageComponent implements OnInit, AfterViewInit {
+  private readonly soroScriptId = 'soro-blog-embed-script';
+  private readonly soroScriptSrc = 'https://app.trysoro.com/api/embed/f8a7eab0-b7c4-4561-9e23-8347ca2a2c3e';
   isNavOpen = false;
   isNavCompact = false;
+  isSoroBlogFallbackVisible = true;
   scrollProgress = 0;
   pointerTiltX = 0;
   pointerTiltY = 0;
@@ -37,6 +40,10 @@ export class LandingPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.updateViewportEffects();
+  }
+
+  ngAfterViewInit(): void {
+    this.loadSoroBlog();
   }
 
   toggleNav(): void {
@@ -99,5 +106,25 @@ export class LandingPageComponent implements OnInit {
     const y = this.lastPointerEvent.clientY / window.innerHeight;
     this.pointerTiltX = Number(((x - 0.5) * 2).toFixed(4));
     this.pointerTiltY = Number(((y - 0.5) * 2).toFixed(4));
+  }
+
+  private loadSoroBlog(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    document.getElementById(this.soroScriptId)?.remove();
+
+    const script = document.createElement('script');
+    script.id = this.soroScriptId;
+    script.src = this.soroScriptSrc;
+    script.defer = true;
+    script.onload = () => {
+      window.setTimeout(() => {
+        const blogRoot = document.getElementById('soro-blog');
+        this.isSoroBlogFallbackVisible = !blogRoot?.childElementCount;
+      }, 800);
+    };
+    document.body.appendChild(script);
   }
 }

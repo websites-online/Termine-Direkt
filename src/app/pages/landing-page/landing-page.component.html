@@ -14,6 +14,7 @@
         <nav class="nav">
           <a routerLink="/demo-unternehmen">Demo</a>
           <a href="#pricing">Preise</a>
+          <a href="#blog">Blog</a>
           <a href="#contact">Kontakt</a>
           <a routerLink="/unternehmen/login">Unternehmenslogin</a>
           <a class="btn btn-primary" href="#contact">Jetzt starten</a>
@@ -97,6 +98,30 @@
           </div>
         </div>
       </div>
+      <div class="section-band band-light section-interactive stage-blog" id="blog">
+        <div class="section-stage">
+          <div class="depth-wrap depth-left">
+            <section class="section soro-blog-section" aria-labelledby="blog-title">
+              <div class="container">
+                <div class="section-header">
+                  <span class="badge">NexTime Blog</span>
+                  <h2 class="section-title" id="blog-title">Tipps für mehr Reservierungen</h2>
+                  <p class="section-lead">
+                    Praxisnahe Beiträge zu Online-Buchung, Google-Profilen und digitalem Marketing.
+                  </p>
+                </div>
+                <div class="card soro-blog-card">
+                  <div id="soro-blog"></div>
+                  <div class="soro-blog-fallback" *ngIf="isSoroBlogFallbackVisible">
+                    <strong>Blog wird vorbereitet</strong>
+                    <span>Der Soro-Embed ist aktuell noch nicht aktiv. Sobald er bei Soro freigeschaltet ist, erscheinen die Beiträge hier automatisch.</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
       <div class="section-band band-light section-interactive stage-contact">
         <div class="section-stage">
           <div class="depth-wrap depth-left">
@@ -112,6 +137,7 @@
   <div class="nav-panel" [class.open]="isNavOpen" (click)="closeNav()">
     <a routerLink="/demo-unternehmen" (click)="$event.stopPropagation(); closeNav()">Demo</a>
     <a href="#pricing" (click)="$event.stopPropagation(); closeNav()">Preise</a>
+    <a href="#blog" (click)="$event.stopPropagation(); closeNav()">Blog</a>
     <a href="#contact" (click)="$event.stopPropagation(); closeNav()">Kontakt</a>
     <a routerLink="/unternehmen/login" (click)="$event.stopPropagation(); closeNav()">Unternehmenslogin</a>
     <a class="btn btn-primary" href="#contact" (click)="$event.stopPropagation(); closeNav()">Jetzt starten</a>
