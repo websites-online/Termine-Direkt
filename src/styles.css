@@ -75,20 +75,186 @@ button {
   margin: 12px 0 18px;
 }
 
-.page:not(.landing-page),
-.page:not(.landing-page) * {
+.booking-flow-page .booking-flow {
+  width: min(360px, 100%);
+  margin: 0 auto 10px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.booking-flow-page .flow-step {
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    opacity 0.24s ease,
+    transform 0.24s var(--ease-smooth),
+    background 0.24s ease,
+    color 0.24s ease,
+    border-color 0.24s ease;
+}
+
+.booking-flow-page .flow-step:not(:disabled):hover {
+  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.22);
+}
+
+.booking-flow-page .flow-step:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.booking-flow-page .flow-step--active {
+  border-color: rgba(37, 99, 235, 0.18);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(20, 184, 166, 0.1));
+  color: #1d4ed8;
+}
+
+.booking-flow-page .flow-line {
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.28);
+  overflow: hidden;
+  position: relative;
+}
+
+.booking-flow-page .flow-line::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: scaleX(0);
+  transform-origin: left;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  transition: transform 0.42s var(--ease-smooth);
+}
+
+.booking-flow-page .flow-line--active::before {
+  transform: scaleX(1);
+}
+
+.booking-flow-page .calendar-card {
+  animation: calendarIntro 0.42s var(--ease-smooth) both;
+}
+
+.booking-flow-page .calendar-card--selected {
+  animation: none;
+}
+
+.booking-flow-page .show-details .flow-panel {
+  animation: detailsReveal 0.52s var(--ease-emphatic) both;
+}
+
+.booking-flow-page .flow-ready .calendar-card,
+.booking-flow-page .flow-ready .details-card {
+  transition:
+    opacity 0.38s var(--ease-smooth),
+    transform 0.38s var(--ease-smooth),
+    filter 0.38s var(--ease-smooth);
+}
+
+.booking-flow-page .flow-ready.show-details .calendar-card {
+  z-index: 1;
+  opacity: 0.42;
+  filter: blur(1.2px) saturate(0.78);
+  transform: translateX(10px) scale(0.94);
+  cursor: pointer;
+}
+
+.booking-flow-page .flow-ready.show-details .calendar-card > * {
+  pointer-events: none;
+}
+
+.booking-flow-page .flow-ready.show-details .details-card {
+  z-index: 2;
+  opacity: 1;
+  filter: none;
+  transform: translateX(-6px) scale(1.02);
+}
+
+.booking-flow-page .flow-ready.show-calendar .calendar-card {
+  z-index: 2;
+  opacity: 1;
+  filter: none;
+  transform: translateX(0) scale(1.02);
+}
+
+.booking-flow-page .flow-ready.show-calendar .details-card {
+  z-index: 1;
+  opacity: 0.4;
+  filter: blur(1px) saturate(0.82);
+  transform: translateX(-10px) scale(0.94);
+  cursor: pointer;
+}
+
+.booking-flow-page .flow-ready.show-calendar .details-card > * {
+  pointer-events: none;
+}
+
+.booking-flow-page .flow-ready.show-calendar .details-card--locked {
+  cursor: default;
+  pointer-events: none;
+}
+
+@keyframes calendarIntro {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes calendarConfirm {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(0.985);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes detailsReveal {
+  from {
+    opacity: 0;
+    transform: translateX(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.page:not(.landing-page):not(.booking-flow-page),
+.page:not(.landing-page):not(.booking-flow-page) * {
   animation: none !important;
   transition: none !important;
   scroll-behavior: auto !important;
 }
 
-.page:not(.landing-page) * {
+.page:not(.landing-page):not(.booking-flow-page) * {
   box-shadow: none !important;
   filter: none !important;
   backdrop-filter: none !important;
 }
 
-.page:not(.landing-page) *:hover {
+.page:not(.landing-page):not(.booking-flow-page) *:hover {
   transform: none !important;
 }
 
@@ -149,4 +315,30 @@ button {
   .label {
     font-size: 0.75rem;
   }
+
+  .booking-flow-page .booking-flow {
+    margin-bottom: 8px;
+  }
+
+  .booking-flow-page .flow-ready.show-details .details-card {
+    order: initial;
+    transform: translateY(0) scale(1);
+  }
+
+  .booking-flow-page .flow-ready.show-details .calendar-card {
+    opacity: 0.38;
+    filter: blur(1px) saturate(0.82);
+    transform: translateY(0) scale(0.96);
+    pointer-events: auto;
+  }
+
+  .booking-flow-page .flow-ready.show-calendar .calendar-card {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .booking-flow-page .flow-ready.show-calendar .details-card {
+    transform: translateY(0) scale(0.96);
+  }
+
 }

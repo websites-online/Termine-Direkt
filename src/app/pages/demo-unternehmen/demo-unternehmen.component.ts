@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, ElementRef, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -11,6 +11,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 })
 export class DemoUnternehmenComponent {
   private readonly formBuilder = inject(FormBuilder);
+  @ViewChild('calendarCard') private calendarCard?: ElementRef<HTMLElement>;
+  @ViewChild('detailsCard') private detailsCard?: ElementRef<HTMLElement>;
   successMessage = '';
   readonly slots = this.generateSlots();
   readonly weekdays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
@@ -35,6 +37,8 @@ export class DemoUnternehmenComponent {
     this.baseDate.getDate()
   );
   monthOffset = 0;
+  hasSelectedDate = false;
+  activeFlowStep: 'date' | 'details' = 'date';
   calendarDays = this.generateCalendar(
     this.baseDate.getFullYear(),
     this.baseDate.getMonth(),
@@ -79,8 +83,48 @@ export class DemoUnternehmenComponent {
     }
     this.selectedDateObj = day.date;
     this.selectedDate = this.formatDate(day.date);
+    this.hasSelectedDate = true;
+    this.activeFlowStep = 'details';
     this.calendarDays.forEach((entry) => {
       entry.active = !entry.muted && entry.date?.getTime() === day.date?.getTime();
+    });
+    this.scrollDetailsIntoViewOnMobile();
+  }
+
+  showDateStep(): void {
+    this.activeFlowStep = 'date';
+    this.scrollCalendarIntoViewOnMobile();
+  }
+
+  showDetailsStep(): void {
+    if (!this.hasSelectedDate) {
+      return;
+    }
+    this.activeFlowStep = 'details';
+    this.scrollDetailsIntoViewOnMobile();
+  }
+
+  private scrollDetailsIntoViewOnMobile(): void {
+    if (typeof window === 'undefined' || !window.matchMedia('(max-width: 480px)').matches) {
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      this.detailsCard?.nativeElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    });
+  }
+
+  private scrollCalendarIntoViewOnMobile(): void {
+    if (typeof window === 'undefined' || !window.matchMedia('(max-width: 480px)').matches) {
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      this.calendarCard?.nativeElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
     });
   }
 

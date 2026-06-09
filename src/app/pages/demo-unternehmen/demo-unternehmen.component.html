@@ -1,19 +1,49 @@
-<section class="section page demo-page">
+<section class="section page demo-page booking-flow-page">
     <div class="container">
     <div class="section-header demo-header">
         <h1 class="section-title">Max Grill</h1>
         <p class="section-lead">Beispielhafte Reservierungsseite ohne Backend.</p>
       </div>
 
-      <div class="grid-2 demo-grid">
-        <div class="card calendar-card">
+      <div class="booking-flow" aria-label="Reservierungsfortschritt">
+        <button
+          class="flow-step"
+          type="button"
+          [class.flow-step--active]="activeFlowStep === 'date'"
+          (click)="showDateStep()"
+        >
+          1. Datum
+        </button>
+        <span class="flow-line" [class.flow-line--active]="hasSelectedDate"></span>
+        <button
+          class="flow-step"
+          type="button"
+          [class.flow-step--active]="activeFlowStep === 'details'"
+          [disabled]="!hasSelectedDate"
+          (click)="showDetailsStep()"
+        >
+          2. Details
+        </button>
+      </div>
+
+      <div
+        class="grid-2 demo-grid flow-ready"
+        [class.show-calendar]="activeFlowStep === 'date'"
+        [class.show-details]="activeFlowStep === 'details'"
+      >
+        <div
+          #calendarCard
+          class="card calendar-card"
+          [class.calendar-card--selected]="hasSelectedDate"
+          (click)="showDateStep()"
+        >
           <h2>Kalender</h2>
           <div class="calendar-header">
-            <button class="month-nav" type="button" (click)="prevMonth()" [disabled]="!canGoPrev">
+            <button class="month-nav" type="button" (click)="prevMonth(); $event.stopPropagation()" [disabled]="!canGoPrev">
               ‹
             </button>
             <span class="month-label">{{ currentMonthLabel }}</span>
-            <button class="month-nav" type="button" (click)="nextMonth()" [disabled]="!canGoNext">
+            <button class="month-nav" type="button" (click)="nextMonth(); $event.stopPropagation()" [disabled]="!canGoNext">
               ›
             </button>
           </div>
@@ -26,18 +56,24 @@
             type="button"
             *ngFor="let day of calendarDays"
             [class.muted]="day.muted"
-            [class.active]="day.active"
+            [class.active]="hasSelectedDate && day.active"
             [class.today]="day.today"
             [disabled]="day.muted"
-            (click)="selectDate(day)"
+            (click)="selectDate(day); $event.stopPropagation()"
           >
             {{ day.label }}
           </button>
           </div>
-          <p class="helptext">Datum auswählen (Demo).</p>
+          <p class="helptext" *ngIf="!hasSelectedDate">Wähle zuerst ein Datum aus.</p>
+          <p class="helptext" *ngIf="hasSelectedDate">Ausgewählt: {{ selectedDate }}</p>
         </div>
 
-        <div class="card details-card">
+        <div
+          #detailsCard
+          class="card details-card flow-panel"
+          [class.details-card--locked]="!hasSelectedDate"
+          (click)="showDetailsStep()"
+        >
           <h2>Reservierungsdetails</h2>
           <p class="muted">Musterstraße 12, 10115 Berlin</p>
           <p class="muted">Öffnungszeiten: Mo–So 12:00–20:00</p>

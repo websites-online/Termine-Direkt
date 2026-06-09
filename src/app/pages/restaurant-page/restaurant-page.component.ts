@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
@@ -24,6 +24,8 @@ export class RestaurantPageComponent implements OnInit {
   private readonly companyService = inject(CompanyApiService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly http = inject(HttpClient);
+  @ViewChild('calendarCard') private calendarCard?: ElementRef<HTMLElement>;
+  @ViewChild('detailsCard') private detailsCard?: ElementRef<HTMLElement>;
 
   readonly slug = this.route.snapshot.paramMap.get('slug') ?? '';
   company: Company | null = null;
@@ -54,6 +56,8 @@ export class RestaurantPageComponent implements OnInit {
   private parsedScheduleCache: { source: string; value: ParsedSchedule } | null = null;
   private holidayCache = new Map<number, Set<string>>();
   monthOffset = 0;
+  hasSelectedDate = false;
+  activeFlowStep: 'date' | 'details' = 'date';
   calendarDays = this.generateCalendar(
     this.baseDate.getFullYear(),
     this.baseDate.getMonth(),
@@ -323,12 +327,52 @@ export class RestaurantPageComponent implements OnInit {
     this.selectedDateObj = day.date;
     this.selectedDate = this.formatDateISO(day.date);
     this.selectedDateLabel = this.formatDate(day.date);
+    this.hasSelectedDate = true;
+    this.activeFlowStep = 'details';
     this.calendarDays.forEach((entry) => {
       entry.active = !entry.muted && entry.date?.getTime() === day.date?.getTime();
     });
     this.slots = this.generateSlots(this.selectedDateObj);
     this.syncSelectedTimeWithMode();
     this.loadSlotAvailability();
+    this.scrollDetailsIntoViewOnMobile();
+  }
+
+  showDateStep(): void {
+    this.activeFlowStep = 'date';
+    this.scrollCalendarIntoViewOnMobile();
+  }
+
+  showDetailsStep(): void {
+    if (!this.hasSelectedDate) {
+      return;
+    }
+    this.activeFlowStep = 'details';
+    this.scrollDetailsIntoViewOnMobile();
+  }
+
+  private scrollDetailsIntoViewOnMobile(): void {
+    if (typeof window === 'undefined' || !window.matchMedia('(max-width: 480px)').matches) {
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      this.detailsCard?.nativeElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    });
+  }
+
+  private scrollCalendarIntoViewOnMobile(): void {
+    if (typeof window === 'undefined' || !window.matchMedia('(max-width: 480px)').matches) {
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      this.calendarCard?.nativeElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    });
   }
 
   onSlotClick(slot: string): void {
