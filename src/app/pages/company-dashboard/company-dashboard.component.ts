@@ -30,8 +30,6 @@ export class CompanyDashboardComponent implements OnInit {
   private selectedDateObj = this.parseDate(this.getToday());
   slots: string[] = [];
   slotCounts: Record<string, number> = {};
-  readonly bookingBufferMinutes = 120;
-  private readonly today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
   isLoading = false;
   listError = '';
   isSubmitting = false;
@@ -276,25 +274,34 @@ export class CompanyDashboardComponent implements OnInit {
   }
 
   isSlotTooSoon(slot: string): boolean {
-    if (!this.isTodaySelected()) {
-      return false;
-    }
     const slotMinutes = this.toMinutes(slot);
     if (Number.isNaN(slotMinutes)) {
       return false;
     }
-    const earliest = this.getEarliestBookableMinutes();
-    return slotMinutes < earliest;
+    const selectedDate = this.selectedDateObj;
+    if (!selectedDate) {
+      return false;
+    }
+    const slotDateTime = new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth(),
+      selectedDate.getDate(),
+      Math.floor(slotMinutes / 60),
+      slotMinutes % 60
+    );
+    return slotDateTime.getTime() < this.getEarliestBookableTime().getTime();
   }
 
-  private isTodaySelected(): boolean {
-    return this.selectedDateObj?.getTime() === this.today.getTime();
+  private getEarliestBookableTime(): Date {
+    return new Date(Date.now() + this.getBookingBufferMinutes() * 60_000);
   }
 
-  private getEarliestBookableMinutes(): number {
-    const now = new Date();
-    const minutesNow = now.getHours() * 60 + now.getMinutes();
-    return minutesNow + this.bookingBufferMinutes;
+  private getBookingBufferMinutes(): number {
+    const minutes = Number(this.company?.bookingBufferMinutes);
+    if (!Number.isFinite(minutes)) {
+      return 120;
+    }
+    return Math.min(Math.max(Math.round(minutes), 0), 1440);
   }
 
   private getSlotCapacity(): number {

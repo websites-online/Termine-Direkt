@@ -52,7 +52,6 @@ export class RestaurantPageComponent implements OnInit {
     this.baseDate.getMonth(),
     this.baseDate.getDate()
   );
-  private readonly bookingBufferMinutes = 120;
   private parsedScheduleCache: { source: string; value: ParsedSchedule } | null = null;
   private holidayCache = new Map<number, Set<string>>();
   monthOffset = 0;
@@ -128,7 +127,7 @@ export class RestaurantPageComponent implements OnInit {
       return;
     }
     if (this.isSlotTooSoon(requestedTime)) {
-      this.errorMessage = 'Bitte beachten Sie: Reservierungen sind frühestens 2 Stunden im Voraus möglich.';
+      this.errorMessage = `Bitte beachten Sie: Buchungen sind frühestens ${this.getBookingBufferLabel()} im Voraus möglich.`;
       return;
     }
 
@@ -377,7 +376,7 @@ export class RestaurantPageComponent implements OnInit {
 
   onSlotClick(slot: string): void {
     if (this.isSlotTooSoon(slot)) {
-      this.errorMessage = 'Bitte beachten Sie: Reservierungen sind frühestens 2 Stunden im Voraus möglich.';
+      this.errorMessage = `Bitte beachten Sie: Buchungen sind frühestens ${this.getBookingBufferLabel()} im Voraus möglich.`;
       return;
     }
     this.errorMessage = '';
@@ -865,25 +864,46 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   isSlotTooSoon(slot: string): boolean {
-    if (!this.isTodaySelected()) {
-      return false;
-    }
     const slotMinutes = this.toMinutes(slot);
     if (Number.isNaN(slotMinutes)) {
       return false;
     }
-    const earliest = this.getEarliestBookableMinutes();
-    return slotMinutes < earliest;
+    const selectedDate = this.selectedDateObj;
+    if (!selectedDate) {
+      return false;
+    }
+    const slotDateTime = new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth(),
+      selectedDate.getDate(),
+      Math.floor(slotMinutes / 60),
+      slotMinutes % 60
+    );
+    return slotDateTime.getTime() < this.getEarliestBookableTime().getTime();
   }
 
-  private isTodaySelected(): boolean {
-    return this.selectedDateObj?.getTime() === this.today.getTime();
+  private getEarliestBookableTime(): Date {
+    return new Date(Date.now() + this.getBookingBufferMinutes() * 60_000);
   }
 
-  private getEarliestBookableMinutes(): number {
-    const now = new Date();
-    const minutesNow = now.getHours() * 60 + now.getMinutes();
-    return minutesNow + this.bookingBufferMinutes;
+  private getBookingBufferMinutes(): number {
+    const minutes = Number(this.company?.bookingBufferMinutes);
+    if (!Number.isFinite(minutes)) {
+      return 120;
+    }
+    return Math.min(Math.max(Math.round(minutes), 0), 1440);
+  }
+
+  private getBookingBufferLabel(): string {
+    const minutes = this.getBookingBufferMinutes();
+    if (minutes === 0) {
+      return 'sofort';
+    }
+    if (minutes % 60 === 0) {
+      const hours = minutes / 60;
+      return hours === 1 ? '1 Stunde' : `${hours} Stunden`;
+    }
+    return `${minutes} Minuten`;
   }
 
   private getSlotCapacity(): number {

@@ -78,6 +78,70 @@ const formatDisplayDate = (dateValue?: string): string => {
   return dateValue;
 };
 
+const normalizeBookingBufferMinutes = (value: unknown): number => {
+  const minutes = Number(value);
+  if (!Number.isFinite(minutes)) {
+    return 120;
+  }
+  return Math.min(Math.max(Math.round(minutes), 0), 1440);
+};
+
+const toMinutes = (time: string): number => {
+  const match = time.trim().match(/^(\d{1,2})(?::(\d{2}))?$/);
+  if (!match) {
+    return NaN;
+  }
+  const hour = Number(match[1]);
+  const minute = match[2] ? Number(match[2]) : 0;
+  if (Number.isNaN(hour) || Number.isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    return NaN;
+  }
+  return hour * 60 + minute;
+};
+
+const getDayIndex = (year: number, month: number, day: number): number =>
+  Math.floor(Date.UTC(year, month - 1, day) / 86_400_000);
+
+const getBerlinNowIndex = (): number => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Berlin',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  })
+    .formatToParts(new Date())
+    .reduce<Record<string, string>>((acc, part) => {
+      if (part.type !== 'literal') {
+        acc[part.type] = part.value;
+      }
+      return acc;
+    }, {});
+
+  const hour = Number(parts.hour) === 24 ? 0 : Number(parts.hour);
+  return (
+    getDayIndex(Number(parts.year), Number(parts.month), Number(parts.day)) * 1440 +
+    hour * 60 +
+    Number(parts.minute)
+  );
+};
+
+const isBookingTooSoon = (dateValue: string, timeValue: string, bookingBufferMinutes: number): boolean => {
+  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateValue.trim());
+  if (!dateMatch) {
+    return false;
+  }
+  const minutes = toMinutes(timeValue);
+  if (Number.isNaN(minutes)) {
+    return false;
+  }
+  const targetIndex =
+    getDayIndex(Number(dateMatch[1]), Number(dateMatch[2]), Number(dateMatch[3])) * 1440 + minutes;
+  return targetIndex < getBerlinNowIndex() + bookingBufferMinutes;
+};
+
 const buildEmailLayout = ({
   brand,
   title,
@@ -226,11 +290,17 @@ module.exports = async function handler(req: any, res: any) {
     const supabase = getClient();
     const { data: company } = await supabase
       .from('companies')
-      .select('slot_capacity,booking_mode')
+      .select('*')
       .eq('slug', body.restaurantSlug)
       .maybeSingle();
     const slotCapacity = typeof company?.slot_capacity === 'number' ? company.slot_capacity : 3;
     const requestMode = company?.booking_mode === 'request';
+    const bookingBufferMinutes = normalizeBookingBufferMinutes(company?.booking_buffer_minutes);
+
+    if (isBookingTooSoon(body.date, body.time, bookingBufferMinutes)) {
+      res.status(409).json({ error: 'Diese Uhrzeit ist kurzfristig nicht mehr buchbar.' });
+      return;
+    }
 
     if (!requestMode) {
       const { count, error: countError } = await supabase

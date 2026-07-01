@@ -10,6 +10,7 @@ type CompanyRow = {
   login_pin?: string | null;
   slot_capacity?: number | null;
   slot_interval_minutes?: number | null;
+  booking_buffer_minutes?: number | null;
   time_selection_mode?: string | null;
   booking_mode?: string | null;
   seating_options_enabled?: boolean | null;
@@ -38,6 +39,7 @@ const toCompanyResponse = (row: CompanyRow) => ({
     row.slot_interval_minutes === 30 || row.slot_interval_minutes === 60
       ? row.slot_interval_minutes
       : 45,
+  bookingBufferMinutes: normalizeBookingBufferMinutes(row.booking_buffer_minutes),
   timeSelectionMode: row.time_selection_mode === 'free' ? 'free' : 'slots',
   bookingMode: row.booking_mode || 'confirm',
   seatingOptionsEnabled: row.seating_options_enabled ?? false,
@@ -54,6 +56,23 @@ const normalizeSlotInterval = (value: unknown): 30 | 45 | 60 => {
 
 const normalizeTimeSelectionMode = (value: unknown): 'slots' | 'free' =>
   value === 'free' ? 'free' : 'slots';
+
+const normalizeBookingBufferMinutes = (value: unknown): number => {
+  const minutes = Number(value);
+  if (!Number.isFinite(minutes)) {
+    return 120;
+  }
+  return Math.min(Math.max(Math.round(minutes), 0), 1440);
+};
+
+const isMissingColumnError = (error: any, columnName: string): boolean => {
+  const message = String(error?.message || '').toLowerCase();
+  return (
+    error?.code === 'PGRST204' ||
+    (message.includes(columnName.toLowerCase()) && message.includes('column')) ||
+    (message.includes('schema cache') && message.includes(columnName.toLowerCase()))
+  );
+};
 
 const getClient = () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -121,11 +140,19 @@ module.exports = async function handler(req: any, res: any) {
         login_pin: body.loginPin ? String(body.loginPin).trim() : null,
         slot_capacity: typeof body.slotCapacity === 'number' ? body.slotCapacity : 3,
         slot_interval_minutes: normalizeSlotInterval(body.slotIntervalMinutes),
+        booking_buffer_minutes: normalizeBookingBufferMinutes(body.bookingBufferMinutes),
         time_selection_mode: normalizeTimeSelectionMode(body.timeSelectionMode),
         booking_mode: body.bookingMode === 'request' ? 'request' : 'confirm',
         seating_options_enabled: body.seatingOptionsEnabled === true
       };
-      const { data, error } = await supabase.from('companies').insert(insert).select('*').single();
+      let { data, error } = await supabase.from('companies').insert(insert).select('*').single();
+      if (error && isMissingColumnError(error, 'booking_buffer_minutes')) {
+        const fallbackInsert = { ...insert };
+        delete (fallbackInsert as Record<string, any>).booking_buffer_minutes;
+        const fallbackResult = await supabase.from('companies').insert(fallbackInsert).select('*').single();
+        data = fallbackResult.data;
+        error = fallbackResult.error;
+      }
       if (error) {
         res.status(500).json({ error: error.message });
         return;
@@ -170,6 +197,7 @@ module.exports = async function handler(req: any, res: any) {
         break_hours: body.breakHours || null,
         email: body.email,
         service_type: body.serviceType || 'restaurant',
+        booking_buffer_minutes: normalizeBookingBufferMinutes(body.bookingBufferMinutes),
         time_selection_mode: normalizeTimeSelectionMode(body.timeSelectionMode),
         booking_mode: body.bookingMode === 'request' ? 'request' : 'confirm',
         seating_options_enabled: body.seatingOptionsEnabled === true
@@ -183,7 +211,13 @@ module.exports = async function handler(req: any, res: any) {
       if (body.slotIntervalMinutes !== undefined && body.slotIntervalMinutes !== null) {
         updates.slot_interval_minutes = normalizeSlotInterval(body.slotIntervalMinutes);
       }
-      const { data, error } = await supabase.from('companies').update(updates).eq('slug', slug).select('*').single();
+      let { data, error } = await supabase.from('companies').update(updates).eq('slug', slug).select('*').single();
+      if (error && isMissingColumnError(error, 'booking_buffer_minutes')) {
+        delete updates.booking_buffer_minutes;
+        const fallbackResult = await supabase.from('companies').update(updates).eq('slug', slug).select('*').single();
+        data = fallbackResult.data;
+        error = fallbackResult.error;
+      }
       if (error) {
         res.status(500).json({ error: error.message });
         return;

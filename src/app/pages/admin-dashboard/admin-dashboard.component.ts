@@ -30,6 +30,7 @@ export class AdminDashboardComponent implements OnInit {
     loginPin: [''],
     slotCapacity: [3, [Validators.required, Validators.min(1), Validators.max(3)]],
     slotIntervalMinutes: [45, Validators.required],
+    bookingBufferMinutes: [120, [Validators.required, Validators.min(0), Validators.max(1440)]],
     timeSelectionMode: ['slots', Validators.required]
   });
 
@@ -69,6 +70,7 @@ export class AdminDashboardComponent implements OnInit {
       loginPin: value.loginPin?.trim() || undefined,
       slotCapacity: Number(value.slotCapacity || 3),
       slotIntervalMinutes: Number(value.slotIntervalMinutes || 45) as 30 | 45 | 60,
+      bookingBufferMinutes: Number(value.bookingBufferMinutes ?? 120),
       timeSelectionMode: (value.timeSelectionMode || 'slots') as TimeSelectionMode
     };
 
@@ -97,12 +99,25 @@ export class AdminDashboardComponent implements OnInit {
       loginPin: '',
       slotCapacity: company.slotCapacity ?? 3,
       slotIntervalMinutes: company.slotIntervalMinutes ?? 45,
+      bookingBufferMinutes: company.bookingBufferMinutes ?? 120,
       timeSelectionMode: company.timeSelectionMode || 'slots'
     });
   }
 
   cancelEdit(): void {
     this.resetForm();
+  }
+
+  formatBookingBufferMinutes(value: number | undefined): string {
+    const minutes = Number(value ?? 120);
+    if (!Number.isFinite(minutes) || minutes <= 0) {
+      return 'Sofort';
+    }
+    if (minutes % 60 === 0) {
+      const hours = minutes / 60;
+      return hours === 1 ? '1 Stunde' : `${hours} Stunden`;
+    }
+    return `${minutes} Minuten`;
   }
 
   deleteCompany(slug: string): void {
@@ -137,6 +152,7 @@ export class AdminDashboardComponent implements OnInit {
       loginPin: this.createRandomPin(),
       slotCapacity: 3,
       slotIntervalMinutes: 45,
+      bookingBufferMinutes: 120,
       timeSelectionMode: 'slots'
     });
     this.companyForm.markAsPristine();

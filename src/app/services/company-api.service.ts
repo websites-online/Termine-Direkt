@@ -20,6 +20,7 @@ export interface Company {
   loginPin?: string;
   slotCapacity?: number;
   slotIntervalMinutes?: 30 | 45 | 60;
+  bookingBufferMinutes?: number;
   timeSelectionMode?: TimeSelectionMode;
   bookingMode?: BookingMode;
   seatingOptionsEnabled?: boolean;
@@ -36,6 +37,7 @@ export interface CompanyPayload {
   loginPin?: string;
   slotCapacity?: number;
   slotIntervalMinutes?: 30 | 45 | 60;
+  bookingBufferMinutes?: number;
   timeSelectionMode?: TimeSelectionMode;
   bookingMode?: BookingMode;
   seatingOptionsEnabled?: boolean;
@@ -75,6 +77,7 @@ export class CompanyApiService {
         createdAt: new Date().toISOString(),
         ...payload,
         slotIntervalMinutes: payload.slotIntervalMinutes || 45,
+        bookingBufferMinutes: this.normalizeBookingBufferMinutes(payload.bookingBufferMinutes),
         timeSelectionMode: payload.timeSelectionMode || 'slots',
         bookingMode: payload.bookingMode || 'confirm',
         seatingOptionsEnabled: payload.seatingOptionsEnabled === true
@@ -110,6 +113,13 @@ export class CompanyApiService {
       }
       if (!payload.slotIntervalMinutes) {
         updated.slotIntervalMinutes = companies[index].slotIntervalMinutes ?? 45;
+      }
+      if (payload.bookingBufferMinutes === undefined || payload.bookingBufferMinutes === null) {
+        updated.bookingBufferMinutes = this.normalizeBookingBufferMinutes(
+          companies[index].bookingBufferMinutes
+        );
+      } else {
+        updated.bookingBufferMinutes = this.normalizeBookingBufferMinutes(payload.bookingBufferMinutes);
       }
       if (!payload.timeSelectionMode) {
         updated.timeSelectionMode = companies[index].timeSelectionMode || 'slots';
@@ -160,6 +170,7 @@ export class CompanyApiService {
           company.slotIntervalMinutes === 30 || company.slotIntervalMinutes === 60
             ? company.slotIntervalMinutes
             : 45,
+        bookingBufferMinutes: this.normalizeBookingBufferMinutes(company.bookingBufferMinutes),
         timeSelectionMode: company.timeSelectionMode === 'free' ? 'free' : 'slots'
       }));
     } catch {
@@ -192,5 +203,13 @@ export class CompanyApiService {
       .replace(/[^a-z0-9\\s-]/g, '')
       .replace(/\\s+/g, '-')
       .replace(/-+/g, '-');
+  }
+
+  private normalizeBookingBufferMinutes(value: unknown): number {
+    const minutes = Number(value);
+    if (!Number.isFinite(minutes)) {
+      return 120;
+    }
+    return Math.min(Math.max(Math.round(minutes), 0), 1440);
   }
 }

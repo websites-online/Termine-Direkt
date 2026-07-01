@@ -72,6 +72,20 @@
           </select>
         </label>
         <label>
+          <span class="label">Buchbar frühestens*</span>
+          <select class="input" formControlName="bookingBufferMinutes">
+            <option [value]="0">Sofort</option>
+            <option [value]="30">In 30 Minuten</option>
+            <option [value]="60">In 1 Stunde</option>
+            <option [value]="90">In 1,5 Stunden</option>
+            <option [value]="120">In 2 Stunden</option>
+            <option [value]="180">In 3 Stunden</option>
+            <option [value]="240">In 4 Stunden</option>
+            <option [value]="1440">Erst am nächsten Tag</option>
+          </select>
+          <span class="helptext">Blockiert kurzfristige Buchungen oder Anfragen ab der aktuellen Uhrzeit.</span>
+        </label>
+        <label>
           <span class="label">Zeitauswahl für Kunden*</span>
           <select class="input" formControlName="timeSelectionMode">
             <option value="slots">Zeitslots (wie bisher)</option>
@@ -128,6 +142,7 @@
             </p>
             <p class="muted">Slots pro Zeit: {{ company.slotCapacity || 3 }}</p>
             <p class="muted">Abstand pro Slot: {{ company.slotIntervalMinutes || 45 }} Minuten</p>
+            <p class="muted">Buchbar frühestens: {{ formatBookingBufferMinutes(company.bookingBufferMinutes) }}</p>
             <p class="muted">
               Zeitauswahl: {{ company.timeSelectionMode === 'free' ? 'Freie Uhrzeit-Eingabe' : 'Zeitslots' }}
             </p>
