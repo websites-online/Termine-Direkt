@@ -83,6 +83,7 @@ export class RestaurantPageComponent implements OnInit {
     people: [2, [Validators.required, Validators.min(1)]],
     seating: ['egal'],
     service: [''],
+    stylist: [''],
     note: [''],
     time: ['', Validators.required]
   });
@@ -140,6 +141,7 @@ export class RestaurantPageComponent implements OnInit {
       guestName: this.bookingForm.value.name ?? '',
       seating: this.hasSeatingChoice ? seatingValue : undefined,
       service: this.isSalon ? serviceValue : undefined,
+      stylist: this.hasStylistChoice ? this.getStylistLabel(this.bookingForm.value.stylist ?? '') : undefined,
       date: this.selectedDate,
       time: this.bookingForm.value.time ?? '',
       people: this.isSalon ? 1 : (this.bookingForm.value.people ?? 2),
@@ -166,6 +168,7 @@ export class RestaurantPageComponent implements OnInit {
           people: 2,
           seating: 'egal',
           service: '',
+          stylist: '',
           note: '',
           time: this.getDefaultTimeForCurrentDate()
         });
@@ -196,6 +199,14 @@ export class RestaurantPageComponent implements OnInit {
 
   get hasSeatingChoice(): boolean {
     return !this.isSalon && this.company?.seatingOptionsEnabled === true;
+  }
+
+  get hasStylistChoice(): boolean {
+    return this.isSalon && this.company?.stylistSelectionEnabled === true && this.stylistOptions.length > 0;
+  }
+
+  get stylistOptions(): string[] {
+    return this.company?.stylists || [];
   }
 
   get useFreeTimeInput(): boolean {
@@ -279,6 +290,14 @@ export class RestaurantPageComponent implements OnInit {
     }
     const match = this.salonServices.find((item) => item.value === value);
     return match ? match.label : '';
+  }
+
+  private getStylistLabel(value: string): string {
+    if (!this.hasStylistChoice) {
+      return '';
+    }
+    const trimmed = value.trim();
+    return this.stylistOptions.includes(trimmed) ? trimmed : '';
   }
 
   private getSeatingLabel(value: string): string {

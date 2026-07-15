@@ -42,6 +42,9 @@
             <p class="muted">{{ reservation.guestEmail || 'Keine E-Mail' }}</p>
             <p class="muted" *ngIf="reservation.phone">{{ reservation.phone }}</p>
             <p class="muted" *ngIf="isSalon && reservation.service">Service: {{ reservation.service }}</p>
+            <p class="muted" *ngIf="isSalon && reservation.stylist">
+              Friseur: {{ reservation.stylist }}
+            </p>
             <p class="muted" *ngIf="!isSalon && reservation.people">Personen: {{ reservation.people }}</p>
             <p class="muted" *ngIf="reservation.note">{{ reservation.note }}</p>
           </div>
@@ -104,6 +107,15 @@
             <option value="">Bitte wählen</option>
             <option *ngFor="let option of serviceOptions" [value]="option.value">
               {{ option.label }}
+            </option>
+          </select>
+        </label>
+        <label *ngIf="hasStylistChoice">
+          <span class="label">Friseur (optional)</span>
+          <select class="input" formControlName="stylist">
+            <option value="">Egal / keine Präferenz</option>
+            <option *ngFor="let stylist of stylistOptions" [value]="stylist">
+              {{ stylist }}
             </option>
           </select>
         </label>

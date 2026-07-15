@@ -153,6 +153,15 @@
               Pflichtfeld.
             </span>
           </label>
+          <label *ngIf="hasStylistChoice">
+            <span class="label">Friseur (optional)</span>
+            <select class="input" formControlName="stylist">
+              <option value="">Egal / keine Präferenz</option>
+              <option *ngFor="let stylist of stylistOptions" [value]="stylist">
+                {{ stylist }}
+              </option>
+            </select>
+          </label>
           <label>
             <span class="label">Notiz (optional)</span>
             <textarea class="textarea" formControlName="note" placeholder="Zusätzliche Hinweise"></textarea>

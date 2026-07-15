@@ -4,6 +4,7 @@ type ReservationBody = {
   restaurantEmail?: string;
   serviceType?: 'restaurant' | 'friseur';
   service?: string;
+  stylist?: string;
   guestEmail?: string;
   guestName?: string;
   seating?: string;
@@ -340,6 +341,7 @@ module.exports = async function handler(req: any, res: any) {
     const noteParts = [
       body.seating ? `Sitzplatz: ${body.seating}` : null,
       body.service ? `Service: ${body.service}` : null,
+      body.stylist ? `Friseur: ${body.stylist}` : null,
       body.note ? `Notiz: ${body.note}` : null
     ].filter(Boolean);
 
@@ -415,7 +417,10 @@ module.exports = async function handler(req: any, res: any) {
       { label: 'Telefon', value: body.phone || '-' },
       ...(!isSalon && body.seating ? [{ label: 'Sitzplatz', value: body.seating }] : []),
       ...(isSalon
-        ? [{ label: 'Service', value: body.service || '-' }]
+        ? [
+            { label: 'Service', value: body.service || '-' },
+            ...(body.stylist ? [{ label: 'Friseur', value: body.stylist }] : [])
+          ]
         : [{ label: 'Personen', value: body.people ? String(body.people) : '-' }]),
       { label: 'Notiz', value: body.note || '-' }
     ];
@@ -436,6 +441,7 @@ module.exports = async function handler(req: any, res: any) {
         `  Uhrzeit: ${body.time || '-'}`,
         !isSalon && body.seating ? `  Sitzplatz: ${body.seating}` : null,
         isSalon ? (body.service ? `  Service: ${body.service}` : null) : body.people ? `  Personen: ${body.people}` : null,
+        isSalon && body.stylist ? `  Friseur: ${body.stylist}` : null,
         body.note ? `  Notiz: ${body.note}` : null,
         '',
         'Bei Rückfragen antworten Sie direkt auf diese E-Mail.',
@@ -466,6 +472,7 @@ module.exports = async function handler(req: any, res: any) {
         `  Uhrzeit: ${body.time || '-'}`,
         !isSalon && body.seating ? `  Sitzplatz: ${body.seating}` : null,
         isSalon ? (body.service ? `  Service: ${body.service}` : null) : body.people ? `  Personen: ${body.people}` : null,
+        isSalon && body.stylist ? `  Friseur: ${body.stylist}` : null,
         '',
         'Mögliche Alternative:',
         '',
@@ -506,7 +513,10 @@ module.exports = async function handler(req: any, res: any) {
       ...(body.note ? [{ label: 'Notiz', value: body.note }] : []),
       ...(!isSalon && body.seating ? [{ label: 'Sitzplatz', value: body.seating }] : []),
       ...(isSalon
-        ? [{ label: 'Service', value: body.service || '-' }]
+        ? [
+            { label: 'Service', value: body.service || '-' },
+            ...(body.stylist ? [{ label: 'Friseur', value: body.stylist }] : [])
+          ]
         : [{ label: 'Personen', value: body.people ? String(body.people) : '-' }])
     ];
 

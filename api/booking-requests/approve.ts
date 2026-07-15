@@ -308,6 +308,9 @@ module.exports = async function handler(req: any, res: any) {
     const displayDate = formatDisplayDate(requestRow.date);
     const seating = extractFromNote(requestRow.note || null, 'Sitzplatz');
     const service = extractFromNote(requestRow.note || null, 'Service');
+    const stylist =
+      extractFromNote(requestRow.note || null, 'Friseur') ||
+      extractFromNote(requestRow.note || null, 'Wunsch-Friseur');
     const customerNote = extractFromNote(requestRow.note || null, 'Notiz');
 
     if (requestRow.status === 'approved') {
@@ -438,6 +441,7 @@ module.exports = async function handler(req: any, res: any) {
       customerNote ? `Notiz: ${customerNote}` : null,
       !isSalon && seating ? `Sitzplatz: ${seating}` : null,
       isSalon ? (service ? `Service: ${service}` : null) : requestRow.people ? `Personen: ${requestRow.people}` : null,
+      isSalon && stylist ? `Friseur: ${stylist}` : null,
       '',
       'Bei Rückfragen antworten Sie direkt auf diese E-Mail.',
       '',

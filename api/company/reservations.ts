@@ -33,6 +33,17 @@ const extractService = (note: string | null) => {
   return match[1].trim();
 };
 
+const extractStylist = (note: string | null) => {
+  if (!note) {
+    return undefined;
+  }
+  const match = note.match(/(?:Friseur|Wunsch-Friseur):\s*([^|]+)/i);
+  if (!match) {
+    return undefined;
+  }
+  return match[1].trim();
+};
+
 const extractNote = (note: string | null) => {
   if (!note) {
     return undefined;
@@ -40,7 +51,13 @@ const extractNote = (note: string | null) => {
   const parts = note
     .split('|')
     .map((part: string) => part.trim())
-    .filter((part: string) => part.length > 0 && !/^Service:/i.test(part));
+    .filter(
+      (part: string) =>
+        part.length > 0 &&
+        !/^Service:/i.test(part) &&
+        !/^Wunsch-Friseur:/i.test(part) &&
+        !/^Friseur:/i.test(part)
+    );
   if (parts.length === 0) {
     return undefined;
   }
@@ -105,6 +122,7 @@ module.exports = async function handler(req: any, res: any) {
         people: row.people || undefined,
         note: extractNote(row.note || null),
         service: extractService(row.note || null),
+        stylist: extractStylist(row.note || null),
         createdAt: row.created_at
       }));
 
@@ -138,6 +156,7 @@ module.exports = async function handler(req: any, res: any) {
 
       const noteParts = [
         body.service ? `Service: ${body.service}` : null,
+        body.stylist ? `Friseur: ${body.stylist}` : null,
         body.note ? `Notiz: ${body.note}` : null
       ].filter(Boolean);
 
@@ -173,6 +192,7 @@ module.exports = async function handler(req: any, res: any) {
         people: data.people || undefined,
         note: extractNote(data.note || null),
         service: extractService(data.note || null),
+        stylist: extractStylist(data.note || null),
         createdAt: data.created_at
       });
       return;

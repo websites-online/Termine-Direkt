@@ -14,6 +14,8 @@ type CompanyRow = {
   time_selection_mode?: string | null;
   booking_mode?: string | null;
   seating_options_enabled?: boolean | null;
+  stylist_selection_enabled?: boolean | null;
+  stylists?: unknown;
   created_at: string;
 };
 
@@ -43,6 +45,8 @@ const toCompanyResponse = (row: CompanyRow) => ({
   timeSelectionMode: row.time_selection_mode === 'free' ? 'free' : 'slots',
   bookingMode: row.booking_mode || 'confirm',
   seatingOptionsEnabled: row.seating_options_enabled ?? false,
+  stylistSelectionEnabled: row.service_type === 'friseur' && row.stylist_selection_enabled === true,
+  stylists: row.service_type === 'friseur' ? normalizeStylists(row.stylists) : [],
   createdAt: row.created_at
 });
 
@@ -65,6 +69,22 @@ const normalizeBookingBufferMinutes = (value: unknown): number => {
   return Math.min(Math.max(Math.round(minutes), 0), 1440);
 };
 
+const normalizeStylists = (value: unknown): string[] => {
+  const source =
+    typeof value === 'string'
+      ? value.split(/\r?\n|,/)
+      : Array.isArray(value)
+        ? value
+        : [];
+  return Array.from(
+    new Set(
+      source
+        .map((item) => String(item || '').trim())
+        .filter((item) => item.length > 0)
+    )
+  );
+};
+
 const isMissingColumnError = (error: any, columnName: string): boolean => {
   const message = String(error?.message || '').toLowerCase();
   return (
@@ -73,6 +93,25 @@ const isMissingColumnError = (error: any, columnName: string): boolean => {
     (message.includes('schema cache') && message.includes(columnName.toLowerCase()))
   );
 };
+
+const optionalCompanyColumns = [
+  'booking_buffer_minutes',
+  'stylist_selection_enabled',
+  'stylists'
+] as const;
+
+const removeMissingOptionalColumns = <T extends Record<string, any>>(record: T, error: any): T => {
+  const fallback = { ...record };
+  optionalCompanyColumns.forEach((columnName) => {
+    if (isMissingColumnError(error, columnName)) {
+      delete fallback[columnName];
+    }
+  });
+  return fallback;
+};
+
+const hasMissingOptionalColumn = (error: any): boolean =>
+  optionalCompanyColumns.some((columnName) => isMissingColumnError(error, columnName));
 
 const getClient = () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -112,6 +151,8 @@ module.exports = async function handler(req: any, res: any) {
 
     if (req.method === 'POST') {
       const body = req.body || {};
+      const serviceType = body.serviceType || 'restaurant';
+      const stylists = serviceType === 'friseur' ? normalizeStylists(body.stylists) : [];
       if (!body.name || !body.address || !body.hours || !body.email) {
         res.status(400).json({ error: 'Missing required fields' });
         return;
@@ -136,19 +177,21 @@ module.exports = async function handler(req: any, res: any) {
         hours: body.hours,
         break_hours: body.breakHours || null,
         email: body.email,
-        service_type: body.serviceType || 'restaurant',
+        service_type: serviceType,
         login_pin: body.loginPin ? String(body.loginPin).trim() : null,
         slot_capacity: typeof body.slotCapacity === 'number' ? body.slotCapacity : 3,
         slot_interval_minutes: normalizeSlotInterval(body.slotIntervalMinutes),
         booking_buffer_minutes: normalizeBookingBufferMinutes(body.bookingBufferMinutes),
         time_selection_mode: normalizeTimeSelectionMode(body.timeSelectionMode),
         booking_mode: body.bookingMode === 'request' ? 'request' : 'confirm',
-        seating_options_enabled: body.seatingOptionsEnabled === true
+        seating_options_enabled: serviceType === 'restaurant' && body.seatingOptionsEnabled === true,
+        stylist_selection_enabled:
+          serviceType === 'friseur' && body.stylistSelectionEnabled === true && stylists.length > 0,
+        stylists
       };
       let { data, error } = await supabase.from('companies').insert(insert).select('*').single();
-      if (error && isMissingColumnError(error, 'booking_buffer_minutes')) {
-        const fallbackInsert = { ...insert };
-        delete (fallbackInsert as Record<string, any>).booking_buffer_minutes;
+      if (error && hasMissingOptionalColumn(error)) {
+        const fallbackInsert = removeMissingOptionalColumns(insert, error);
         const fallbackResult = await supabase.from('companies').insert(fallbackInsert).select('*').single();
         data = fallbackResult.data;
         error = fallbackResult.error;
@@ -167,6 +210,8 @@ module.exports = async function handler(req: any, res: any) {
         return;
       }
       const body = req.body || {};
+      const serviceType = body.serviceType || 'restaurant';
+      const stylists = serviceType === 'friseur' ? normalizeStylists(body.stylists) : [];
       if (!body.name || !body.address || !body.hours || !body.email) {
         res.status(400).json({ error: 'Missing required fields' });
         return;
@@ -196,11 +241,14 @@ module.exports = async function handler(req: any, res: any) {
         hours: body.hours,
         break_hours: body.breakHours || null,
         email: body.email,
-        service_type: body.serviceType || 'restaurant',
+        service_type: serviceType,
         booking_buffer_minutes: normalizeBookingBufferMinutes(body.bookingBufferMinutes),
         time_selection_mode: normalizeTimeSelectionMode(body.timeSelectionMode),
         booking_mode: body.bookingMode === 'request' ? 'request' : 'confirm',
-        seating_options_enabled: body.seatingOptionsEnabled === true
+        seating_options_enabled: serviceType === 'restaurant' && body.seatingOptionsEnabled === true,
+        stylist_selection_enabled:
+          serviceType === 'friseur' && body.stylistSelectionEnabled === true && stylists.length > 0,
+        stylists
       };
       if (body.loginPin) {
         updates.login_pin = String(body.loginPin).trim();
@@ -212,9 +260,9 @@ module.exports = async function handler(req: any, res: any) {
         updates.slot_interval_minutes = normalizeSlotInterval(body.slotIntervalMinutes);
       }
       let { data, error } = await supabase.from('companies').update(updates).eq('slug', slug).select('*').single();
-      if (error && isMissingColumnError(error, 'booking_buffer_minutes')) {
-        delete updates.booking_buffer_minutes;
-        const fallbackResult = await supabase.from('companies').update(updates).eq('slug', slug).select('*').single();
+      if (error && hasMissingOptionalColumn(error)) {
+        const fallbackUpdates = removeMissingOptionalColumns(updates, error);
+        const fallbackResult = await supabase.from('companies').update(fallbackUpdates).eq('slug', slug).select('*').single();
         data = fallbackResult.data;
         error = fallbackResult.error;
       }

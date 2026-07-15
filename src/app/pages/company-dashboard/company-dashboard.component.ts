@@ -56,6 +56,7 @@ export class CompanyDashboardComponent implements OnInit {
     phone: [''],
     people: [2],
     service: [''],
+    stylist: [''],
     note: ['']
   });
 
@@ -171,7 +172,8 @@ export class CompanyDashboardComponent implements OnInit {
       phone: value.phone || undefined,
       note: value.note || undefined,
       people: this.isSalon ? 1 : Number(value.people || 1),
-      service: this.isSalon ? value.service || undefined : undefined
+      service: this.isSalon ? value.service || undefined : undefined,
+      stylist: this.hasStylistChoice ? value.stylist || undefined : undefined
     };
 
     this.reservationsService.createReservation(payload).subscribe({
@@ -183,6 +185,7 @@ export class CompanyDashboardComponent implements OnInit {
           guestName: '',
           guestEmail: '',
           phone: '',
+          stylist: '',
           note: ''
         });
         if (this.isSalon) {
@@ -217,6 +220,14 @@ export class CompanyDashboardComponent implements OnInit {
 
   get useFreeTimeInput(): boolean {
     return this.company?.timeSelectionMode === 'free';
+  }
+
+  get hasStylistChoice(): boolean {
+    return this.isSalon && this.company?.stylistSelectionEnabled === true && this.stylistOptions.length > 0;
+  }
+
+  get stylistOptions(): string[] {
+    return this.company?.stylists || [];
   }
 
   get freeTimeOptions(): string[] {

@@ -15,6 +15,7 @@ export interface CompanyReservation {
   people?: number;
   note?: string;
   service?: string;
+  stylist?: string;
   createdAt?: string;
 }
 
@@ -27,6 +28,7 @@ export interface CompanyReservationPayload {
   people?: number;
   note?: string;
   service?: string;
+  stylist?: string;
 }
 
 @Injectable({

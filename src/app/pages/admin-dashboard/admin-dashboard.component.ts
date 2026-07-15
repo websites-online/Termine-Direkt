@@ -27,6 +27,8 @@ export class AdminDashboardComponent implements OnInit {
     serviceType: ['restaurant', Validators.required],
     bookingMode: ['confirm', Validators.required],
     seatingOptionsEnabled: [false],
+    stylistSelectionEnabled: [false],
+    stylistsText: [''],
     loginPin: [''],
     slotCapacity: [3, [Validators.required, Validators.min(1), Validators.max(3)]],
     slotIntervalMinutes: [45, Validators.required],
@@ -57,16 +59,20 @@ export class AdminDashboardComponent implements OnInit {
     }
 
     const value = this.companyForm.value;
+    const serviceType = (value.serviceType || 'restaurant') as 'restaurant' | 'friseur';
+    const stylists = this.parseStylistNames(value.stylistsText);
     const payload = {
       name: value.name || 'Neues Unternehmen',
       address: value.address || 'Beispielstraße 12, 12345 Musterstadt',
       hours: value.hours || 'Mo–So 12:00–20:00',
       breakHours: value.breakHours || undefined,
       email: value.email || 'kontakt@example.com',
-      serviceType: (value.serviceType || 'restaurant') as 'restaurant' | 'friseur',
+      serviceType,
       bookingMode: (value.bookingMode || 'confirm') as 'confirm' | 'request',
-      seatingOptionsEnabled:
-        (value.serviceType || 'restaurant') === 'restaurant' && value.seatingOptionsEnabled === true,
+      seatingOptionsEnabled: serviceType === 'restaurant' && value.seatingOptionsEnabled === true,
+      stylistSelectionEnabled:
+        serviceType === 'friseur' && value.stylistSelectionEnabled === true && stylists.length > 0,
+      stylists: serviceType === 'friseur' ? stylists : [],
       loginPin: value.loginPin?.trim() || undefined,
       slotCapacity: Number(value.slotCapacity || 3),
       slotIntervalMinutes: Number(value.slotIntervalMinutes || 45) as 30 | 45 | 60,
@@ -96,6 +102,8 @@ export class AdminDashboardComponent implements OnInit {
       serviceType: company.serviceType || 'restaurant',
       bookingMode: company.bookingMode || 'confirm',
       seatingOptionsEnabled: company.seatingOptionsEnabled || false,
+      stylistSelectionEnabled: company.stylistSelectionEnabled || false,
+      stylistsText: (company.stylists || []).join('\n'),
       loginPin: '',
       slotCapacity: company.slotCapacity ?? 3,
       slotIntervalMinutes: company.slotIntervalMinutes ?? 45,
@@ -149,6 +157,8 @@ export class AdminDashboardComponent implements OnInit {
       serviceType: 'restaurant',
       bookingMode: 'confirm',
       seatingOptionsEnabled: false,
+      stylistSelectionEnabled: false,
+      stylistsText: '',
       loginPin: this.createRandomPin(),
       slotCapacity: 3,
       slotIntervalMinutes: 45,
@@ -165,5 +175,16 @@ export class AdminDashboardComponent implements OnInit {
 
   private createRandomPin(): string {
     return `${Math.floor(100000 + Math.random() * 900000)}`;
+  }
+
+  private parseStylistNames(value: unknown): string[] {
+    return Array.from(
+      new Set(
+        String(value || '')
+          .split(/\r?\n|,/)
+          .map((item) => item.trim())
+          .filter((item) => item.length > 0)
+      )
+    );
   }
 }

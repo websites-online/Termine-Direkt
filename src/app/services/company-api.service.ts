@@ -24,6 +24,8 @@ export interface Company {
   timeSelectionMode?: TimeSelectionMode;
   bookingMode?: BookingMode;
   seatingOptionsEnabled?: boolean;
+  stylistSelectionEnabled?: boolean;
+  stylists?: string[];
   createdAt?: string;
 }
 
@@ -41,6 +43,8 @@ export interface CompanyPayload {
   timeSelectionMode?: TimeSelectionMode;
   bookingMode?: BookingMode;
   seatingOptionsEnabled?: boolean;
+  stylistSelectionEnabled?: boolean;
+  stylists?: string[];
 }
 
 @Injectable({
@@ -80,7 +84,10 @@ export class CompanyApiService {
         bookingBufferMinutes: this.normalizeBookingBufferMinutes(payload.bookingBufferMinutes),
         timeSelectionMode: payload.timeSelectionMode || 'slots',
         bookingMode: payload.bookingMode || 'confirm',
-        seatingOptionsEnabled: payload.seatingOptionsEnabled === true
+        seatingOptionsEnabled: payload.seatingOptionsEnabled === true,
+        stylistSelectionEnabled:
+          payload.serviceType === 'friseur' && payload.stylistSelectionEnabled === true,
+        stylists: payload.serviceType === 'friseur' ? this.normalizeStylists(payload.stylists) : []
       };
       companies.unshift(created);
       this.saveLocalCompanies(companies);
@@ -130,6 +137,9 @@ export class CompanyApiService {
       if (typeof payload.seatingOptionsEnabled !== 'boolean') {
         updated.seatingOptionsEnabled = companies[index].seatingOptionsEnabled || false;
       }
+      updated.stylistSelectionEnabled =
+        updated.serviceType === 'friseur' && payload.stylistSelectionEnabled === true;
+      updated.stylists = updated.serviceType === 'friseur' ? this.normalizeStylists(payload.stylists) : [];
       companies[index] = updated;
       this.saveLocalCompanies(companies);
       return of(updated).pipe(delay(200));
@@ -171,7 +181,10 @@ export class CompanyApiService {
             ? company.slotIntervalMinutes
             : 45,
         bookingBufferMinutes: this.normalizeBookingBufferMinutes(company.bookingBufferMinutes),
-        timeSelectionMode: company.timeSelectionMode === 'free' ? 'free' : 'slots'
+        timeSelectionMode: company.timeSelectionMode === 'free' ? 'free' : 'slots',
+        stylistSelectionEnabled:
+          company.serviceType === 'friseur' && company.stylistSelectionEnabled === true,
+        stylists: company.serviceType === 'friseur' ? this.normalizeStylists(company.stylists) : []
       }));
     } catch {
       return [];
@@ -211,5 +224,18 @@ export class CompanyApiService {
       return 120;
     }
     return Math.min(Math.max(Math.round(minutes), 0), 1440);
+  }
+
+  private normalizeStylists(value: unknown): string[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+    return Array.from(
+      new Set(
+        value
+          .map((item) => String(item || '').trim())
+          .filter((item) => item.length > 0)
+      )
+    );
   }
 }

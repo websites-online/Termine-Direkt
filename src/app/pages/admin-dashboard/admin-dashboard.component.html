@@ -42,6 +42,19 @@
           <input type="checkbox" formControlName="seatingOptionsEnabled" />
           <span>Sitzplatz-Auswahl aktivieren (Tisch drinnen / Tisch draußen)</span>
         </label>
+        <label *ngIf="companyForm.value.serviceType === 'friseur'" class="inline-toggle">
+          <input type="checkbox" formControlName="stylistSelectionEnabled" />
+          <span>Friseur-Auswahl aktivieren</span>
+        </label>
+        <label *ngIf="companyForm.value.serviceType === 'friseur' && companyForm.value.stylistSelectionEnabled">
+          <span class="label">Friseure (je Zeile ein Name)</span>
+          <textarea
+            class="textarea"
+            formControlName="stylistsText"
+            placeholder="Ali&#10;Merve&#10;Sarah"
+          ></textarea>
+          <span class="helptext">Kunden können daraus optional einen Friseur auswählen.</span>
+        </label>
         <label>
           <span class="label">Adresse*</span>
           <input class="input" type="text" formControlName="address" placeholder="Musterstraße 12, 10115 Berlin" />
@@ -149,6 +162,14 @@
             <p class="muted">Buchungsmodus: {{ company.bookingMode === 'request' ? 'Anfrage' : 'Direkt bestätigt' }}</p>
             <p class="muted" *ngIf="company.serviceType === 'restaurant'">
               Sitzplatz-Auswahl: {{ company.seatingOptionsEnabled ? 'Aktiv' : 'Inaktiv' }}
+            </p>
+            <p class="muted" *ngIf="company.serviceType === 'friseur'">
+              Friseure:
+              {{
+                company.stylistSelectionEnabled && (company.stylists?.length || 0) > 0
+                  ? company.stylists?.join(', ')
+                  : 'Inaktiv'
+              }}
             </p>
             <p class="muted">Login: {{ company.slug }}</p>
             <a class="company-link" [routerLink]="['/', company.slug]">/{{ company.slug }}</a>
