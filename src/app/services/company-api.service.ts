@@ -16,6 +16,8 @@ export interface Company {
   hours: string;
   breakHours?: string;
   email: string;
+  splitServiceEmails?: boolean;
+  womenServicesEmail?: string;
   serviceType?: ServiceType;
   loginPin?: string;
   slotCapacity?: number;
@@ -35,6 +37,8 @@ export interface CompanyPayload {
   hours: string;
   breakHours?: string;
   email: string;
+  splitServiceEmails?: boolean;
+  womenServicesEmail?: string;
   serviceType?: ServiceType;
   loginPin?: string;
   slotCapacity?: number;
@@ -87,7 +91,13 @@ export class CompanyApiService {
         seatingOptionsEnabled: payload.seatingOptionsEnabled === true,
         stylistSelectionEnabled:
           payload.serviceType === 'friseur' && payload.stylistSelectionEnabled === true,
-        stylists: payload.serviceType === 'friseur' ? this.normalizeStylists(payload.stylists) : []
+        stylists: payload.serviceType === 'friseur' ? this.normalizeStylists(payload.stylists) : [],
+        splitServiceEmails:
+          payload.serviceType === 'friseur' && payload.splitServiceEmails === true,
+        womenServicesEmail:
+          payload.serviceType === 'friseur' && payload.splitServiceEmails === true
+            ? this.normalizeOptionalEmail(payload.womenServicesEmail)
+            : undefined
       };
       companies.unshift(created);
       this.saveLocalCompanies(companies);
@@ -140,6 +150,12 @@ export class CompanyApiService {
       updated.stylistSelectionEnabled =
         updated.serviceType === 'friseur' && payload.stylistSelectionEnabled === true;
       updated.stylists = updated.serviceType === 'friseur' ? this.normalizeStylists(payload.stylists) : [];
+      updated.splitServiceEmails =
+        updated.serviceType === 'friseur' && payload.splitServiceEmails === true;
+      updated.womenServicesEmail =
+        updated.splitServiceEmails === true
+          ? this.normalizeOptionalEmail(payload.womenServicesEmail)
+          : undefined;
       companies[index] = updated;
       this.saveLocalCompanies(companies);
       return of(updated).pipe(delay(200));
@@ -184,7 +200,12 @@ export class CompanyApiService {
         timeSelectionMode: company.timeSelectionMode === 'free' ? 'free' : 'slots',
         stylistSelectionEnabled:
           company.serviceType === 'friseur' && company.stylistSelectionEnabled === true,
-        stylists: company.serviceType === 'friseur' ? this.normalizeStylists(company.stylists) : []
+        stylists: company.serviceType === 'friseur' ? this.normalizeStylists(company.stylists) : [],
+        splitServiceEmails: company.serviceType === 'friseur' && company.splitServiceEmails === true,
+        womenServicesEmail:
+          company.serviceType === 'friseur' && company.splitServiceEmails === true
+            ? this.normalizeOptionalEmail(company.womenServicesEmail)
+            : undefined
       }));
     } catch {
       return [];
@@ -237,5 +258,10 @@ export class CompanyApiService {
           .filter((item) => item.length > 0)
       )
     );
+  }
+
+  private normalizeOptionalEmail(value: unknown): string | undefined {
+    const email = String(value || '').trim();
+    return email.length > 0 ? email : undefined;
   }
 }

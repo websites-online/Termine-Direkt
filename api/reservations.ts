@@ -4,6 +4,7 @@ type ReservationBody = {
   restaurantEmail?: string;
   serviceType?: 'restaurant' | 'friseur';
   service?: string;
+  serviceAudience?: 'men' | 'women' | 'general';
   stylist?: string;
   guestEmail?: string;
   guestName?: string;
@@ -85,6 +86,40 @@ const normalizeBookingBufferMinutes = (value: unknown): number => {
     return 120;
   }
   return Math.min(Math.max(Math.round(minutes), 0), 1440);
+};
+
+const normalizeEmail = (value: unknown): string => String(value || '').trim();
+
+const isValidEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+const isWomenSalonService = (
+  service: string | undefined,
+  serviceAudience: ReservationBody['serviceAudience']
+): boolean => {
+  if (serviceAudience === 'women') {
+    return true;
+  }
+  if (serviceAudience === 'men') {
+    return false;
+  }
+  const normalized = String(service || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  return [
+    'frauen',
+    'damen',
+    'fohnen',
+    'balayage',
+    'strahnen',
+    'highlights',
+    'glossing',
+    'ansatz',
+    'komplettfarbe',
+    'tonung',
+    'pflegekur',
+    'hochsteck'
+  ].some((marker) => normalized.includes(marker));
 };
 
 const toMinutes = (time: string): number => {
@@ -297,6 +332,20 @@ module.exports = async function handler(req: any, res: any) {
     const slotCapacity = typeof company?.slot_capacity === 'number' ? company.slot_capacity : 3;
     const requestMode = company?.booking_mode === 'request';
     const bookingBufferMinutes = normalizeBookingBufferMinutes(company?.booking_buffer_minutes);
+    const isSalon = body.serviceType === 'friseur';
+    const primaryBusinessEmail = normalizeEmail(company?.email || body.restaurantEmail);
+    const splitServiceEmails = isSalon && company?.split_service_emails === true;
+    const womenServicesEmail = normalizeEmail(company?.women_services_email);
+    const isWomenService = isSalon && isWomenSalonService(body.service, body.serviceAudience);
+    const businessEmail =
+      splitServiceEmails && isWomenService && isValidEmail(womenServicesEmail)
+        ? womenServicesEmail
+        : primaryBusinessEmail;
+
+    if (!isValidEmail(businessEmail)) {
+      res.status(400).json({ error: 'Business email missing' });
+      return;
+    }
 
     if (isBookingTooSoon(body.date, body.time, bookingBufferMinutes)) {
       res.status(409).json({ error: 'Diese Uhrzeit ist kurzfristig nicht mehr buchbar.' });
@@ -321,7 +370,7 @@ module.exports = async function handler(req: any, res: any) {
     }
 
     console.log('reservation request', {
-      restaurantEmail: body.restaurantEmail,
+      restaurantEmail: businessEmail,
       guestEmail: body.guestEmail,
       date: body.date,
       time: body.time
@@ -348,7 +397,7 @@ module.exports = async function handler(req: any, res: any) {
     const bookingRecord = {
       restaurant_slug: body.restaurantSlug,
       restaurant_name: body.restaurantName || null,
-      restaurant_email: body.restaurantEmail,
+      restaurant_email: businessEmail,
       guest_name: body.guestName || null,
       guest_email: body.guestEmail,
       phone: body.phone || null,
@@ -381,7 +430,6 @@ module.exports = async function handler(req: any, res: any) {
       }
     }
 
-    const isSalon = body.serviceType === 'friseur';
     const businessLabel = isSalon ? 'Salon' : 'Restaurant';
     const businessName = body.restaurantName?.trim() || (isSalon ? 'Ihr Salon' : 'Ihr Betrieb');
     const guestName = body.guestName?.trim() || 'Gast';
@@ -532,7 +580,7 @@ module.exports = async function handler(req: any, res: any) {
 
     await resend.emails.send({
       from,
-      to: body.restaurantEmail,
+      to: businessEmail,
       subject: `${bookingCopy.newTitle} | ${displayDate} um ${body.time}`,
       replyTo: body.guestEmail,
       text: [
@@ -546,6 +594,7 @@ module.exports = async function handler(req: any, res: any) {
         body.phone ? `Telefon: ${body.phone}` : null,
         !isSalon && body.seating ? `Sitzplatz: ${body.seating}` : null,
         isSalon ? (body.service ? `Service: ${body.service}` : null) : body.people ? `Personen: ${body.people}` : null,
+        isSalon && body.stylist ? `Friseur: ${body.stylist}` : null,
         body.note ? `Notiz: ${body.note}` : null
       ]
         .filter(Boolean)
@@ -569,7 +618,7 @@ module.exports = async function handler(req: any, res: any) {
         from,
         to: body.guestEmail,
         subject: `${bookingCopy.confirmTitle} – ${businessName} (${displayDate}, ${body.time})`,
-        replyTo: body.restaurantEmail,
+        replyTo: businessEmail,
         text: [
           `${greeting} ${guestName},`,
           '',
@@ -580,6 +629,7 @@ module.exports = async function handler(req: any, res: any) {
           body.note ? `Notiz: ${body.note}` : null,
           !isSalon && body.seating ? `Sitzplatz: ${body.seating}` : null,
           isSalon ? (body.service ? `Service: ${body.service}` : null) : body.people ? `Personen: ${body.people}` : null,
+          isSalon && body.stylist ? `Friseur: ${body.stylist}` : null,
           '',
           'Bei Rückfragen antworten Sie direkt auf diese E-Mail.',
           '',

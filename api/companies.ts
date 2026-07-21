@@ -6,6 +6,8 @@ type CompanyRow = {
   hours: string;
   break_hours?: string | null;
   email: string;
+  split_service_emails?: boolean | null;
+  women_services_email?: string | null;
   service_type?: string | null;
   login_pin?: string | null;
   slot_capacity?: number | null;
@@ -35,6 +37,11 @@ const toCompanyResponse = (row: CompanyRow) => ({
   hours: row.hours,
   breakHours: row.break_hours || undefined,
   email: row.email,
+  splitServiceEmails: row.service_type === 'friseur' && row.split_service_emails === true,
+  womenServicesEmail:
+    row.service_type === 'friseur' && row.split_service_emails === true
+      ? row.women_services_email || undefined
+      : undefined,
   serviceType: row.service_type || 'restaurant',
   slotCapacity: row.slot_capacity ?? 3,
   slotIntervalMinutes:
@@ -69,6 +76,11 @@ const normalizeBookingBufferMinutes = (value: unknown): number => {
   return Math.min(Math.max(Math.round(minutes), 0), 1440);
 };
 
+const normalizeOptionalEmail = (value: unknown): string | null => {
+  const email = String(value || '').trim();
+  return email.length > 0 ? email : null;
+};
+
 const normalizeStylists = (value: unknown): string[] => {
   const source =
     typeof value === 'string'
@@ -97,7 +109,9 @@ const isMissingColumnError = (error: any, columnName: string): boolean => {
 const optionalCompanyColumns = [
   'booking_buffer_minutes',
   'stylist_selection_enabled',
-  'stylists'
+  'stylists',
+  'split_service_emails',
+  'women_services_email'
 ] as const;
 
 const removeMissingOptionalColumns = <T extends Record<string, any>>(record: T, error: any): T => {
@@ -153,6 +167,9 @@ module.exports = async function handler(req: any, res: any) {
       const body = req.body || {};
       const serviceType = body.serviceType || 'restaurant';
       const stylists = serviceType === 'friseur' ? normalizeStylists(body.stylists) : [];
+      const splitServiceEmails = serviceType === 'friseur' && body.splitServiceEmails === true;
+      const womenServicesEmail =
+        splitServiceEmails ? normalizeOptionalEmail(body.womenServicesEmail) : null;
       if (!body.name || !body.address || !body.hours || !body.email) {
         res.status(400).json({ error: 'Missing required fields' });
         return;
@@ -177,6 +194,8 @@ module.exports = async function handler(req: any, res: any) {
         hours: body.hours,
         break_hours: body.breakHours || null,
         email: body.email,
+        split_service_emails: splitServiceEmails,
+        women_services_email: womenServicesEmail,
         service_type: serviceType,
         login_pin: body.loginPin ? String(body.loginPin).trim() : null,
         slot_capacity: typeof body.slotCapacity === 'number' ? body.slotCapacity : 3,
@@ -212,6 +231,9 @@ module.exports = async function handler(req: any, res: any) {
       const body = req.body || {};
       const serviceType = body.serviceType || 'restaurant';
       const stylists = serviceType === 'friseur' ? normalizeStylists(body.stylists) : [];
+      const splitServiceEmails = serviceType === 'friseur' && body.splitServiceEmails === true;
+      const womenServicesEmail =
+        splitServiceEmails ? normalizeOptionalEmail(body.womenServicesEmail) : null;
       if (!body.name || !body.address || !body.hours || !body.email) {
         res.status(400).json({ error: 'Missing required fields' });
         return;
@@ -241,6 +263,8 @@ module.exports = async function handler(req: any, res: any) {
         hours: body.hours,
         break_hours: body.breakHours || null,
         email: body.email,
+        split_service_emails: splitServiceEmails,
+        women_services_email: womenServicesEmail,
         service_type: serviceType,
         booking_buffer_minutes: normalizeBookingBufferMinutes(body.bookingBufferMinutes),
         time_selection_mode: normalizeTimeSelectionMode(body.timeSelectionMode),

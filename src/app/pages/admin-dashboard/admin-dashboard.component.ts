@@ -24,6 +24,8 @@ export class AdminDashboardComponent implements OnInit {
     hours: ['Mo–So 12:00–20:00', Validators.required],
     breakHours: [''],
     email: ['kontakt@example.com', [Validators.required, Validators.email]],
+    splitServiceEmails: [false],
+    womenServicesEmail: [''],
     serviceType: ['restaurant', Validators.required],
     bookingMode: ['confirm', Validators.required],
     seatingOptionsEnabled: [false],
@@ -44,6 +46,8 @@ export class AdminDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.resetForm();
+    this.companyForm.valueChanges.subscribe(() => this.updateWomenServicesEmailValidators());
+    this.updateWomenServicesEmailValidators();
     this.loadCompanies();
   }
 
@@ -53,6 +57,7 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   submitCompany(): void {
+    this.updateWomenServicesEmailValidators();
     if (this.companyForm.invalid) {
       this.companyForm.markAllAsTouched();
       return;
@@ -60,6 +65,7 @@ export class AdminDashboardComponent implements OnInit {
 
     const value = this.companyForm.value;
     const serviceType = (value.serviceType || 'restaurant') as 'restaurant' | 'friseur';
+    const splitServiceEmails = serviceType === 'friseur' && value.splitServiceEmails === true;
     const stylists = this.parseStylistNames(value.stylistsText);
     const payload = {
       name: value.name || 'Neues Unternehmen',
@@ -67,6 +73,8 @@ export class AdminDashboardComponent implements OnInit {
       hours: value.hours || 'Mo–So 12:00–20:00',
       breakHours: value.breakHours || undefined,
       email: value.email || 'kontakt@example.com',
+      splitServiceEmails,
+      womenServicesEmail: splitServiceEmails ? value.womenServicesEmail?.trim() || undefined : undefined,
       serviceType,
       bookingMode: (value.bookingMode || 'confirm') as 'confirm' | 'request',
       seatingOptionsEnabled: serviceType === 'restaurant' && value.seatingOptionsEnabled === true,
@@ -99,6 +107,8 @@ export class AdminDashboardComponent implements OnInit {
       hours: company.hours,
       breakHours: company.breakHours || '',
       email: company.email,
+      splitServiceEmails: company.splitServiceEmails || false,
+      womenServicesEmail: company.womenServicesEmail || '',
       serviceType: company.serviceType || 'restaurant',
       bookingMode: company.bookingMode || 'confirm',
       seatingOptionsEnabled: company.seatingOptionsEnabled || false,
@@ -110,6 +120,7 @@ export class AdminDashboardComponent implements OnInit {
       bookingBufferMinutes: company.bookingBufferMinutes ?? 120,
       timeSelectionMode: company.timeSelectionMode || 'slots'
     });
+    this.updateWomenServicesEmailValidators();
   }
 
   cancelEdit(): void {
@@ -154,6 +165,8 @@ export class AdminDashboardComponent implements OnInit {
       hours: 'Mo–So 12:00–20:00',
       breakHours: '',
       email: 'kontakt@example.com',
+      splitServiceEmails: false,
+      womenServicesEmail: '',
       serviceType: 'restaurant',
       bookingMode: 'confirm',
       seatingOptionsEnabled: false,
@@ -165,6 +178,7 @@ export class AdminDashboardComponent implements OnInit {
       bookingBufferMinutes: 120,
       timeSelectionMode: 'slots'
     });
+    this.updateWomenServicesEmailValidators();
     this.companyForm.markAsPristine();
   }
 
@@ -186,5 +200,21 @@ export class AdminDashboardComponent implements OnInit {
           .filter((item) => item.length > 0)
       )
     );
+  }
+
+  private updateWomenServicesEmailValidators(): void {
+    const control = this.companyForm.get('womenServicesEmail');
+    if (!control) {
+      return;
+    }
+    const splitServiceEmails =
+      this.companyForm.value.serviceType === 'friseur' && this.companyForm.value.splitServiceEmails === true;
+    if (splitServiceEmails) {
+      control.setValidators([Validators.required, Validators.email]);
+    } else {
+      control.clearValidators();
+      control.setErrors(null);
+    }
+    control.updateValueAndValidity({ emitEvent: false });
   }
 }

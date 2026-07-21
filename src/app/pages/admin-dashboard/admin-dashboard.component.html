@@ -111,8 +111,25 @@
           <input class="input" type="text" formControlName="breakHours" placeholder="13:00–16:00" />
         </label>
         <label>
-          <span class="label">E-Mail*</span>
+          <span class="label">{{ companyForm.value.serviceType === 'friseur' && companyForm.value.splitServiceEmails ? 'E-Mail Männer*' : 'E-Mail*' }}</span>
           <input class="input" type="email" formControlName="email" placeholder="kontakt@maxgrill.de" />
+          <span class="helptext" *ngIf="companyForm.value.serviceType === 'friseur' && !companyForm.value.splitServiceEmails">
+            Ohne Trennung gehen alle Friseur-Anfragen an diese Mail.
+          </span>
+        </label>
+        <label *ngIf="companyForm.value.serviceType === 'friseur'" class="inline-toggle">
+          <input type="checkbox" formControlName="splitServiceEmails" />
+          <span>Mails trennen?</span>
+        </label>
+        <label *ngIf="companyForm.value.serviceType === 'friseur' && companyForm.value.splitServiceEmails">
+          <span class="label">E-Mail Frauen*</span>
+          <input class="input" type="email" formControlName="womenServicesEmail" placeholder="frauen@salon.de" />
+          <span class="helptext">
+            Frauen-Services gehen an diese Mail. Männer und Sonstiges gehen an die Männer-Mail.
+          </span>
+          <span class="error" *ngIf="companyForm.get('womenServicesEmail')?.touched && companyForm.get('womenServicesEmail')?.invalid">
+            Bitte eine gültige Frauen-Mail eintragen.
+          </span>
         </label>
         <label>
           <span class="label">Login PIN (Unternehmenslogin)</span>
@@ -169,6 +186,14 @@
                 company.stylistSelectionEnabled && (company.stylists?.length || 0) > 0
                   ? company.stylists?.join(', ')
                   : 'Inaktiv'
+              }}
+            </p>
+            <p class="muted" *ngIf="company.serviceType === 'friseur'">
+              Mail-Trennung:
+              {{
+                company.splitServiceEmails && company.womenServicesEmail
+                  ? 'Aktiv · Frauen: ' + company.womenServicesEmail
+                  : 'Inaktiv · alles an Standard-Mail'
               }}
             </p>
             <p class="muted">Login: {{ company.slug }}</p>

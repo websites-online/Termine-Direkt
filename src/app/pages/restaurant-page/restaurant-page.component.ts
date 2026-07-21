@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { Company, CompanyApiService } from '../../services/company-api.service';
+import { SALON_SERVICES, SalonServiceAudience } from '../../shared/salon-services';
 
 type TimeRange = { start: number; end: number };
 type ParsedSchedule = {
@@ -141,6 +142,9 @@ export class RestaurantPageComponent implements OnInit {
       guestName: this.bookingForm.value.name ?? '',
       seating: this.hasSeatingChoice ? seatingValue : undefined,
       service: this.isSalon ? serviceValue : undefined,
+      serviceAudience: this.isSalon
+        ? this.getSalonServiceAudience(this.bookingForm.value.service ?? '')
+        : undefined,
       stylist: this.hasStylistChoice ? this.getStylistLabel(this.bookingForm.value.stylist ?? '') : undefined,
       date: this.selectedDate,
       time: this.bookingForm.value.time ?? '',
@@ -255,18 +259,8 @@ export class RestaurantPageComponent implements OnInit {
     return this.isSalon ? 'Kunden*' : 'Personen*';
   }
 
-  get salonServices(): Array<{ value: string; label: string }> {
-    return [
-      { value: 'haarschnitt', label: 'Haarschnitt' },
-      { value: 'haarschnitt_bart', label: 'Haarschnitt und Bart' },
-      { value: 'bart', label: 'Bart' },
-      { value: 'haarschnitt_bart_augenbrauen', label: 'Haarschnitt, Bart und Augenbrauen' },
-      { value: 'faerben', label: 'Färben' },
-      { value: 'faerben_schneiden_frauen', label: 'Färben und Schneiden (Frauen)' },
-      { value: 'waschen_schneiden_frauen', label: 'Waschen und Schneiden (Frauen)' },
-      { value: 'ansaetze_faerben_frauen', label: 'Ansätze färben (Frauen)' },
-      { value: 'sonstiges', label: 'Sonstiges' }
-    ];
+  get salonServices() {
+    return SALON_SERVICES;
   }
 
   get seatingOptions(): Array<{ value: string; label: string }> {
@@ -290,6 +284,11 @@ export class RestaurantPageComponent implements OnInit {
     }
     const match = this.salonServices.find((item) => item.value === value);
     return match ? match.label : '';
+  }
+
+  private getSalonServiceAudience(value: string): SalonServiceAudience {
+    const match = this.salonServices.find((item) => item.value === value);
+    return match?.audience || 'general';
   }
 
   private getStylistLabel(value: string): string {

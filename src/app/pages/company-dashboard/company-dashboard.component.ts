@@ -11,8 +11,7 @@ import {
   CompanyReservationPayload,
   CompanyReservationsService
 } from '../../services/company-reservations.service';
-
-type ServiceOption = { value: string; label: string };
+import { SALON_SERVICES } from '../../shared/salon-services';
 
 @Component({
   selector: 'app-company-dashboard',
@@ -36,17 +35,10 @@ export class CompanyDashboardComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
-  readonly serviceOptions: ServiceOption[] = [
-    { value: 'Haarschnitt', label: 'Haarschnitt' },
-    { value: 'Haarschnitt und Bart', label: 'Haarschnitt und Bart' },
-    { value: 'Bart', label: 'Bart' },
-    { value: 'Haarschnitt, Bart und Augenbrauen', label: 'Haarschnitt, Bart und Augenbrauen' },
-    { value: 'Färben', label: 'Färben' },
-    { value: 'Färben und Schneiden (Frauen)', label: 'Färben und Schneiden (Frauen)' },
-    { value: 'Waschen und Schneiden (Frauen)', label: 'Waschen und Schneiden (Frauen)' },
-    { value: 'Ansätze färben (Frauen)', label: 'Ansätze färben (Frauen)' },
-    { value: 'Sonstiges', label: 'Sonstiges' }
-  ];
+  readonly serviceOptions = SALON_SERVICES.map((service) => ({
+    value: service.label,
+    label: service.label
+  }));
 
   readonly bookingForm = this.formBuilder.group({
     date: [this.getToday(), Validators.required],
