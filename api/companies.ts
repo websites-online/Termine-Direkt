@@ -127,6 +127,10 @@ const removeMissingOptionalColumns = <T extends Record<string, any>>(record: T, 
 const hasMissingOptionalColumn = (error: any): boolean =>
   optionalCompanyColumns.some((columnName) => isMissingColumnError(error, columnName));
 
+const isMissingMailSplitColumn = (error: any): boolean =>
+  isMissingColumnError(error, 'split_service_emails') ||
+  isMissingColumnError(error, 'women_services_email');
+
 const getClient = () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { createClient } = require('@supabase/supabase-js');
@@ -209,6 +213,13 @@ module.exports = async function handler(req: any, res: any) {
         stylists
       };
       let { data, error } = await supabase.from('companies').insert(insert).select('*').single();
+      if (error && splitServiceEmails && isMissingMailSplitColumn(error)) {
+        res.status(500).json({
+          error:
+            'Supabase-Spalten fuer Mail-Trennung fehlen oder Schema-Cache ist noch nicht aktualisiert.'
+        });
+        return;
+      }
       if (error && hasMissingOptionalColumn(error)) {
         const fallbackInsert = removeMissingOptionalColumns(insert, error);
         const fallbackResult = await supabase.from('companies').insert(fallbackInsert).select('*').single();
@@ -284,6 +295,13 @@ module.exports = async function handler(req: any, res: any) {
         updates.slot_interval_minutes = normalizeSlotInterval(body.slotIntervalMinutes);
       }
       let { data, error } = await supabase.from('companies').update(updates).eq('slug', slug).select('*').single();
+      if (error && splitServiceEmails && isMissingMailSplitColumn(error)) {
+        res.status(500).json({
+          error:
+            'Supabase-Spalten fuer Mail-Trennung fehlen oder Schema-Cache ist noch nicht aktualisiert.'
+        });
+        return;
+      }
       if (error && hasMissingOptionalColumn(error)) {
         const fallbackUpdates = removeMissingOptionalColumns(updates, error);
         const fallbackResult = await supabase.from('companies').update(fallbackUpdates).eq('slug', slug).select('*').single();

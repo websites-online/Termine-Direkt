@@ -18,6 +18,7 @@ export class AdminDashboardComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   companies: Company[] = [];
   editingSlug: string | null = null;
+  formError = '';
   readonly companyForm = this.formBuilder.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     address: ['Beispielstraße 12, 12345 Musterstadt', Validators.required],
@@ -57,6 +58,7 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   submitCompany(): void {
+    this.formError = '';
     this.updateWomenServicesEmailValidators();
     if (this.companyForm.invalid) {
       this.companyForm.markAllAsTouched();
@@ -95,6 +97,11 @@ export class AdminDashboardComponent implements OnInit {
       next: () => {
         this.resetForm();
         this.loadCompanies();
+      },
+      error: (error) => {
+        this.formError =
+          error?.error?.error ||
+          'Speichern fehlgeschlagen. Bitte Supabase-Spalten prüfen und erneut versuchen.';
       }
     });
   }
@@ -159,6 +166,7 @@ export class AdminDashboardComponent implements OnInit {
 
   private resetForm(): void {
     this.editingSlug = null;
+    this.formError = '';
     this.companyForm.reset({
       name: '',
       address: 'Beispielstraße 12, 12345 Musterstadt',
