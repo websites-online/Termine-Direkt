@@ -16,6 +16,9 @@ export interface CompanyReservation {
   note?: string;
   service?: string;
   stylist?: string;
+  isBlock?: boolean;
+  isInternal?: boolean;
+  blockId?: string;
   createdAt?: string;
 }
 
@@ -29,10 +32,12 @@ export interface CompanyReservationPayload {
   note?: string;
   service?: string;
   stylist?: string;
+  isBlock?: boolean;
+  blockCapacity?: number;
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CompanyReservationsService {
   private readonly baseUrl = this.resolveBaseUrl();
@@ -40,7 +45,7 @@ export class CompanyReservationsService {
 
   constructor(
     private readonly http: HttpClient,
-    private readonly authService: CompanyAuthService
+    private readonly authService: CompanyAuthService,
   ) {}
 
   listReservations(date: string): Observable<CompanyReservation[]> {
@@ -53,10 +58,27 @@ export class CompanyReservationsService {
       return of(this.sortReservations(reservations)).pipe(delay(200));
     }
 
-    return this.http.get<CompanyReservation[]>(
-      `${this.baseUrl}?date=${encodeURIComponent(date)}`,
-      { headers: this.authHeaders() }
-    );
+    return this.http.get<CompanyReservation[]>(`${this.baseUrl}?date=${encodeURIComponent(date)}`, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  listReservationsRange(startDate: string, endDate: string): Observable<CompanyReservation[]> {
+    if (this.isLocalMock()) {
+      const slug = this.authService.getSession()?.slug;
+      if (!slug) {
+        return of([]);
+      }
+      const reservations = this.loadLocalReservations(slug).filter(
+        (item) => item.date >= startDate && item.date <= endDate,
+      );
+      return of(this.sortReservations(reservations)).pipe(delay(200));
+    }
+
+    const query = new URLSearchParams({ startDate, endDate });
+    return this.http.get<CompanyReservation[]>(`${this.baseUrl}?${query.toString()}`, {
+      headers: this.authHeaders(),
+    });
   }
 
   createReservation(payload: CompanyReservationPayload): Observable<CompanyReservation> {
@@ -66,21 +88,31 @@ export class CompanyReservationsService {
         return throwError(() => new Error('Nicht eingeloggt.'));
       }
       const reservations = this.loadLocalReservations(slug);
-      const count = reservations.filter((item) => item.date === payload.date && item.time === payload.time).length;
-      if (count >= 3) {
+      const blockCapacity = Math.min(Math.max(Number(payload.blockCapacity || 3), 1), 3);
+      const count = reservations.reduce((total, item) => {
+        if (item.date !== payload.date || item.time !== payload.time) {
+          return total;
+        }
+        return total + (item.isBlock ? blockCapacity : 1);
+      }, 0);
+      if (count >= blockCapacity) {
         return throwError(() => new Error('Slot voll.'));
       }
       const created: CompanyReservation = {
         id: `${Date.now()}`,
         ...payload,
-        createdAt: new Date().toISOString()
+        isInternal: true,
+        blockId: payload.isBlock ? `local-${Date.now()}` : undefined,
+        createdAt: new Date().toISOString(),
       };
       reservations.push(created);
       this.saveLocalReservations(slug, reservations);
       return of(created).pipe(delay(200));
     }
 
-    return this.http.post<CompanyReservation>(this.baseUrl, payload, { headers: this.authHeaders() });
+    return this.http.post<CompanyReservation>(this.baseUrl, payload, {
+      headers: this.authHeaders(),
+    });
   }
 
   deleteReservation(id: string): Observable<{ success: boolean }> {
@@ -89,19 +121,27 @@ export class CompanyReservationsService {
       if (!slug) {
         return throwError(() => new Error('Nicht eingeloggt.'));
       }
-      const reservations = this.loadLocalReservations(slug).filter((item) => item.id !== id);
+      const existing = this.loadLocalReservations(slug);
+      const target = existing.find((item) => item.id === id);
+      const reservations = existing.filter(
+        (item) => item.id !== id && (!target?.blockId || item.blockId !== target.blockId),
+      );
       this.saveLocalReservations(slug, reservations);
       return of({ success: true }).pipe(delay(200));
     }
 
     return this.http.delete<{ success: boolean }>(`${this.baseUrl}?id=${encodeURIComponent(id)}`, {
-      headers: this.authHeaders()
+      headers: this.authHeaders(),
     });
   }
 
   private resolveBaseUrl(): string {
     const baseUrl = environment.API_BASE_URL || '';
-    if (typeof window !== 'undefined' && baseUrl.includes('localhost') && window.location.hostname !== 'localhost') {
+    if (
+      typeof window !== 'undefined' &&
+      baseUrl.includes('localhost') &&
+      window.location.hostname !== 'localhost'
+    ) {
       return '/api/company/reservations';
     }
     return baseUrl.length > 0 ? `${baseUrl}/api/company/reservations` : '/api/company/reservations';
@@ -143,6 +183,8 @@ export class CompanyReservationsService {
   }
 
   private sortReservations(reservations: CompanyReservation[]): CompanyReservation[] {
-    return [...reservations].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    return [...reservations].sort((a, b) =>
+      `${a.date || ''}-${a.time || ''}`.localeCompare(`${b.date || ''}-${b.time || ''}`),
+    );
   }
 }

@@ -1,214 +1,399 @@
-<section class="section page">
+<section
+  class="section page admin-workspace"
+  [class.admin-workspace--settings]="standaloneEditSlug"
+>
   <div class="container">
-    <div class="card admin-card">
-      <div class="admin-header">
+    <div class="admin-topbar">
+      <a class="admin-brand" routerLink="/admin"><span>N</span>Nextime Admin</a>
+      <div class="admin-actions">
+        <a class="btn btn-outline" routerLink="/admin/statistiken" *ngIf="!standaloneEditSlug"
+          >Statistiken</a
+        >
+        <a class="btn btn-outline" routerLink="/admin" *ngIf="standaloneEditSlug">Zur Übersicht</a>
+        <button class="btn btn-outline" type="button" (click)="logout()">Logout</button>
+      </div>
+    </div>
+
+    <header class="admin-page-header">
+      <div>
+        <p class="admin-eyebrow">
+          {{ standaloneEditSlug ? 'Unternehmensverwaltung' : 'Administration' }}
+        </p>
+        <h1>
+          {{
+            standaloneEditSlug
+              ? companyForm.value.name || 'Unternehmen bearbeiten'
+              : 'Unternehmen verwalten'
+          }}
+        </h1>
+        <p>
+          {{
+            standaloneEditSlug
+              ? 'Alle Einstellungen übersichtlich an einem Ort.'
+              : 'Unternehmen anlegen, öffnen und verwalten.'
+          }}
+        </p>
+      </div>
+      <a
+        class="public-page-link"
+        *ngIf="standaloneEditSlug && editingSlug"
+        [routerLink]="['/', editingSlug]"
+      >
+        Kundenseite öffnen <span>↗</span>
+      </a>
+    </header>
+
+    <div class="settings-layout">
+      <aside class="settings-nav" *ngIf="standaloneEditSlug">
+        <span>Einstellungen</span>
+        <a href="#grunddaten">Grunddaten</a>
+        <a href="#buchung">Buchung & Zeiten</a>
+        <a href="#angebot">Angebot</a>
+        <a href="#kontakt">Benachrichtigungen</a>
+        <a href="#zugang">Unternehmenszugang</a>
+        <div class="settings-nav-info">
+          <small>Öffentliche URL</small>
+          <strong>/{{ editingSlug }}</strong>
+        </div>
+      </aside>
+
+      <main class="settings-content">
+        <form class="admin-form" [formGroup]="companyForm" (ngSubmit)="submitCompany()">
+          <section class="settings-section" id="grunddaten">
+            <div class="settings-section-heading">
+              <span class="section-number">01</span>
+              <div>
+                <h2>Grunddaten</h2>
+                <p>Name, Art und Standort des Unternehmens.</p>
+              </div>
+            </div>
+            <div class="settings-fields">
+              <label>
+                <span class="label">Name des Unternehmens*</span>
+                <input class="input" type="text" formControlName="name" placeholder="Max Grill" />
+              </label>
+              <label>
+                <span class="label">Betriebsart*</span>
+                <select class="input" formControlName="serviceType">
+                  <option value="restaurant">Restaurant</option>
+                  <option value="friseur">Friseursalon</option>
+                </select>
+              </label>
+              <label class="field-wide">
+                <span class="label">Adresse*</span>
+                <input
+                  class="input"
+                  type="text"
+                  formControlName="address"
+                  placeholder="Musterstraße 12, 10115 Berlin"
+                />
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-section" id="buchung">
+            <div class="settings-section-heading">
+              <span class="section-number">02</span>
+              <div>
+                <h2>Buchung & Zeiten</h2>
+                <p>Regeln für verfügbare Termine und Kundenbuchungen.</p>
+              </div>
+            </div>
+            <div class="settings-fields">
+              <label>
+                <span class="label">Buchungsmodus*</span>
+                <select class="input" formControlName="bookingMode">
+                  <option value="confirm">Direkte Bestätigung</option>
+                  <option value="request">Termin- / Reservierungsanfrage</option>
+                </select>
+                <span class="helptext">Anfragen werden zuerst nur an den Betrieb gesendet.</span>
+              </label>
+              <label>
+                <span class="label">Zeitauswahl für Kunden*</span>
+                <select class="input" formControlName="timeSelectionMode">
+                  <option value="slots">Vorgegebene Zeitslots</option>
+                  <option value="free">Freie Uhrzeit-Eingabe</option>
+                </select>
+              </label>
+              <label>
+                <span class="label">Buchungen pro Zeitslot*</span>
+                <select class="input" formControlName="slotCapacity">
+                  <option [value]="1">1 Buchung</option>
+                  <option [value]="2">2 Buchungen</option>
+                  <option [value]="3">3 Buchungen</option>
+                </select>
+              </label>
+              <label>
+                <span class="label">Abstand der Zeitslots*</span>
+                <select class="input" formControlName="slotIntervalMinutes">
+                  <option [value]="30">30 Minuten</option>
+                  <option [value]="45">45 Minuten</option>
+                  <option [value]="60">60 Minuten</option>
+                </select>
+              </label>
+              <label>
+                <span class="label">Buchbar frühestens*</span>
+                <select class="input" formControlName="bookingBufferMinutes">
+                  <option [value]="0">Sofort</option>
+                  <option [value]="30">In 30 Minuten</option>
+                  <option [value]="60">In 1 Stunde</option>
+                  <option [value]="90">In 1,5 Stunden</option>
+                  <option [value]="120">In 2 Stunden</option>
+                  <option [value]="180">In 3 Stunden</option>
+                  <option [value]="240">In 4 Stunden</option>
+                  <option [value]="1440">Erst am nächsten Tag</option>
+                </select>
+              </label>
+              <label class="field-wide">
+                <span class="label">Öffnungszeiten*</span>
+                <input
+                  class="input"
+                  type="text"
+                  formControlName="hours"
+                  placeholder="Mo–Fr 09–20; Sa–So 08–20"
+                />
+                <span class="helptext">Beispiel: Mo–Fr 09:00–18:00; Sa 09:00–14:00</span>
+              </label>
+              <label class="field-wide">
+                <span class="label">Pausenzeiten</span>
+                <input
+                  class="input"
+                  type="text"
+                  formControlName="breakHours"
+                  placeholder="13:00–14:00"
+                />
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-section" id="angebot">
+            <div class="settings-section-heading">
+              <span class="section-number">03</span>
+              <div>
+                <h2>
+                  {{
+                    companyForm.value.serviceType === 'friseur'
+                      ? 'Team & Services'
+                      : 'Restaurant-Optionen'
+                  }}
+                </h2>
+                <p>Zusätzliche Auswahlmöglichkeiten auf der Buchungsseite.</p>
+              </div>
+            </div>
+            <div class="settings-fields settings-fields--single">
+              <label *ngIf="companyForm.value.serviceType === 'restaurant'" class="switch-row">
+                <span
+                  ><strong>Sitzplatz-Auswahl</strong
+                  ><small>Kunden wählen zwischen drinnen und draußen.</small></span
+                >
+                <input type="checkbox" formControlName="seatingOptionsEnabled" />
+              </label>
+              <label *ngIf="companyForm.value.serviceType === 'friseur'" class="switch-row">
+                <span
+                  ><strong>Friseur-Auswahl</strong
+                  ><small>Kunden können optional eine Person auswählen.</small></span
+                >
+                <input type="checkbox" formControlName="stylistSelectionEnabled" />
+              </label>
+              <label
+                *ngIf="
+                  companyForm.value.serviceType === 'friseur' &&
+                  companyForm.value.stylistSelectionEnabled
+                "
+              >
+                <span class="label">Teammitglieder (je Zeile ein Name)</span>
+                <textarea
+                  class="textarea"
+                  formControlName="stylistsText"
+                  placeholder="Ali&#10;Merve&#10;Sarah"
+                ></textarea>
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-section" id="kontakt">
+            <div class="settings-section-heading">
+              <span class="section-number">04</span>
+              <div>
+                <h2>Benachrichtigungen</h2>
+                <p>Wohin neue Buchungen und Anfragen gesendet werden.</p>
+              </div>
+            </div>
+            <div class="settings-fields">
+              <label
+                [class.field-wide]="
+                  companyForm.value.serviceType !== 'friseur' ||
+                  !companyForm.value.splitServiceEmails
+                "
+              >
+                <span class="label">{{
+                  companyForm.value.serviceType === 'friseur' &&
+                  companyForm.value.splitServiceEmails
+                    ? 'E-Mail Männer*'
+                    : 'E-Mail-Adresse*'
+                }}</span>
+                <input
+                  class="input"
+                  type="email"
+                  formControlName="email"
+                  placeholder="kontakt@unternehmen.de"
+                />
+              </label>
+              <label
+                *ngIf="
+                  companyForm.value.serviceType === 'friseur' &&
+                  companyForm.value.splitServiceEmails
+                "
+              >
+                <span class="label">E-Mail Frauen*</span>
+                <input
+                  class="input"
+                  type="email"
+                  formControlName="womenServicesEmail"
+                  placeholder="frauen@salon.de"
+                />
+                <span
+                  class="error"
+                  *ngIf="
+                    companyForm.get('womenServicesEmail')?.touched &&
+                    companyForm.get('womenServicesEmail')?.invalid
+                  "
+                  >Bitte gültige E-Mail eintragen.</span
+                >
+              </label>
+              <label
+                *ngIf="companyForm.value.serviceType === 'friseur'"
+                class="switch-row field-wide"
+              >
+                <span
+                  ><strong>E-Mails nach Service trennen</strong
+                  ><small>Frauen-Services an eine separate Adresse senden.</small></span
+                >
+                <input type="checkbox" formControlName="splitServiceEmails" />
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-section" id="zugang">
+            <div class="settings-section-heading">
+              <span class="section-number">05</span>
+              <div>
+                <h2>Unternehmenszugang</h2>
+                <p>PIN für den geschützten Kalenderbereich.</p>
+              </div>
+            </div>
+            <div class="settings-fields settings-fields--single">
+              <label>
+                <span class="label">Login-PIN</span>
+                <div class="pin-row">
+                  <input
+                    class="input pin-input"
+                    type="text"
+                    formControlName="loginPin"
+                    placeholder="Bisherigen PIN beibehalten"
+                  />
+                  <button
+                    class="btn btn-outline pin-generate"
+                    type="button"
+                    (click)="generateLoginPin()"
+                  >
+                    Neuen PIN erzeugen
+                  </button>
+                </div>
+                <span class="helptext">{{
+                  editingSlug
+                    ? 'Leer lassen, um den bisherigen PIN beizubehalten.'
+                    : 'Diesen PIN sicher an das Unternehmen weitergeben.'
+                }}</span>
+              </label>
+            </div>
+          </section>
+
+          <div class="save-bar">
+            <div>
+              <p class="error" *ngIf="formError">{{ formError }}</p>
+              <p class="success" *ngIf="formSuccess">{{ formSuccess }}</p>
+              <span *ngIf="!formError && !formSuccess">{{
+                companyForm.dirty ? 'Nicht gespeicherte Änderungen' : 'Alle Angaben sind aktuell'
+              }}</span>
+            </div>
+            <div class="admin-form-actions">
+              <button
+                class="btn btn-outline"
+                type="button"
+                *ngIf="editingSlug"
+                (click)="cancelEdit()"
+              >
+                Abbrechen
+              </button>
+              <button class="btn btn-primary" type="submit" [disabled]="isSaving">
+                {{
+                  isSaving
+                    ? 'Wird gespeichert…'
+                    : editingSlug
+                      ? 'Änderungen speichern'
+                      : 'Unternehmen anlegen'
+                }}
+              </button>
+            </div>
+          </div>
+        </form>
+      </main>
+    </div>
+
+    <section class="company-overview" *ngIf="!standaloneEditSlug">
+      <div class="overview-heading">
         <div>
-          <h1 class="section-title">Admin Dashboard </h1>
-          <p class="section-lead">Unternehmen verwalten und neue Seiten anlegen.</p>
+          <p class="admin-eyebrow">Übersicht</p>
+          <h2>Alle Unternehmen</h2>
         </div>
-        <div class="admin-actions">
-          <a class="btn btn-outline" routerLink="/">Zur Startseite</a>
-          <a class="btn btn-outline" routerLink="/admin/statistiken">Statistiken</a>
-          <button class="btn btn-outline" type="button" (click)="logout()">Logout</button>
-        </div>
+        <span
+          >{{ companies.length }} {{ companies.length === 1 ? 'Unternehmen' : 'Unternehmen' }}</span
+        >
       </div>
-    </div>
-
-    <div class="card admin-card admin-form-card">
-      <div class="admin-card-header">
-        <h2>{{ editingSlug ? 'Unternehmen bearbeiten' : 'Neues Unternehmen' }}</h2>
-      </div>
-      <form class="admin-form" [formGroup]="companyForm" (ngSubmit)="submitCompany()">
-        <label>
-          <span class="label">Name*</span>
-          <input class="input" type="text" formControlName="name" placeholder="Max Grill" />
-        </label>
-        <label>
-          <span class="label">Betriebsart*</span>
-          <select class="input" formControlName="serviceType">
-            <option value="restaurant">Restaurant</option>
-            <option value="friseur">Friseur</option>
-          </select>
-        </label>
-        <label>
-          <span class="label">Buchungsmodus*</span>
-          <select class="input" formControlName="bookingMode">
-            <option value="confirm">Direkte Bestätigung</option>
-            <option value="request">Terminanfrage / Reservierungsanfrage</option>
-          </select>
-          <span class="helptext">Bei Anfrage geht nur eine Mail an den Betrieb, keine Kunden-Bestätigung.</span>
-        </label>
-        <label *ngIf="companyForm.value.serviceType === 'restaurant'" class="inline-toggle">
-          <input type="checkbox" formControlName="seatingOptionsEnabled" />
-          <span>Sitzplatz-Auswahl aktivieren (Tisch drinnen / Tisch draußen)</span>
-        </label>
-        <label *ngIf="companyForm.value.serviceType === 'friseur'" class="inline-toggle">
-          <input type="checkbox" formControlName="stylistSelectionEnabled" />
-          <span>Friseur-Auswahl aktivieren</span>
-        </label>
-        <label *ngIf="companyForm.value.serviceType === 'friseur' && companyForm.value.stylistSelectionEnabled">
-          <span class="label">Friseure (je Zeile ein Name)</span>
-          <textarea
-            class="textarea"
-            formControlName="stylistsText"
-            placeholder="Ali&#10;Merve&#10;Sarah"
-          ></textarea>
-          <span class="helptext">Kunden können daraus optional einen Friseur auswählen.</span>
-        </label>
-        <label>
-          <span class="label">Adresse*</span>
-          <input class="input" type="text" formControlName="address" placeholder="Musterstraße 12, 10115 Berlin" />
-        </label>
-        <label>
-          <span class="label">Öffnungszeiten*</span>
-          <input
-            class="input"
-            type="text"
-            formControlName="hours"
-            placeholder="Mo–Fr 09–20; Sa–So und Feiertage 08–20"
-          />
-        </label>
-        <label>
-          <span class="label">Buchungen pro Zeitslot*</span>
-          <select class="input" formControlName="slotCapacity">
-            <option [value]="1">1</option>
-            <option [value]="2">2</option>
-            <option [value]="3">3</option>
-          </select>
-        </label>
-        <label>
-          <span class="label">Zeitslot-Abstand*</span>
-          <select class="input" formControlName="slotIntervalMinutes">
-            <option [value]="30">30 Minuten</option>
-            <option [value]="45">45 Minuten</option>
-            <option [value]="60">60 Minuten</option>
-          </select>
-        </label>
-        <label>
-          <span class="label">Buchbar frühestens*</span>
-          <select class="input" formControlName="bookingBufferMinutes">
-            <option [value]="0">Sofort</option>
-            <option [value]="30">In 30 Minuten</option>
-            <option [value]="60">In 1 Stunde</option>
-            <option [value]="90">In 1,5 Stunden</option>
-            <option [value]="120">In 2 Stunden</option>
-            <option [value]="180">In 3 Stunden</option>
-            <option [value]="240">In 4 Stunden</option>
-            <option [value]="1440">Erst am nächsten Tag</option>
-          </select>
-          <span class="helptext">Blockiert kurzfristige Buchungen oder Anfragen ab der aktuellen Uhrzeit.</span>
-        </label>
-        <label>
-          <span class="label">Zeitauswahl für Kunden*</span>
-          <select class="input" formControlName="timeSelectionMode">
-            <option value="slots">Zeitslots (wie bisher)</option>
-            <option value="free">Freie Uhrzeit-Eingabe</option>
-          </select>
-          <span class="helptext">Bei freier Eingabe kann der Kunde z. B. 18:15 oder 18:20 direkt wählen.</span>
-        </label>
-        <label>
-          <span class="label">Mittagspause (optional)</span>
-          <input class="input" type="text" formControlName="breakHours" placeholder="13:00–16:00" />
-        </label>
-        <label>
-          <span class="label">{{ companyForm.value.serviceType === 'friseur' && companyForm.value.splitServiceEmails ? 'E-Mail Männer*' : 'E-Mail*' }}</span>
-          <input class="input" type="email" formControlName="email" placeholder="kontakt@maxgrill.de" />
-          <span class="helptext" *ngIf="companyForm.value.serviceType === 'friseur' && !companyForm.value.splitServiceEmails">
-            Ohne Trennung gehen alle Friseur-Anfragen an diese Mail.
-          </span>
-        </label>
-        <label *ngIf="companyForm.value.serviceType === 'friseur'" class="inline-toggle">
-          <input type="checkbox" formControlName="splitServiceEmails" />
-          <span>Mails trennen?</span>
-        </label>
-        <label *ngIf="companyForm.value.serviceType === 'friseur' && companyForm.value.splitServiceEmails">
-          <span class="label">E-Mail Frauen*</span>
-          <input class="input" type="email" formControlName="womenServicesEmail" placeholder="frauen@salon.de" />
-          <span class="helptext">
-            Frauen-Services gehen an diese Mail. Männer und Sonstiges gehen an die Männer-Mail.
-          </span>
-          <span class="error" *ngIf="companyForm.get('womenServicesEmail')?.touched && companyForm.get('womenServicesEmail')?.invalid">
-            Bitte eine gültige Frauen-Mail eintragen.
-          </span>
-        </label>
-        <label>
-          <span class="label">Login PIN (Unternehmenslogin)</span>
-          <div class="pin-row">
-            <input class="input" type="text" formControlName="loginPin" placeholder="z. B. 834216" />
-            <button class="btn btn-outline pin-generate" type="button" (click)="generateLoginPin()">
-              Neu generieren
-            </button>
+      <p class="helptext" *ngIf="companies.length === 0">Noch keine Unternehmen angelegt.</p>
+      <div class="company-grid" *ngIf="companies.length > 0">
+        <article class="company-card" *ngFor="let company of companies">
+          <div class="company-card-top">
+            <span class="company-logo">{{ company.name.slice(0, 2).toUpperCase() }}</span>
+            <span
+              class="company-tag"
+              [class.company-tag--salon]="company.serviceType === 'friseur'"
+              >{{ company.serviceType === 'friseur' ? 'Friseur' : 'Restaurant' }}</span
+            >
           </div>
-          <span class="helptext">Bitte notieren und an das Unternehmen senden.</span>
-          <span class="helptext">Leer lassen, um den bisherigen PIN beizubehalten.</span>
-        </label>
-        <div class="admin-form-actions">
-          <button class="btn btn-primary" type="submit">
-            {{ editingSlug ? 'Änderungen speichern' : 'Unternehmen anlegen' }}
-          </button>
-          <button class="btn btn-outline" type="button" *ngIf="editingSlug" (click)="cancelEdit()">
-            Abbrechen
-          </button>
-        </div>
-        <p class="error" *ngIf="formError">{{ formError }}</p>
-      </form>
-    </div>
-
-    <div class="card admin-card admin-list-card">
-      <h2>Unternehmen</h2>
-      <p class="helptext" *ngIf="companies.length === 0">Noch keine Unternehmen angelegt..</p>
-      <div class="company-list" *ngIf="companies.length > 0">
-        <div class="company-row" *ngFor="let company of companies">
-          <div class="company-main">
-            <h3>
-              {{ company.name }}
-              <span class="company-tag" [class.company-tag--salon]="company.serviceType === 'friseur'">
-                {{ company.serviceType === 'friseur' ? 'Friseur' : 'Restaurant' }}
-              </span>
-            </h3>
-            <p class="muted">{{ company.address || '—' }}</p>
-            <p class="muted">
-              {{ company.hours || '—' }}
-              <span *ngIf="company.breakHours"> · Pause: {{ company.breakHours }}</span>
-            </p>
-            <p class="muted">Slots pro Zeit: {{ company.slotCapacity || 3 }}</p>
-            <p class="muted">Abstand pro Slot: {{ company.slotIntervalMinutes || 45 }} Minuten</p>
-            <p class="muted">Buchbar frühestens: {{ formatBookingBufferMinutes(company.bookingBufferMinutes) }}</p>
-            <p class="muted">
-              Zeitauswahl: {{ company.timeSelectionMode === 'free' ? 'Freie Uhrzeit-Eingabe' : 'Zeitslots' }}
-            </p>
-            <p class="muted">Buchungsmodus: {{ company.bookingMode === 'request' ? 'Anfrage' : 'Direkt bestätigt' }}</p>
-            <p class="muted" *ngIf="company.serviceType === 'restaurant'">
-              Sitzplatz-Auswahl: {{ company.seatingOptionsEnabled ? 'Aktiv' : 'Inaktiv' }}
-            </p>
-            <p class="muted" *ngIf="company.serviceType === 'friseur'">
-              Friseure:
-              {{
-                company.stylistSelectionEnabled && (company.stylists?.length || 0) > 0
-                  ? company.stylists?.join(', ')
-                  : 'Inaktiv'
-              }}
-            </p>
-            <p class="muted" *ngIf="company.serviceType === 'friseur'">
-              Mail-Trennung:
-              {{
-                company.splitServiceEmails && company.womenServicesEmail
-                  ? 'Aktiv · Frauen: ' + company.womenServicesEmail
-                  : 'Inaktiv · alles an Standard-Mail'
-              }}
-            </p>
-            <p class="muted">Login: {{ company.slug }}</p>
-            <a class="company-link" [routerLink]="['/', company.slug]">/{{ company.slug }}</a>
-          </div>
+          <h3>{{ company.name }}</h3>
+          <p>{{ company.address || 'Keine Adresse hinterlegt' }}</p>
+          <dl>
+            <div>
+              <dt>Öffnungszeiten</dt>
+              <dd>{{ company.hours || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Buchungsmodus</dt>
+              <dd>{{ company.bookingMode === 'request' ? 'Anfrage' : 'Direkt' }}</dd>
+            </div>
+            <div>
+              <dt>URL</dt>
+              <dd>/{{ company.slug }}</dd>
+            </div>
+          </dl>
           <div class="company-actions">
-            <a class="btn btn-outline" [routerLink]="['/', company.slug]">Zur Seite</a>
-            <button class="btn btn-outline" type="button" (click)="startEdit(company)">Bearbeiten</button>
-            <button class="btn btn-outline danger" type="button" (click)="deleteCompany(company.slug)">
-              Löschen
+            <a class="btn btn-outline" [routerLink]="['/', company.slug]">Seite</a>
+            <a class="btn btn-primary" [routerLink]="['/admin/unternehmen', company.slug]"
+              >Einstellungen</a
+            >
+            <button
+              class="delete-button"
+              type="button"
+              (click)="deleteCompany(company.slug)"
+              aria-label="Unternehmen löschen"
+            >
+              ×
             </button>
           </div>
-        </div>
+        </article>
       </div>
-    </div>
+    </section>
   </div>
 </section>

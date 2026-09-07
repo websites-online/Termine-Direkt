@@ -1,24 +1,71 @@
-<section class="section page">
-  <div class="container">
-    <div class="card auth-card">
-      <h1 class="section-title">Unternehmenslogin</h1>
-      <p class="section-lead">Loggen Sie sich ein, um Termine zu verwalten.</p>
-      <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="submit()">
-        <label>
-          <span class="label">Unternehmen / Benutzername*</span>
-          <input class="input" type="text" formControlName="slug" placeholder="z. B. max-grill" />
-        </label>
-        <label>
-          <span class="label">Login PIN*</span>
-          <input class="input" type="password" formControlName="pin" placeholder="••••••" />
-        </label>
-        <button class="btn btn-primary" type="submit" [disabled]="isSubmitting">
-          {{ isSubmitting ? 'Anmelden...' : 'Anmelden' }}
-        </button>
-        <a class="btn btn-outline back-button" routerLink="/">Zur Startseite</a>
-        <p class="helptext">Ihre Login-Daten erhalten Sie vom Betreiber.</p>
-        <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
-      </form>
-    </div>
+<section class="page login-page">
+  <div class="login-shell">
+    <aside class="login-visual">
+      <a class="login-brand" routerLink="/"><span>N</span>Nextime</a>
+      <div class="visual-copy">
+        <span class="visual-badge">Ihr digitaler Empfang</span>
+        <h2>Termine im Blick.<br />Mehr Zeit fürs Geschäft.</h2>
+        <p>Verwalten Sie Buchungen, freie Zeiten und Ihren Tagesablauf an einem zentralen Ort.</p>
+        <div class="visual-preview">
+          <div class="preview-top"><span>Heute</span><strong>Montag, 7. September</strong></div>
+          <div class="preview-row"><b>09:30</b><i></i><span>Erster Termin</span></div>
+          <div class="preview-row"><b>11:00</b><i></i><span>Kundenbuchung</span></div>
+          <div class="preview-row preview-row--blocked">
+            <b>13:00</b><i></i><span>Blockierte Zeit</span>
+          </div>
+        </div>
+      </div>
+      <small>© Nextime · Terminverwaltung einfach gemacht</small>
+    </aside>
+
+    <main class="login-main">
+      <a class="mobile-brand" routerLink="/"><span>N</span>Nextime</a>
+      <div class="login-card">
+        <p class="login-eyebrow">Unternehmensbereich</p>
+        <h1>Willkommen zurück</h1>
+        <p class="login-lead">Melden Sie sich an, um Ihre Termine zu verwalten.</p>
+        <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="submit()">
+          <label>
+            <span>Unternehmensname / Benutzername</span>
+            <div class="input-wrap">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 21V8l8-5 8 5v13M9 21v-7h6v7"></path>
+              </svg>
+              <input
+                type="text"
+                formControlName="slug"
+                placeholder="z. B. max-grill"
+                autocomplete="username"
+              />
+            </div>
+          </label>
+          <label>
+            <span>Login-PIN</span>
+            <div class="input-wrap">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="4" y="10" width="16" height="11" rx="2"></rect>
+                <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+              </svg>
+              <input
+                type="password"
+                inputmode="numeric"
+                formControlName="pin"
+                placeholder="6-stellige PIN"
+                autocomplete="current-password"
+              />
+            </div>
+          </label>
+          <p class="login-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+          <button class="login-submit" type="submit" [disabled]="isSubmitting">
+            {{ isSubmitting ? 'Anmeldung läuft…' : 'Zum Dashboard' }} <span>→</span>
+          </button>
+        </form>
+        <div class="login-help">
+          <span>?</span>
+          <p>Keine Zugangsdaten? Wenden Sie sich an den Betreiber von Nextime.</p>
+        </div>
+        <a class="back-link" routerLink="/">← Zurück zur Startseite</a>
+      </div>
+    </main>
   </div>
 </section>

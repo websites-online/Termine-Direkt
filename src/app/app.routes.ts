@@ -17,53 +17,58 @@ export const routes: Routes = [
   {
     path: '',
     component: LandingPageComponent,
-    pathMatch: 'full'
+    pathMatch: 'full',
   },
   {
     path: 'demo-unternehmen',
-    component: DemoUnternehmenComponent
+    component: DemoUnternehmenComponent,
   },
   {
     path: 'impressum',
-    component: ImpressumComponent
+    component: ImpressumComponent,
   },
   {
     path: 'datenschutz',
-    component: DatenschutzComponent
+    component: DatenschutzComponent,
   },
   {
     path: 'admin/login',
-    component: AdminLoginComponent
+    component: AdminLoginComponent,
+  },
+  {
+    path: 'admin/unternehmen/:slug',
+    component: AdminDashboardComponent,
+    canActivate: [adminGuard],
   },
   {
     path: 'admin',
     component: AdminDashboardComponent,
-    canActivate: [adminGuard]
+    canActivate: [adminGuard],
   },
   {
     path: 'admin/statistiken',
     component: AdminStatsComponent,
-    canActivate: [adminGuard]
+    canActivate: [adminGuard],
   },
   {
     path: 'unternehmen/login',
-    component: CompanyLoginComponent
+    component: CompanyLoginComponent,
   },
   {
     path: 'unternehmen',
     component: CompanyDashboardComponent,
-    canActivate: [companyGuard]
+    canActivate: [companyGuard],
   },
   {
     path: 'r/:slug',
-    component: RestaurantPageComponent
+    component: RestaurantPageComponent,
   },
   {
     path: ':slug',
-    component: RestaurantPageComponent
+    component: RestaurantPageComponent,
   },
   {
     path: '**',
-    redirectTo: ''
-  }
+    redirectTo: '',
+  },
 ];

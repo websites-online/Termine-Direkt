@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { AdminAuthService } from '../../services/admin-auth.service';
@@ -12,13 +12,16 @@ import { Company, CompanyApiService, TimeSelectionMode } from '../../services/co
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule, HttpClientModule],
   templateUrl: './admin-dashboard.component.html',
-  styleUrl: './admin-dashboard.component.css'
+  styleUrl: './admin-dashboard.component.css',
 })
 export class AdminDashboardComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   companies: Company[] = [];
   editingSlug: string | null = null;
+  readonly standaloneEditSlug: string | null;
+  isSaving = false;
   formError = '';
+  formSuccess = '';
   readonly companyForm = this.formBuilder.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     address: ['Beispielstraße 12, 12345 Musterstadt', Validators.required],
@@ -36,14 +39,17 @@ export class AdminDashboardComponent implements OnInit {
     slotCapacity: [3, [Validators.required, Validators.min(1), Validators.max(3)]],
     slotIntervalMinutes: [45, Validators.required],
     bookingBufferMinutes: [120, [Validators.required, Validators.min(0), Validators.max(1440)]],
-    timeSelectionMode: ['slots', Validators.required]
+    timeSelectionMode: ['slots', Validators.required],
   });
 
   constructor(
     private readonly authService: AdminAuthService,
     private readonly router: Router,
-    private readonly companyService: CompanyApiService
-  ) {}
+    private readonly companyService: CompanyApiService,
+    private readonly route: ActivatedRoute,
+  ) {
+    this.standaloneEditSlug = this.route.snapshot.paramMap.get('slug');
+  }
 
   ngOnInit(): void {
     this.resetForm();
@@ -59,6 +65,7 @@ export class AdminDashboardComponent implements OnInit {
 
   submitCompany(): void {
     this.formError = '';
+    this.formSuccess = '';
     this.updateWomenServicesEmailValidators();
     if (this.companyForm.invalid) {
       this.companyForm.markAllAsTouched();
@@ -76,7 +83,9 @@ export class AdminDashboardComponent implements OnInit {
       breakHours: value.breakHours || undefined,
       email: value.email || 'kontakt@example.com',
       splitServiceEmails,
-      womenServicesEmail: splitServiceEmails ? value.womenServicesEmail?.trim() || undefined : undefined,
+      womenServicesEmail: splitServiceEmails
+        ? value.womenServicesEmail?.trim() || undefined
+        : undefined,
       serviceType,
       bookingMode: (value.bookingMode || 'confirm') as 'confirm' | 'request',
       seatingOptionsEnabled: serviceType === 'restaurant' && value.seatingOptionsEnabled === true,
@@ -87,22 +96,33 @@ export class AdminDashboardComponent implements OnInit {
       slotCapacity: Number(value.slotCapacity || 3),
       slotIntervalMinutes: Number(value.slotIntervalMinutes || 45) as 30 | 45 | 60,
       bookingBufferMinutes: Number(value.bookingBufferMinutes ?? 120),
-      timeSelectionMode: (value.timeSelectionMode || 'slots') as TimeSelectionMode
+      timeSelectionMode: (value.timeSelectionMode || 'slots') as TimeSelectionMode,
     };
 
     const request$ = this.editingSlug
       ? this.companyService.updateCompany(this.editingSlug, payload)
       : this.companyService.createCompany(payload);
+    this.isSaving = true;
     request$.subscribe({
-      next: () => {
+      next: (company) => {
+        this.isSaving = false;
+        if (this.standaloneEditSlug) {
+          this.editingSlug = company.slug;
+          this.formSuccess = 'Alle Änderungen wurden gespeichert.';
+          if (company.slug !== this.standaloneEditSlug) {
+            this.router.navigate(['/admin/unternehmen', company.slug], { replaceUrl: true });
+          }
+          return;
+        }
         this.resetForm();
         this.loadCompanies();
       },
       error: (error) => {
+        this.isSaving = false;
         this.formError =
           error?.error?.error ||
           'Speichern fehlgeschlagen. Bitte Supabase-Spalten prüfen und erneut versuchen.';
-      }
+      },
     });
   }
 
@@ -125,12 +145,16 @@ export class AdminDashboardComponent implements OnInit {
       slotCapacity: company.slotCapacity ?? 3,
       slotIntervalMinutes: company.slotIntervalMinutes ?? 45,
       bookingBufferMinutes: company.bookingBufferMinutes ?? 120,
-      timeSelectionMode: company.timeSelectionMode || 'slots'
+      timeSelectionMode: company.timeSelectionMode || 'slots',
     });
     this.updateWomenServicesEmailValidators();
   }
 
   cancelEdit(): void {
+    if (this.standaloneEditSlug) {
+      this.router.navigate(['/admin']);
+      return;
+    }
     this.resetForm();
   }
 
@@ -152,7 +176,7 @@ export class AdminDashboardComponent implements OnInit {
       return;
     }
     this.companyService.deleteCompany(slug).subscribe({
-      next: () => this.loadCompanies()
+      next: () => this.loadCompanies(),
     });
   }
 
@@ -160,13 +184,22 @@ export class AdminDashboardComponent implements OnInit {
     this.companyService.listCompanies().subscribe({
       next: (companies) => {
         this.companies = companies;
-      }
+        if (this.standaloneEditSlug) {
+          const company = companies.find((item) => item.slug === this.standaloneEditSlug);
+          if (company) {
+            this.startEdit(company);
+          } else {
+            this.formError = 'Das Unternehmen wurde nicht gefunden.';
+          }
+        }
+      },
     });
   }
 
   private resetForm(): void {
     this.editingSlug = null;
     this.formError = '';
+    this.formSuccess = '';
     this.companyForm.reset({
       name: '',
       address: 'Beispielstraße 12, 12345 Musterstadt',
@@ -184,7 +217,7 @@ export class AdminDashboardComponent implements OnInit {
       slotCapacity: 3,
       slotIntervalMinutes: 45,
       bookingBufferMinutes: 120,
-      timeSelectionMode: 'slots'
+      timeSelectionMode: 'slots',
     });
     this.updateWomenServicesEmailValidators();
     this.companyForm.markAsPristine();
@@ -205,8 +238,8 @@ export class AdminDashboardComponent implements OnInit {
         String(value || '')
           .split(/\r?\n|,/)
           .map((item) => item.trim())
-          .filter((item) => item.length > 0)
-      )
+          .filter((item) => item.length > 0),
+      ),
     );
   }
 
@@ -216,7 +249,8 @@ export class AdminDashboardComponent implements OnInit {
       return;
     }
     const splitServiceEmails =
-      this.companyForm.value.serviceType === 'friseur' && this.companyForm.value.splitServiceEmails === true;
+      this.companyForm.value.serviceType === 'friseur' &&
+      this.companyForm.value.splitServiceEmails === true;
     if (splitServiceEmails) {
       control.setValidators([Validators.required, Validators.email]);
     } else {

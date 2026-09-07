@@ -1,5 +1,6 @@
 @import './styles/theme.css';
 @import './styles/landing.css';
+@import './app/pages/company-dashboard/company-dashboard.component.css';
 
 * {
   box-sizing: border-box;
@@ -340,5 +341,4 @@ button {
   .booking-flow-page .flow-ready.show-calendar .details-card {
     transform: translateY(0) scale(0.96);
   }
-
 }

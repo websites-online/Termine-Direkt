@@ -9,24 +9,41 @@ import { Company, CompanyApiService } from '../../services/company-api.service';
 import {
   CompanyReservation,
   CompanyReservationPayload,
-  CompanyReservationsService
+  CompanyReservationsService,
 } from '../../services/company-reservations.service';
 import { SALON_SERVICES } from '../../shared/salon-services';
+
+interface CalendarDay {
+  date: string;
+  dayNumber: number;
+  isCurrentMonth: boolean;
+  isToday: boolean;
+  isSelected: boolean;
+  appointmentCount: number;
+  hasBlock: boolean;
+}
 
 @Component({
   selector: 'app-company-dashboard',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule, HttpClientModule],
   templateUrl: './company-dashboard.component.html',
-  styleUrl: './company-dashboard.component.css'
 })
 export class CompanyDashboardComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   session: CompanySession | null = null;
   company: Company | null = null;
   reservations: CompanyReservation[] = [];
+  calendarReservations: CompanyReservation[] = [];
   selectedDate = this.getToday();
   private selectedDateObj = this.parseDate(this.getToday());
+  private monthCursor = new Date(
+    this.selectedDateObj.getFullYear(),
+    this.selectedDateObj.getMonth(),
+    1,
+  );
+  calendarDays: CalendarDay[] = [];
+  readonly weekdays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
   slots: string[] = [];
   slotCounts: Record<string, number> = {};
   isLoading = false;
@@ -34,10 +51,12 @@ export class CompanyDashboardComponent implements OnInit {
   isSubmitting = false;
   errorMessage = '';
   successMessage = '';
+  isEntryPanelOpen = false;
+  entryMode: 'appointment' | 'block' = 'appointment';
 
   readonly serviceOptions = SALON_SERVICES.map((service) => ({
     value: service.label,
-    label: service.label
+    label: service.label,
   }));
 
   readonly bookingForm = this.formBuilder.group({
@@ -49,19 +68,26 @@ export class CompanyDashboardComponent implements OnInit {
     people: [2],
     service: [''],
     stylist: [''],
-    note: ['']
+    note: [''],
+  });
+
+  readonly blockForm = this.formBuilder.group({
+    date: [this.getToday(), Validators.required],
+    time: ['', Validators.required],
+    note: ['Privater Termin'],
   });
 
   constructor(
     private readonly authService: CompanyAuthService,
     private readonly reservationsService: CompanyReservationsService,
     private readonly companyService: CompanyApiService,
-    private readonly router: Router
+    private readonly router: Router,
   ) {}
 
   ngOnInit(): void {
     this.session = this.authService.getSession();
     this.updateValidators();
+    this.buildCalendarDays();
     this.loadCompanyDetails();
     this.loadReservations();
   }
@@ -74,26 +100,26 @@ export class CompanyDashboardComponent implements OnInit {
   loadReservations(): void {
     this.isLoading = true;
     this.listError = '';
+    this.buildCalendarDays();
+    const startDate = this.calendarDays[0]?.date;
+    const endDate = this.calendarDays[this.calendarDays.length - 1]?.date;
+    if (!startDate || !endDate) {
+      this.isLoading = false;
+      return;
+    }
 
-    this.reservationsService.listReservations(this.selectedDate).subscribe({
+    this.reservationsService.listReservationsRange(startDate, endDate).subscribe({
       next: (items) => {
-        this.reservations = items;
-        const counts: Record<string, number> = {};
-        items.forEach((item) => {
-          if (!item.time) {
-            return;
-          }
-          counts[item.time] = (counts[item.time] || 0) + 1;
-        });
-        this.slotCounts = counts;
-        this.refreshSlots();
+        this.calendarReservations = items;
         this.isLoading = false;
+        this.buildCalendarDays();
+        this.refreshSelectedDate();
       },
       error: () => {
         this.isLoading = false;
-        this.listError = 'Buchungen konnten nicht geladen werden.';
-        this.refreshSlots();
-      }
+        this.listError = 'Termine konnten nicht geladen werden.';
+        this.refreshSelectedDate();
+      },
     });
   }
 
@@ -101,13 +127,22 @@ export class CompanyDashboardComponent implements OnInit {
     if (!value) {
       return;
     }
-    this.applySelectedDate(value);
+    const date = this.parseDate(value);
+    const monthChanged =
+      date.getMonth() !== this.monthCursor.getMonth() ||
+      date.getFullYear() !== this.monthCursor.getFullYear();
+    this.monthCursor = new Date(date.getFullYear(), date.getMonth(), 1);
+    this.applySelectedDate(value, !monthChanged);
+    if (monthChanged) {
+      this.loadReservations();
+    }
   }
 
-  onTimeInput(value: string): void {
+  onTimeInput(value: string, target: 'appointment' | 'block' = 'appointment'): void {
+    const form = target === 'block' ? this.blockForm : this.bookingForm;
     if (!value) {
       this.errorMessage = '';
-      this.bookingForm.patchValue({ time: '' });
+      form.patchValue({ time: '' });
       return;
     }
     if (!this.isValidTimeValue(value)) {
@@ -119,12 +154,116 @@ export class CompanyDashboardComponent implements OnInit {
       return;
     }
     this.errorMessage = '';
-    this.bookingForm.patchValue({ time: value });
+    form.patchValue({ time: value });
   }
 
   setQuickDate(offsetDays: number): void {
     const target = this.getDateOffset(offsetDays);
-    this.applySelectedDate(target);
+    const targetDate = this.parseDate(target);
+    const monthChanged =
+      targetDate.getMonth() !== this.monthCursor.getMonth() ||
+      targetDate.getFullYear() !== this.monthCursor.getFullYear();
+    this.monthCursor = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
+    this.applySelectedDate(target, !monthChanged);
+    if (monthChanged) {
+      this.loadReservations();
+    }
+  }
+
+  navigateMonth(offset: number): void {
+    this.monthCursor = new Date(
+      this.monthCursor.getFullYear(),
+      this.monthCursor.getMonth() + offset,
+      1,
+    );
+    this.applySelectedDate(this.formatDateValue(this.monthCursor), false);
+    this.loadReservations();
+  }
+
+  selectCalendarDay(day: CalendarDay): void {
+    const date = this.parseDate(day.date);
+    const monthChanged =
+      date.getMonth() !== this.monthCursor.getMonth() ||
+      date.getFullYear() !== this.monthCursor.getFullYear();
+    this.monthCursor = new Date(date.getFullYear(), date.getMonth(), 1);
+    this.applySelectedDate(day.date, !monthChanged);
+    if (monthChanged) {
+      this.loadReservations();
+    }
+  }
+
+  openEntryPanel(mode: 'appointment' | 'block'): void {
+    this.entryMode = mode;
+    this.errorMessage = '';
+    this.successMessage = '';
+    const time = this.getDefaultTimeForCurrentDate();
+    this.bookingForm.patchValue({ date: this.selectedDate, time });
+    this.blockForm.patchValue({ date: this.selectedDate, time });
+    this.isEntryPanelOpen = true;
+  }
+
+  closeEntryPanel(): void {
+    if (!this.isSubmitting) {
+      this.isEntryPanelOpen = false;
+      this.errorMessage = '';
+    }
+  }
+
+  setEntryMode(mode: 'appointment' | 'block'): void {
+    this.entryMode = mode;
+    this.errorMessage = '';
+  }
+
+  submitEntry(): void {
+    if (this.entryMode === 'block') {
+      this.submitBlock();
+      return;
+    }
+    this.submitReservation();
+  }
+
+  submitBlock(): void {
+    this.successMessage = '';
+    this.errorMessage = '';
+    if (this.blockForm.invalid) {
+      this.blockForm.markAllAsTouched();
+      this.errorMessage = 'Bitte Datum und Uhrzeit auswählen.';
+      return;
+    }
+    const value = this.blockForm.value;
+    const time = (value.time || '').trim();
+    if (!this.isValidTimeValue(time) || !this.isTimeWithinOpenHours(time, this.selectedDateObj)) {
+      this.errorMessage = 'Bitte eine Uhrzeit innerhalb der Öffnungszeiten wählen.';
+      return;
+    }
+    if (this.isSlotFull(time)) {
+      this.errorMessage = 'Diese Uhrzeit ist bereits vollständig belegt.';
+      return;
+    }
+    this.isSubmitting = true;
+    this.reservationsService
+      .createReservation({
+        date: value.date || this.selectedDate,
+        time,
+        guestName: 'Sperrzeit',
+        note: value.note?.trim() || 'Privater Termin',
+        isBlock: true,
+        blockCapacity: this.getSlotCapacity(),
+      })
+      .subscribe({
+        next: () => {
+          this.isSubmitting = false;
+          this.isEntryPanelOpen = false;
+          this.successMessage = 'Die Zeit wurde für Kunden blockiert.';
+          this.blockForm.patchValue({ time: '', note: 'Privater Termin' });
+          this.loadReservations();
+        },
+        error: (err) => {
+          this.isSubmitting = false;
+          this.errorMessage =
+            err?.error?.error || err?.message || 'Sperrzeit konnte nicht gespeichert werden.';
+        },
+      });
   }
 
   submitReservation(): void {
@@ -148,11 +287,6 @@ export class CompanyDashboardComponent implements OnInit {
       this.errorMessage = 'Die Uhrzeit liegt außerhalb der Öffnungszeiten oder Pause.';
       return;
     }
-    if (this.isSlotTooSoon(selectedTime)) {
-      this.errorMessage = 'Diese Uhrzeit liegt zu nah an der aktuellen Zeit.';
-      return;
-    }
-
     this.isSubmitting = true;
 
     const value = this.bookingForm.value;
@@ -165,20 +299,22 @@ export class CompanyDashboardComponent implements OnInit {
       note: value.note || undefined,
       people: this.isSalon ? 1 : Number(value.people || 1),
       service: this.isSalon ? value.service || undefined : undefined,
-      stylist: this.hasStylistChoice ? value.stylist || undefined : undefined
+      stylist: this.hasStylistChoice ? value.stylist || undefined : undefined,
+      blockCapacity: this.getSlotCapacity(),
     };
 
     this.reservationsService.createReservation(payload).subscribe({
       next: () => {
         this.isSubmitting = false;
         this.successMessage = 'Termin wurde gespeichert.';
+        this.isEntryPanelOpen = false;
         this.bookingForm.patchValue({
           time: '',
           guestName: '',
           guestEmail: '',
           phone: '',
           stylist: '',
-          note: ''
+          note: '',
         });
         if (this.isSalon) {
           this.bookingForm.patchValue({ service: '' });
@@ -188,17 +324,24 @@ export class CompanyDashboardComponent implements OnInit {
       error: (err) => {
         this.isSubmitting = false;
         this.errorMessage = err?.message || 'Speichern fehlgeschlagen.';
-      }
+      },
     });
   }
 
   deleteReservation(reservation: CompanyReservation): void {
-    const confirmed = window.confirm('Buchung wirklich löschen?');
+    const confirmed = window.confirm(
+      reservation.isBlock ? 'Sperrzeit wirklich aufheben?' : 'Termin wirklich löschen?',
+    );
     if (!confirmed) {
       return;
     }
     this.reservationsService.deleteReservation(reservation.id).subscribe({
-      next: () => this.loadReservations()
+      next: () => {
+        this.successMessage = reservation.isBlock
+          ? 'Sperrzeit wurde aufgehoben.'
+          : 'Termin wurde gelöscht.';
+        this.loadReservations();
+      },
     });
   }
 
@@ -210,12 +353,103 @@ export class CompanyDashboardComponent implements OnInit {
     return this.session?.name || 'Unternehmen';
   }
 
+  get companyInitials(): string {
+    return this.companyName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('');
+  }
+
+  get greeting(): string {
+    const hour = new Date().getHours();
+    return hour < 11 ? 'Guten Morgen' : hour < 18 ? 'Guten Tag' : 'Guten Abend';
+  }
+
+  get monthTitle(): string {
+    return new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' }).format(
+      this.monthCursor,
+    );
+  }
+
+  get selectedDateTitle(): string {
+    return new Intl.DateTimeFormat('de-DE', {
+      weekday: 'long',
+      day: '2-digit',
+      month: 'long',
+    }).format(this.selectedDateObj);
+  }
+
+  get todayAppointmentCount(): number {
+    return this.calendarReservations.filter(
+      (item) => item.date === this.getToday() && !item.isBlock,
+    ).length;
+  }
+
+  get selectedBlockedCount(): number {
+    return this.reservations.filter((item) => item.isBlock).length;
+  }
+
+  get occupiedSlotCount(): number {
+    return Object.values(this.slotCounts).filter((count) => count >= this.getSlotCapacity()).length;
+  }
+
+  get nextReservation(): CompanyReservation | undefined {
+    const today = this.getToday();
+    const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+    return [...this.calendarReservations]
+      .filter(
+        (item) =>
+          !item.isBlock &&
+          (item.date > today || (item.date === today && this.toMinutes(item.time) >= nowMinutes)),
+      )
+      .sort((a, b) => `${a.date}-${a.time}`.localeCompare(`${b.date}-${b.time}`))[0];
+  }
+
+  get nextReservationLabel(): string {
+    const next = this.nextReservation;
+    if (!next) {
+      return 'Kein weiterer Termin';
+    }
+    return next.date === this.getToday()
+      ? `Heute, ${next.time} Uhr`
+      : `${this.formatShortDate(next.date)}, ${next.time} Uhr`;
+  }
+
+  formatShortDate(value: string): string {
+    return new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'short' }).format(
+      this.parseDate(value),
+    );
+  }
+
+  copyBookingLink(): void {
+    if (!this.session?.slug || typeof navigator === 'undefined') {
+      return;
+    }
+    navigator.clipboard?.writeText(`${window.location.origin}/${this.session.slug}`).then(() => {
+      this.successMessage = 'Buchungslink wurde kopiert.';
+    });
+  }
+
+  trackByDate(_index: number, day: CalendarDay): string {
+    return day.date;
+  }
+
+  trackByReservation(_index: number, reservation: CompanyReservation): string {
+    return reservation.id;
+  }
+
   get useFreeTimeInput(): boolean {
     return this.company?.timeSelectionMode === 'free';
   }
 
   get hasStylistChoice(): boolean {
-    return this.isSalon && this.company?.stylistSelectionEnabled === true && this.stylistOptions.length > 0;
+    return (
+      this.isSalon &&
+      this.company?.stylistSelectionEnabled === true &&
+      this.stylistOptions.length > 0
+    );
   }
 
   get stylistOptions(): string[] {
@@ -251,8 +485,9 @@ export class CompanyDashboardComponent implements OnInit {
     this.companyService.getCompany(slug).subscribe({
       next: (company) => {
         this.company = company;
-        this.refreshSlots();
-      }
+        this.refreshSelectedDate();
+        this.buildCalendarDays();
+      },
     });
   }
 
@@ -264,11 +499,20 @@ export class CompanyDashboardComponent implements OnInit {
       if (!current || !available.includes(current)) {
         this.bookingForm.patchValue({ time: available[0] || '' }, { emitEvent: false });
       }
+      const currentBlock = this.blockForm.value.time ?? '';
+      if (!currentBlock || !available.includes(currentBlock)) {
+        this.blockForm.patchValue({ time: available[0] || '' }, { emitEvent: false });
+      }
       return;
     }
-    const available = this.slots.filter((slot) => !this.isSlotFull(slot) && !this.isSlotTooSoon(slot));
-    if (!current || !this.slots.includes(current) || this.isSlotFull(current) || this.isSlotTooSoon(current)) {
+    const available = this.slots.filter((slot) => !this.isSlotFull(slot));
+    if (!current || !this.slots.includes(current) || this.isSlotFull(current)) {
       this.bookingForm.patchValue({ time: available[0] || '' }, { emitEvent: false });
+    }
+
+    const currentBlock = this.blockForm.value.time ?? '';
+    if (!currentBlock || !this.slots.includes(currentBlock) || this.isSlotFull(currentBlock)) {
+      this.blockForm.patchValue({ time: available[0] || '' }, { emitEvent: false });
     }
   }
 
@@ -290,7 +534,7 @@ export class CompanyDashboardComponent implements OnInit {
       selectedDate.getMonth(),
       selectedDate.getDate(),
       Math.floor(slotMinutes / 60),
-      slotMinutes % 60
+      slotMinutes % 60,
     );
     return slotDateTime.getTime() < this.getEarliestBookableTime().getTime();
   }
@@ -400,12 +644,12 @@ export class CompanyDashboardComponent implements OnInit {
       Do: 3,
       Fr: 4,
       Sa: 5,
-      So: 6
+      So: 6,
     };
 
     for (const segment of segments) {
       const matches = Array.from(
-        segment.matchAll(/(\d{1,2}(?::\d{2})?)\s*[–-]\s*(\d{1,2}(?::\d{2})?)/g)
+        segment.matchAll(/(\d{1,2}(?::\d{2})?)\s*[–-]\s*(\d{1,2}(?::\d{2})?)/g),
       );
       if (matches.length === 0) {
         continue;
@@ -523,7 +767,7 @@ export class CompanyDashboardComponent implements OnInit {
       .filter((match): match is RegExpMatchArray => Boolean(match))
       .map((match) => ({
         start: this.toMinutes(match[1]),
-        end: this.toMinutes(match[2])
+        end: this.toMinutes(match[2]),
       }))
       .filter((range) => !Number.isNaN(range.start) && !Number.isNaN(range.end));
   }
@@ -539,7 +783,14 @@ export class CompanyDashboardComponent implements OnInit {
     }
     const hour = Number(match[1]);
     const minute = match[2] ? Number(match[2]) : 0;
-    if (Number.isNaN(hour) || Number.isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    if (
+      Number.isNaN(hour) ||
+      Number.isNaN(minute) ||
+      hour < 0 ||
+      hour > 23 ||
+      minute < 0 ||
+      minute > 59
+    ) {
       return NaN;
     }
     return hour * 60 + minute;
@@ -570,7 +821,7 @@ export class CompanyDashboardComponent implements OnInit {
     if (this.useFreeTimeInput) {
       return this.freeTimeOptions[0] || '';
     }
-    const available = this.slots.find((slot) => !this.isSlotFull(slot) && !this.isSlotTooSoon(slot));
+    const available = this.slots.find((slot) => !this.isSlotFull(slot));
     return available || '';
   }
 
@@ -605,21 +856,67 @@ export class CompanyDashboardComponent implements OnInit {
   }
 
   private getToday(): string {
-    return new Date().toISOString().slice(0, 10);
+    return this.formatDateValue(new Date());
   }
 
   private getDateOffset(days: number): string {
     const date = new Date();
     date.setDate(date.getDate() + days);
-    return date.toISOString().slice(0, 10);
+    return this.formatDateValue(date);
   }
 
-  private applySelectedDate(value: string): void {
+  private applySelectedDate(value: string, reuseLoadedRange = true): void {
     this.selectedDate = value;
     this.selectedDateObj = this.parseDate(value);
     this.bookingForm.patchValue({ date: value }, { emitEvent: false });
+    this.blockForm.patchValue({ date: value }, { emitEvent: false });
+    this.buildCalendarDays();
+    if (reuseLoadedRange) {
+      this.refreshSelectedDate();
+    }
+  }
+
+  private refreshSelectedDate(): void {
+    this.reservations = this.calendarReservations
+      .filter((item) => item.date === this.selectedDate)
+      .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    const counts: Record<string, number> = {};
+    this.reservations.forEach((item) => {
+      if (item.time) {
+        counts[item.time] = (counts[item.time] || 0) + (item.isBlock ? this.getSlotCapacity() : 1);
+      }
+    });
+    this.slotCounts = counts;
     this.refreshSlots();
-    this.loadReservations();
+  }
+
+  private buildCalendarDays(): void {
+    const first = new Date(this.monthCursor.getFullYear(), this.monthCursor.getMonth(), 1);
+    const gridStart = new Date(first);
+    gridStart.setDate(first.getDate() - ((first.getDay() + 6) % 7));
+    const today = this.getToday();
+    this.calendarDays = Array.from({ length: 42 }, (_unused, index) => {
+      const date = new Date(gridStart);
+      date.setDate(gridStart.getDate() + index);
+      const dateValue = this.formatDateValue(date);
+      const entries = this.calendarReservations.filter((item) => item.date === dateValue);
+      return {
+        date: dateValue,
+        dayNumber: date.getDate(),
+        isCurrentMonth: date.getMonth() === this.monthCursor.getMonth(),
+        isToday: dateValue === today,
+        isSelected: dateValue === this.selectedDate,
+        appointmentCount: entries.filter((item) => !item.isBlock).length,
+        hasBlock: entries.some((item) => item.isBlock),
+      };
+    });
+  }
+
+  private formatDateValue(date: Date): string {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private parseDate(value: string): Date {

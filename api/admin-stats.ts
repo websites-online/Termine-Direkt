@@ -7,6 +7,8 @@ type CompanyRow = {
 type ReservationRow = {
   restaurant_slug?: string | null;
   date?: string | null;
+  guest_email?: string | null;
+  note?: string | null;
 };
 
 type BookingRequestRow = {
@@ -61,7 +63,7 @@ const parseReservationDate = (value?: string | null): Date | null => {
       september: 8,
       oktober: 9,
       november: 10,
-      dezember: 11
+      dezember: 11,
     };
     const day = Number(named[1]);
     const monthName = named[2].toLowerCase();
@@ -75,9 +77,13 @@ const parseReservationDate = (value?: string | null): Date | null => {
   return null;
 };
 
-const startOfDay = (date: Date): Date => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+const startOfDay = (date: Date): Date =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-const getRange = (period: string, monthParam?: string | null): { from: Date | null; to: Date | null } => {
+const getRange = (
+  period: string,
+  monthParam?: string | null,
+): { from: Date | null; to: Date | null } => {
   const now = new Date();
   if (period === 'all') {
     return { from: null, to: null };
@@ -122,6 +128,9 @@ const isMissingTableError = (error: any, tableName: string): boolean => {
   );
 };
 
+const isInternalCalendarEntry = (note?: string | null): boolean =>
+  /^__(?:BLOCK|INTERNAL)__:/i.test(String(note || '').trim());
+
 module.exports = async function handler(req: any, res: any) {
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -149,7 +158,7 @@ module.exports = async function handler(req: any, res: any) {
     while (true) {
       const { data, error } = await supabase
         .from('reservations')
-        .select('restaurant_slug,date')
+        .select('restaurant_slug,date,guest_email,note')
         .range(fromIndex, fromIndex + pageSize - 1);
       if (error) {
         res.status(500).json({ error: error.message });
@@ -203,12 +212,14 @@ module.exports = async function handler(req: any, res: any) {
     };
 
     const companyMap = new Map<string, CompanyRow>();
-    ((companiesData || []) as CompanyRow[]).forEach((company) => companyMap.set(company.slug, company));
+    ((companiesData || []) as CompanyRow[]).forEach((company) =>
+      companyMap.set(company.slug, company),
+    );
 
     const bookingCounts = new Map<string, number>();
     reservations.forEach((row) => {
       const slug = row.restaurant_slug || '';
-      if (!slug || !isInRange(row.date)) {
+      if (!slug || !isInRange(row.date) || !row.guest_email || isInternalCalendarEntry(row.note)) {
         return;
       }
       bookingCounts.set(slug, (bookingCounts.get(slug) || 0) + 1);
@@ -233,10 +244,13 @@ module.exports = async function handler(req: any, res: any) {
           serviceType: company.service_type || 'restaurant',
           bookings,
           requests,
-          total: bookings + requests
+          total: bookings + requests,
         };
       })
-      .sort((a, b) => b.total - a.total || b.bookings - a.bookings || a.name.localeCompare(b.name, 'de'));
+      .sort(
+        (a, b) =>
+          b.total - a.total || b.bookings - a.bookings || a.name.localeCompare(b.name, 'de'),
+      );
 
     res.status(200).json({
       period,
@@ -247,7 +261,7 @@ module.exports = async function handler(req: any, res: any) {
       requestsTotal: rows.reduce((sum, row) => sum + row.requests, 0),
       interactionsTotal: rows.reduce((sum, row) => sum + row.total, 0),
       requestsTableAvailable,
-      rows
+      rows,
     });
   } catch (error: any) {
     console.error('admin stats api error', error);

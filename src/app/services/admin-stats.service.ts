@@ -35,10 +35,13 @@ interface LocalCompany {
 
 interface LocalReservation {
   date?: string;
+  isBlock?: boolean;
+  isInternal?: boolean;
+  note?: string;
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AdminStatsService {
   private readonly baseUrl = '/api/admin-stats';
@@ -96,7 +99,13 @@ export class AdminStatsService {
           reservations = [];
         }
       }
-      const bookings = reservations.filter((item) => inRange(item.date)).length;
+      const bookings = reservations.filter(
+        (item) =>
+          inRange(item.date) &&
+          item.isBlock !== true &&
+          item.isInternal !== true &&
+          !/^__(?:BLOCK|INTERNAL)__:/i.test(String(item.note || '').trim()),
+      ).length;
       const requests = 0;
       return {
         slug: company.slug,
@@ -104,11 +113,13 @@ export class AdminStatsService {
         serviceType: company.serviceType || 'restaurant',
         bookings,
         requests,
-        total: bookings + requests
+        total: bookings + requests,
       };
     });
 
-    rows.sort((a, b) => b.total - a.total || b.bookings - a.bookings || a.name.localeCompare(b.name, 'de'));
+    rows.sort(
+      (a, b) => b.total - a.total || b.bookings - a.bookings || a.name.localeCompare(b.name, 'de'),
+    );
 
     return {
       period,
@@ -118,7 +129,7 @@ export class AdminStatsService {
       bookingsTotal: rows.reduce((sum, row) => sum + row.bookings, 0),
       requestsTotal: rows.reduce((sum, row) => sum + row.requests, 0),
       interactionsTotal: rows.reduce((sum, row) => sum + row.total, 0),
-      rows
+      rows,
     };
   }
 
@@ -137,7 +148,10 @@ export class AdminStatsService {
     }
   }
 
-  private getRange(period: AdminStatsPeriod, month?: string): { from: Date | null; to: Date | null } {
+  private getRange(
+    period: AdminStatsPeriod,
+    month?: string,
+  ): { from: Date | null; to: Date | null } {
     const now = new Date();
     if (period === 'all') {
       return { from: null, to: null };
@@ -155,13 +169,13 @@ export class AdminStatsService {
         const monthIndex = Number(m[2]) - 1;
         return {
           from: new Date(year, monthIndex, 1),
-          to: new Date(year, monthIndex + 1, 0)
+          to: new Date(year, monthIndex + 1, 0),
         };
       }
     }
     return {
       from: new Date(now.getFullYear(), now.getMonth(), 1),
-      to: new Date(now.getFullYear(), now.getMonth() + 1, 0)
+      to: new Date(now.getFullYear(), now.getMonth() + 1, 0),
     };
   }
 
@@ -195,7 +209,7 @@ export class AdminStatsService {
       september: 8,
       oktober: 9,
       november: 10,
-      dezember: 11
+      dezember: 11,
     };
     const month = monthMap[named[2].toLowerCase()];
     if (month === undefined) {

@@ -31,10 +31,10 @@ const renderRows = (rows: Array<{ label: string; value: string }>): string =>
       <tr>
         <td style="padding:8px 0;color:#64748b;font-size:14px;vertical-align:top">${escapeHtml(row.label)}</td>
         <td style="padding:8px 0;color:#0f172a;font-size:14px;font-weight:600;text-align:right;vertical-align:top">${escapeHtml(
-          row.value
+          row.value,
         )}</td>
       </tr>
-    `
+    `,
     )
     .join('');
 
@@ -45,7 +45,7 @@ const platformUrl =
 
 const createMailtoLink = (email: string, subject: string, body: string): string =>
   `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
-    body.replace(/\r?\n/g, '\r\n')
+    body.replace(/\r?\n/g, '\r\n'),
   )}`;
 
 const getTimeBasedGreeting = (): string => {
@@ -53,7 +53,7 @@ const getTimeBasedGreeting = (): string => {
     const hourText = new Intl.DateTimeFormat('de-DE', {
       hour: '2-digit',
       hour12: false,
-      timeZone: 'Europe/Berlin'
+      timeZone: 'Europe/Berlin',
     }).format(new Date());
     const hour = Number.parseInt(hourText, 10);
 
@@ -94,7 +94,7 @@ const isValidEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.te
 
 const isWomenSalonService = (
   service: string | undefined,
-  serviceAudience: ReservationBody['serviceAudience']
+  serviceAudience: ReservationBody['serviceAudience'],
 ): boolean => {
   if (serviceAudience === 'women') {
     return true;
@@ -118,7 +118,7 @@ const isWomenSalonService = (
     'komplettfarbe',
     'tonung',
     'pflegekur',
-    'hochsteck'
+    'hochsteck',
   ].some((marker) => normalized.includes(marker));
 };
 
@@ -129,7 +129,14 @@ const toMinutes = (time: string): number => {
   }
   const hour = Number(match[1]);
   const minute = match[2] ? Number(match[2]) : 0;
-  if (Number.isNaN(hour) || Number.isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+  if (
+    Number.isNaN(hour) ||
+    Number.isNaN(minute) ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
     return NaN;
   }
   return hour * 60 + minute;
@@ -146,7 +153,7 @@ const getBerlinNowIndex = (): number => {
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false
+    hour12: false,
   })
     .formatToParts(new Date())
     .reduce<Record<string, string>>((acc, part) => {
@@ -164,7 +171,11 @@ const getBerlinNowIndex = (): number => {
   );
 };
 
-const isBookingTooSoon = (dateValue: string, timeValue: string, bookingBufferMinutes: number): boolean => {
+const isBookingTooSoon = (
+  dateValue: string,
+  timeValue: string,
+  bookingBufferMinutes: number,
+): boolean => {
   const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateValue.trim());
   if (!dateMatch) {
     return false;
@@ -186,7 +197,7 @@ const buildEmailLayout = ({
   footer,
   actionsHtml,
   footerLink,
-  footerLinkLabel
+  footerLinkLabel,
 }: {
   brand: string;
   title: string;
@@ -205,10 +216,10 @@ const buildEmailLayout = ({
             <tr>
               <td style="background:linear-gradient(90deg,#4338ca,#4f46e5);padding:18px 24px">
                 <div style="font-family:Arial,Helvetica,sans-serif;color:#ffffff;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700">${escapeHtml(
-                  brand
+                  brand,
                 )}</div>
                 <div style="font-family:Arial,Helvetica,sans-serif;color:#ffffff;font-size:24px;font-weight:700;margin-top:4px">${escapeHtml(
-                  title
+                  title,
                 )}</div>
               </td>
             </tr>
@@ -235,9 +246,9 @@ const buildEmailLayout = ({
                 ${
                   footerLink
                     ? `<div style="margin-top:16px;text-align:center"><a href="${escapeHtml(
-                        footerLink
+                        footerLink,
                       )}" style="color:#4338ca;text-decoration:none;font-weight:700">${escapeHtml(
-                        footerLinkLabel || footerLink
+                        footerLinkLabel || footerLink,
                       )}</a></div>`
                     : ''
                 }
@@ -272,7 +283,8 @@ const isMissingTableError = (error: any, tableName: string): boolean => {
 module.exports = async function handler(req: any, res: any) {
   if (req.method === 'GET') {
     try {
-      const restaurantSlug = typeof req.query?.restaurantSlug === 'string' ? req.query.restaurantSlug : '';
+      const restaurantSlug =
+        typeof req.query?.restaurantSlug === 'string' ? req.query.restaurantSlug : '';
       const date = typeof req.query?.date === 'string' ? req.query.date : '';
       if (!restaurantSlug || !date) {
         res.status(200).json({ slots: {} });
@@ -352,28 +364,26 @@ module.exports = async function handler(req: any, res: any) {
       return;
     }
 
-    if (!requestMode) {
-      const { count, error: countError } = await supabase
-        .from('reservations')
-        .select('id', { count: 'exact', head: true })
-        .eq('restaurant_slug', body.restaurantSlug)
-        .eq('date', body.date)
-        .eq('time', body.time);
-      if (countError) {
-        res.status(500).json({ error: countError.message });
-        return;
-      }
-      if ((count || 0) >= slotCapacity) {
-        res.status(409).json({ error: 'Slot voll' });
-        return;
-      }
+    const { count, error: countError } = await supabase
+      .from('reservations')
+      .select('id', { count: 'exact', head: true })
+      .eq('restaurant_slug', body.restaurantSlug)
+      .eq('date', body.date)
+      .eq('time', body.time);
+    if (countError) {
+      res.status(500).json({ error: countError.message });
+      return;
+    }
+    if ((count || 0) >= slotCapacity) {
+      res.status(409).json({ error: 'Diese Uhrzeit ist bereits belegt.' });
+      return;
     }
 
     console.log('reservation request', {
       restaurantEmail: businessEmail,
       guestEmail: body.guestEmail,
       date: body.date,
-      time: body.time
+      time: body.time,
     });
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -385,13 +395,15 @@ module.exports = async function handler(req: any, res: any) {
       return;
     }
     const fromName = body.restaurantName ? body.restaurantName.trim() : '';
-    const from = fromName ? `${fromName} <${fromAddress}>` : `Reservierungsservice <${fromAddress}>`;
+    const from = fromName
+      ? `${fromName} <${fromAddress}>`
+      : `Reservierungsservice <${fromAddress}>`;
 
     const noteParts = [
       body.seating ? `Sitzplatz: ${body.seating}` : null,
       body.service ? `Service: ${body.service}` : null,
       body.stylist ? `Friseur: ${body.stylist}` : null,
-      body.note ? `Notiz: ${body.note}` : null
+      body.note ? `Notiz: ${body.note}` : null,
     ].filter(Boolean);
 
     const bookingRecord = {
@@ -404,19 +416,19 @@ module.exports = async function handler(req: any, res: any) {
       people: body.people || null,
       note: noteParts.length > 0 ? noteParts.join(' | ') : null,
       date: body.date,
-      time: body.time
+      time: body.time,
     };
 
     if (requestMode) {
-      const { error: requestInsertError } = await supabase.from('booking_requests').insert(bookingRecord);
+      const { error: requestInsertError } = await supabase
+        .from('booking_requests')
+        .insert(bookingRecord);
       if (requestInsertError) {
         if (isMissingTableError(requestInsertError, 'booking_requests')) {
-          res
-            .status(500)
-            .json({
-              error:
-                'DB table "booking_requests" fehlt. Bitte SQL-Migration ausführen und erneut versuchen.'
-            });
+          res.status(500).json({
+            error:
+              'DB table "booking_requests" fehlt. Bitte SQL-Migration ausführen und erneut versuchen.',
+          });
           return;
         }
         res.status(500).json({ error: requestInsertError.message });
@@ -444,7 +456,7 @@ module.exports = async function handler(req: any, res: any) {
             : 'Ein neuer Termin ist eingegangen. Alle Details finden Sie unten.',
           confirmTitle: 'Termin bestätigt',
           confirmThanks: `${greeting} ${guestName}, Ihr Termin bei ${businessName} wurde erfolgreich bestätigt.`,
-          thanksLine: 'Vielen Dank für Ihre Buchung.'
+          thanksLine: 'Vielen Dank für Ihre Buchung.',
         }
       : {
           newTitle: requestMode ? 'Neue Reservierungsanfrage' : 'Neue Reservierung',
@@ -453,7 +465,7 @@ module.exports = async function handler(req: any, res: any) {
             : 'Eine neue Reservierung ist eingegangen. Alle Details finden Sie unten.',
           confirmTitle: 'Reservierung bestätigt',
           confirmThanks: `${greeting} ${guestName}, Ihre Reservierung bei ${businessName} wurde erfolgreich bestätigt.`,
-          thanksLine: 'Vielen Dank für Ihre Buchung.'
+          thanksLine: 'Vielen Dank für Ihre Buchung.',
         };
 
     const details = [
@@ -467,10 +479,10 @@ module.exports = async function handler(req: any, res: any) {
       ...(isSalon
         ? [
             { label: 'Service', value: body.service || '-' },
-            ...(body.stylist ? [{ label: 'Friseur', value: body.stylist }] : [])
+            ...(body.stylist ? [{ label: 'Friseur', value: body.stylist }] : []),
           ]
         : [{ label: 'Personen', value: body.people ? String(body.people) : '-' }]),
-      { label: 'Notiz', value: body.note || '-' }
+      { label: 'Notiz', value: body.note || '-' },
     ];
 
     const approveMailto = createMailtoLink(
@@ -488,7 +500,13 @@ module.exports = async function handler(req: any, res: any) {
         `  Datum: ${displayDate}`,
         `  Uhrzeit: ${body.time || '-'}`,
         !isSalon && body.seating ? `  Sitzplatz: ${body.seating}` : null,
-        isSalon ? (body.service ? `  Service: ${body.service}` : null) : body.people ? `  Personen: ${body.people}` : null,
+        isSalon
+          ? body.service
+            ? `  Service: ${body.service}`
+            : null
+          : body.people
+            ? `  Personen: ${body.people}`
+            : null,
         isSalon && body.stylist ? `  Friseur: ${body.stylist}` : null,
         body.note ? `  Notiz: ${body.note}` : null,
         '',
@@ -499,10 +517,10 @@ module.exports = async function handler(req: any, res: any) {
         businessName,
         '',
         'NexTime - einfache Terminplanung',
-        platformUrl
+        platformUrl,
       ]
         .filter((line): line is string => line !== null && line !== undefined)
-        .join('\r\n')
+        .join('\r\n'),
     );
     const declineMailto = createMailtoLink(
       body.guestEmail || '',
@@ -519,7 +537,13 @@ module.exports = async function handler(req: any, res: any) {
         `  Datum: ${displayDate}`,
         `  Uhrzeit: ${body.time || '-'}`,
         !isSalon && body.seating ? `  Sitzplatz: ${body.seating}` : null,
-        isSalon ? (body.service ? `  Service: ${body.service}` : null) : body.people ? `  Personen: ${body.people}` : null,
+        isSalon
+          ? body.service
+            ? `  Service: ${body.service}`
+            : null
+          : body.people
+            ? `  Personen: ${body.people}`
+            : null,
         isSalon && body.stylist ? `  Friseur: ${body.stylist}` : null,
         '',
         'Mögliche Alternative:',
@@ -528,20 +552,19 @@ module.exports = async function handler(req: any, res: any) {
         '',
         '',
         'Beste Grüße',
-        businessName
+        businessName,
       ]
         .filter((line): line is string => line !== null && line !== undefined)
-        .join('\r\n')
+        .join('\r\n'),
     );
 
-    const actionsHtml =
-      requestMode
-        ? `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%"><tr><td style="padding:0 0 10px;text-align:center"><a href="${escapeHtml(
-            approveMailto
-          )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#4338ca;color:#ffffff;text-decoration:none;font-weight:700">Anfrage annehmen</a></td></tr><tr><td style="text-align:center"><a href="${escapeHtml(
-            declineMailto
-          )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#ffffff;color:#4338ca;text-decoration:none;font-weight:700;border:1px solid #c7d2fe">Anfrage ablehnen</a></td></tr><tr><td style="padding-top:10px;color:#64748b;font-size:12px;line-height:1.4;text-align:center">Beide Aktionen öffnen direkt eine Mailvorlage in Ihrem Mailprogramm.</td></tr></table>`
-        : undefined;
+    const actionsHtml = requestMode
+      ? `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%"><tr><td style="padding:0 0 10px;text-align:center"><a href="${escapeHtml(
+          approveMailto,
+        )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#4338ca;color:#ffffff;text-decoration:none;font-weight:700">Anfrage annehmen</a></td></tr><tr><td style="text-align:center"><a href="${escapeHtml(
+          declineMailto,
+        )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#ffffff;color:#4338ca;text-decoration:none;font-weight:700;border:1px solid #c7d2fe">Anfrage ablehnen</a></td></tr><tr><td style="padding-top:10px;color:#64748b;font-size:12px;line-height:1.4;text-align:center">Beide Aktionen öffnen direkt eine Mailvorlage in Ihrem Mailprogramm.</td></tr></table>`
+      : undefined;
 
     const restaurantHtml = buildEmailLayout({
       brand: businessName,
@@ -551,7 +574,7 @@ module.exports = async function handler(req: any, res: any) {
       actionsHtml,
       footer: 'Sie können auf diese E-Mail antworten, um direkt mit dem Gast zu kommunizieren.',
       footerLink: platformUrl,
-      footerLinkLabel: 'NexTime - einfache Terminplanung'
+      footerLinkLabel: 'NexTime - einfache Terminplanung',
     });
 
     const guestRows = [
@@ -563,9 +586,9 @@ module.exports = async function handler(req: any, res: any) {
       ...(isSalon
         ? [
             { label: 'Service', value: body.service || '-' },
-            ...(body.stylist ? [{ label: 'Friseur', value: body.stylist }] : [])
+            ...(body.stylist ? [{ label: 'Friseur', value: body.stylist }] : []),
           ]
-        : [{ label: 'Personen', value: body.people ? String(body.people) : '-' }])
+        : [{ label: 'Personen', value: body.people ? String(body.people) : '-' }]),
     ];
 
     const guestHtml = buildEmailLayout({
@@ -575,7 +598,7 @@ module.exports = async function handler(req: any, res: any) {
       rows: guestRows,
       footer: `Bei Rückfragen können Sie direkt auf diese E-Mail antworten. ${bookingCopy.thanksLine}`,
       footerLink: platformUrl,
-      footerLinkLabel: 'NexTime - einfache Terminplanung'
+      footerLinkLabel: 'NexTime - einfache Terminplanung',
     });
 
     await resend.emails.send({
@@ -593,24 +616,29 @@ module.exports = async function handler(req: any, res: any) {
         `E-Mail: ${body.guestEmail || '-'}`,
         body.phone ? `Telefon: ${body.phone}` : null,
         !isSalon && body.seating ? `Sitzplatz: ${body.seating}` : null,
-        isSalon ? (body.service ? `Service: ${body.service}` : null) : body.people ? `Personen: ${body.people}` : null,
+        isSalon
+          ? body.service
+            ? `Service: ${body.service}`
+            : null
+          : body.people
+            ? `Personen: ${body.people}`
+            : null,
         isSalon && body.stylist ? `Friseur: ${body.stylist}` : null,
-        body.note ? `Notiz: ${body.note}` : null
+        body.note ? `Notiz: ${body.note}` : null,
       ]
         .filter(Boolean)
         .concat(
           requestMode
-            ? [
-                '',
-                `Anfrage annehmen: ${approveMailto}`,
-                `Anfrage ablehnen: ${declineMailto}`
-              ]
-            : []
+            ? ['', `Anfrage annehmen: ${approveMailto}`, `Anfrage ablehnen: ${declineMailto}`]
+            : [],
         )
-        .concat(['', 'Sie können auf diese E-Mail antworten, um direkt mit dem Gast zu kommunizieren.'])
+        .concat([
+          '',
+          'Sie können auf diese E-Mail antworten, um direkt mit dem Gast zu kommunizieren.',
+        ])
         .concat(['', 'NexTime - einfache Terminplanung', platformUrl])
         .join('\n'),
-      html: restaurantHtml
+      html: restaurantHtml,
     });
 
     if (!requestMode) {
@@ -628,18 +656,24 @@ module.exports = async function handler(req: any, res: any) {
           `Uhrzeit: ${body.time || '-'}`,
           body.note ? `Notiz: ${body.note}` : null,
           !isSalon && body.seating ? `Sitzplatz: ${body.seating}` : null,
-          isSalon ? (body.service ? `Service: ${body.service}` : null) : body.people ? `Personen: ${body.people}` : null,
+          isSalon
+            ? body.service
+              ? `Service: ${body.service}`
+              : null
+            : body.people
+              ? `Personen: ${body.people}`
+              : null,
           isSalon && body.stylist ? `Friseur: ${body.stylist}` : null,
           '',
           'Bei Rückfragen antworten Sie direkt auf diese E-Mail.',
           '',
           'Beste Grüße',
-          `${businessName}`
+          `${businessName}`,
         ]
           .filter(Boolean)
           .concat(['', 'NexTime - einfache Terminplanung', platformUrl])
           .join('\n'),
-        html: guestHtml
+        html: guestHtml,
       });
     }
 

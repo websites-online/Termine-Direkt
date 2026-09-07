@@ -26,7 +26,7 @@ const extractService = (note: string | null) => {
   if (!note) {
     return undefined;
   }
-  const match = note.match(/Service:\\s*([^|]+)/i);
+  const match = note.match(/Service:\s*([^|]+)/i);
   if (!match) {
     return undefined;
   }
@@ -54,17 +54,50 @@ const extractNote = (note: string | null) => {
     .filter(
       (part: string) =>
         part.length > 0 &&
+        !/^__BLOCK__:/i.test(part) &&
+        !/^__INTERNAL__:/i.test(part) &&
         !/^Service:/i.test(part) &&
         !/^Wunsch-Friseur:/i.test(part) &&
-        !/^Friseur:/i.test(part)
+        !/^Friseur:/i.test(part),
     );
   if (parts.length === 0) {
     return undefined;
   }
-  return parts
-    .map((part: string) => part.replace(/^Notiz:\\s*/i, '').trim())
-    .join(' | ');
+  return parts.map((part: string) => part.replace(/^Notiz:\s*/i, '').trim()).join(' | ');
 };
+
+const extractBlockId = (note: string | null): string | undefined => {
+  if (!note) {
+    return undefined;
+  }
+  const match = note.match(/^__BLOCK__:([^|]+)/i);
+  return match?.[1]?.trim() || undefined;
+};
+
+const extractInternalId = (note: string | null): string | undefined => {
+  if (!note) {
+    return undefined;
+  }
+  const match = note.match(/^__INTERNAL__:([^|]+)/i);
+  return match?.[1]?.trim() || undefined;
+};
+
+const toReservationResponse = (row: any) => ({
+  id: row.id,
+  date: row.date,
+  time: row.time,
+  guestName: row.guest_name || undefined,
+  guestEmail: row.guest_email || undefined,
+  phone: row.phone || undefined,
+  people: row.people || undefined,
+  note: extractNote(row.note || null),
+  service: extractService(row.note || null),
+  stylist: extractStylist(row.note || null),
+  isBlock: Boolean(extractBlockId(row.note || null)),
+  isInternal: Boolean(extractBlockId(row.note || null) || extractInternalId(row.note || null)),
+  blockId: extractBlockId(row.note || null),
+  createdAt: row.created_at,
+});
 
 module.exports = async function handler(req: any, res: any) {
   try {
@@ -95,16 +128,20 @@ module.exports = async function handler(req: any, res: any) {
 
     if (req.method === 'GET') {
       const date = typeof req.query?.date === 'string' ? req.query.date : '';
-      if (!date) {
+      const startDate = typeof req.query?.startDate === 'string' ? req.query.startDate : '';
+      const endDate = typeof req.query?.endDate === 'string' ? req.query.endDate : '';
+      if (!date && (!startDate || !endDate)) {
         res.status(200).json([]);
         return;
       }
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('reservations')
         .select('id,date,time,guest_name,guest_email,phone,people,note,created_at')
-        .eq('restaurant_slug', company.slug)
-        .eq('date', date)
+        .eq('restaurant_slug', company.slug);
+      query = date ? query.eq('date', date) : query.gte('date', startDate).lte('date', endDate);
+      const { data, error } = await query
+        .order('date', { ascending: true })
         .order('time', { ascending: true });
 
       if (error) {
@@ -112,19 +149,17 @@ module.exports = async function handler(req: any, res: any) {
         return;
       }
 
-      const mapped = (data || []).map((row: any) => ({
-        id: row.id,
-        date: row.date,
-        time: row.time,
-        guestName: row.guest_name || undefined,
-        guestEmail: row.guest_email || undefined,
-        phone: row.phone || undefined,
-        people: row.people || undefined,
-        note: extractNote(row.note || null),
-        service: extractService(row.note || null),
-        stylist: extractStylist(row.note || null),
-        createdAt: row.created_at
-      }));
+      const seenBlocks = new Set<string>();
+      const mapped = (data || []).map(toReservationResponse).filter((item: any) => {
+        if (!item.blockId) {
+          return true;
+        }
+        if (seenBlocks.has(item.blockId)) {
+          return false;
+        }
+        seenBlocks.add(item.blockId);
+        return true;
+      });
 
       res.status(200).json(mapped);
       return;
@@ -154,47 +189,47 @@ module.exports = async function handler(req: any, res: any) {
         return;
       }
 
+      const isBlock = body.isBlock === true;
+      const blockId = isBlock ? `${Date.now()}-${Math.random().toString(36).slice(2, 9)}` : '';
+      const internalId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
       const noteParts = [
+        isBlock ? `__BLOCK__:${blockId}` : `__INTERNAL__:${internalId}`,
         body.service ? `Service: ${body.service}` : null,
         body.stylist ? `Friseur: ${body.stylist}` : null,
-        body.note ? `Notiz: ${body.note}` : null
+        body.note ? `Notiz: ${body.note}` : null,
       ].filter(Boolean);
+
+      const record = {
+        restaurant_slug: company.slug,
+        restaurant_name: company.name,
+        restaurant_email: company.email,
+        guest_name: isBlock ? 'Sperrzeit' : body.guestName,
+        guest_email: isBlock ? null : body.guestEmail || null,
+        phone: isBlock ? null : body.phone || null,
+        people: isBlock ? null : body.people || null,
+        note: noteParts.length > 0 ? noteParts.join(' | ') : null,
+        date: body.date,
+        time: body.time,
+      };
+      const recordsToInsert = isBlock
+        ? Array.from({ length: Math.max(slotCapacity - (count || 0), 1) }, () => ({ ...record }))
+        : [record];
 
       const { data, error } = await supabase
         .from('reservations')
-        .insert({
-          restaurant_slug: company.slug,
-          restaurant_name: company.name,
-          restaurant_email: company.email,
-          guest_name: body.guestName,
-          guest_email: body.guestEmail || null,
-          phone: body.phone || null,
-          people: body.people || null,
-          note: noteParts.length > 0 ? noteParts.join(' | ') : null,
-          date: body.date,
-          time: body.time
-        })
-        .select('id,date,time,guest_name,guest_email,phone,people,note,created_at')
-        .single();
+        .insert(recordsToInsert)
+        .select('id,date,time,guest_name,guest_email,phone,people,note,created_at');
 
       if (error) {
         res.status(500).json({ error: error.message });
         return;
       }
+      if (!data?.[0]) {
+        res.status(500).json({ error: 'Sperrzeit oder Termin konnte nicht gespeichert werden.' });
+        return;
+      }
 
-      res.status(200).json({
-        id: data.id,
-        date: data.date,
-        time: data.time,
-        guestName: data.guest_name || undefined,
-        guestEmail: data.guest_email || undefined,
-        phone: data.phone || undefined,
-        people: data.people || undefined,
-        note: extractNote(data.note || null),
-        service: extractService(data.note || null),
-        stylist: extractStylist(data.note || null),
-        createdAt: data.created_at
-      });
+      res.status(200).json(toReservationResponse(data[0]));
       return;
     }
 
@@ -205,11 +240,18 @@ module.exports = async function handler(req: any, res: any) {
         return;
       }
 
-      const { error } = await supabase
+      const { data: target } = await supabase
         .from('reservations')
-        .delete()
+        .select('id,note')
         .eq('id', id)
-        .eq('restaurant_slug', company.slug);
+        .eq('restaurant_slug', company.slug)
+        .maybeSingle();
+
+      let deleteQuery = supabase.from('reservations').delete().eq('restaurant_slug', company.slug);
+      deleteQuery = extractBlockId(target?.note || null)
+        ? deleteQuery.eq('note', target.note)
+        : deleteQuery.eq('id', id);
+      const { error } = await deleteQuery;
 
       if (error) {
         res.status(500).json({ error: error.message });
