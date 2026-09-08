@@ -130,16 +130,21 @@
   text-transform: uppercase;
 }
 
-.settings-nav > a {
+.settings-nav > button {
+  width: 100%;
   padding: 9px 10px;
+  border: 0;
   border-radius: 8px;
+  background: transparent;
   color: #647084;
+  font-family: inherit;
   font-size: 0.76rem;
   font-weight: 650;
-  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
 }
 
-.settings-nav > a:first-of-type {
+.settings-nav > button:first-of-type {
   background: #eef2ff;
   color: #4f46e5;
 }
@@ -527,7 +532,8 @@
     display: none;
   }
 
-  .settings-nav > a {
+  .settings-nav > button {
+    width: auto;
     flex: 0 0 auto;
   }
 

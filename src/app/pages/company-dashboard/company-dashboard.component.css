@@ -274,7 +274,7 @@
   max-width: 1370px;
   margin: 0 auto 20px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -307,6 +307,11 @@
 .summary-icon--green {
   background: #eafaf5;
   color: #0f9f78;
+}
+
+.summary-icon--purple {
+  background: #f0edff;
+  color: #7c3aed;
 }
 
 .summary-icon--orange {
@@ -475,12 +480,17 @@
 }
 
 .event-dot,
+.request-dot,
 .block-dot {
   width: 6px;
   height: 6px;
   display: inline-block;
   border-radius: 50%;
   background: #4f46e5;
+}
+
+.request-dot {
+  background: #14b8a6;
 }
 
 .block-dot {
@@ -622,6 +632,14 @@
   background: #f59e0b;
 }
 
+.agenda-item--request .agenda-line {
+  background: #14b8a6;
+}
+
+.agenda-item--request .agenda-type {
+  color: #0f8f82;
+}
+
 .agenda-content {
   min-width: 0;
 }
@@ -660,6 +678,17 @@
   color: #9ca3af;
   font-size: 1rem;
   cursor: pointer;
+}
+
+.request-status {
+  align-self: start;
+  padding: 5px 8px;
+  border-radius: 99px;
+  background: #e8faf6;
+  color: #0f8f82;
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .panel-backdrop {
@@ -978,10 +1007,6 @@
     padding: 13px;
   }
 
-  .summary-card:last-child {
-    display: none;
-  }
-
   .summary-icon {
     width: 38px;
     height: 38px;
@@ -1054,7 +1079,7 @@
     grid-template-columns: 1fr;
   }
 
-  .summary-card:nth-child(2) {
+  .summary-card:nth-child(n + 3) {
     display: none;
   }
 

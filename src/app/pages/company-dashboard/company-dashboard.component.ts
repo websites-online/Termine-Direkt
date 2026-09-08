@@ -20,6 +20,7 @@ interface CalendarDay {
   isToday: boolean;
   isSelected: boolean;
   appointmentCount: number;
+  requestCount: number;
   hasBlock: boolean;
 }
 
@@ -383,8 +384,16 @@ export class CompanyDashboardComponent implements OnInit {
 
   get todayAppointmentCount(): number {
     return this.calendarReservations.filter(
-      (item) => item.date === this.getToday() && !item.isBlock,
+      (item) => item.date === this.getToday() && !item.isBlock && !item.isRequest,
     ).length;
+  }
+
+  get selectedAppointmentCount(): number {
+    return this.reservations.filter((item) => !item.isBlock && !item.isRequest).length;
+  }
+
+  get selectedRequestCount(): number {
+    return this.reservations.filter((item) => item.isRequest).length;
   }
 
   get selectedBlockedCount(): number {
@@ -402,6 +411,7 @@ export class CompanyDashboardComponent implements OnInit {
       .filter(
         (item) =>
           !item.isBlock &&
+          !item.isRequest &&
           (item.date > today || (item.date === today && this.toMinutes(item.time) >= nowMinutes)),
       )
       .sort((a, b) => `${a.date}-${a.time}`.localeCompare(`${b.date}-${b.time}`))[0];
@@ -882,7 +892,7 @@ export class CompanyDashboardComponent implements OnInit {
       .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
     const counts: Record<string, number> = {};
     this.reservations.forEach((item) => {
-      if (item.time) {
+      if (item.time && !item.isRequest) {
         counts[item.time] = (counts[item.time] || 0) + (item.isBlock ? this.getSlotCapacity() : 1);
       }
     });
@@ -906,7 +916,8 @@ export class CompanyDashboardComponent implements OnInit {
         isCurrentMonth: date.getMonth() === this.monthCursor.getMonth(),
         isToday: dateValue === today,
         isSelected: dateValue === this.selectedDate,
-        appointmentCount: entries.filter((item) => !item.isBlock).length,
+        appointmentCount: entries.filter((item) => !item.isBlock && !item.isRequest).length,
+        requestCount: entries.filter((item) => item.isRequest).length,
         hasBlock: entries.some((item) => item.isBlock),
       };
     });

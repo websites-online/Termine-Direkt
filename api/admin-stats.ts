@@ -14,6 +14,7 @@ type ReservationRow = {
 type BookingRequestRow = {
   restaurant_slug?: string | null;
   date?: string | null;
+  status?: string | null;
 };
 
 const getClient = () => {
@@ -128,6 +129,15 @@ const isMissingTableError = (error: any, tableName: string): boolean => {
   );
 };
 
+const isMissingStatusColumnError = (error: any): boolean => {
+  const message = String(error?.message || '').toLowerCase();
+  return (
+    error?.code === '42703' ||
+    error?.code === 'PGRST204' ||
+    (message.includes('status') && message.includes('column'))
+  );
+};
+
 const isInternalCalendarEntry = (note?: string | null): boolean =>
   /^__(?:BLOCK|INTERNAL)__:/i.test(String(note || '').trim());
 
@@ -176,10 +186,17 @@ module.exports = async function handler(req: any, res: any) {
     let requestsTableAvailable = true;
     fromIndex = 0;
     while (true) {
-      const { data, error } = await supabase
+      let requestResult = await supabase
         .from('booking_requests')
-        .select('restaurant_slug,date')
+        .select('restaurant_slug,date,status')
         .range(fromIndex, fromIndex + pageSize - 1);
+      if (requestResult.error && isMissingStatusColumnError(requestResult.error)) {
+        requestResult = await supabase
+          .from('booking_requests')
+          .select('restaurant_slug,date')
+          .range(fromIndex, fromIndex + pageSize - 1);
+      }
+      const { data, error } = requestResult;
       if (error) {
         if (isMissingTableError(error, 'booking_requests')) {
           requestsTableAvailable = false;
@@ -228,7 +245,7 @@ module.exports = async function handler(req: any, res: any) {
     const requestCounts = new Map<string, number>();
     bookingRequests.forEach((row) => {
       const slug = row.restaurant_slug || '';
-      if (!slug || !isInRange(row.date)) {
+      if (!slug || !isInRange(row.date) || row.status === 'approved') {
         return;
       }
       requestCounts.set(slug, (requestCounts.get(slug) || 0) + 1);

@@ -46,11 +46,11 @@
     <div class="settings-layout">
       <aside class="settings-nav" *ngIf="standaloneEditSlug">
         <span>Einstellungen</span>
-        <a href="#grunddaten">Grunddaten</a>
-        <a href="#buchung">Buchung & Zeiten</a>
-        <a href="#angebot">Angebot</a>
-        <a href="#kontakt">Benachrichtigungen</a>
-        <a href="#zugang">Unternehmenszugang</a>
+        <button type="button" (click)="scrollToSection('grunddaten')">Grunddaten</button>
+        <button type="button" (click)="scrollToSection('buchung')">Buchung & Zeiten</button>
+        <button type="button" (click)="scrollToSection('angebot')">Angebot</button>
+        <button type="button" (click)="scrollToSection('kontakt')">Benachrichtigungen</button>
+        <button type="button" (click)="scrollToSection('zugang')">Unternehmenszugang</button>
         <div class="settings-nav-info">
           <small>Öffentliche URL</small>
           <strong>/{{ editingSlug }}</strong>

@@ -18,6 +18,8 @@ export interface CompanyReservation {
   stylist?: string;
   isBlock?: boolean;
   isInternal?: boolean;
+  isRequest?: boolean;
+  requestStatus?: 'pending' | 'approved' | string;
   blockId?: string;
   createdAt?: string;
 }

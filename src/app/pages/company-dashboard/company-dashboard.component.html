@@ -84,8 +84,16 @@
             <rect x="4" y="5" width="16" height="16" rx="2"></rect></svg
         ></span>
         <div>
-          <span>Termine am Tag</span
-          ><strong>{{ reservations.length - selectedBlockedCount }}</strong>
+          <span>Termine am Tag</span><strong>{{ selectedAppointmentCount }}</strong>
+        </div>
+      </article>
+      <article class="summary-card summary-card--request">
+        <span class="summary-icon summary-icon--purple"
+          ><svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path></svg
+        ></span>
+        <div>
+          <span>Offene Anfragen</span><strong>{{ selectedRequestCount }}</strong>
         </div>
       </article>
       <article class="summary-card">
@@ -153,18 +161,24 @@
             (click)="selectCalendarDay(day)"
           >
             <span class="day-number">{{ day.dayNumber }}</span>
-            <span class="day-events" *ngIf="day.appointmentCount > 0 || day.hasBlock">
+            <span
+              class="day-events"
+              *ngIf="day.appointmentCount > 0 || day.requestCount > 0 || day.hasBlock"
+            >
               <span class="event-dot" *ngIf="day.appointmentCount > 0"></span>
               <span class="event-count" *ngIf="day.appointmentCount > 0">{{
                 day.appointmentCount
               }}</span>
+              <span class="request-dot" *ngIf="day.requestCount > 0"></span>
+              <span class="event-count" *ngIf="day.requestCount > 0">{{ day.requestCount }}</span>
               <span class="block-dot" *ngIf="day.hasBlock" title="Sperrzeit"></span>
             </span>
           </button>
         </div>
         <div class="calendar-legend">
-          <span><i class="event-dot"></i>Kundentermine</span
-          ><span><i class="block-dot"></i>Von Ihnen blockiert</span>
+          <span><i class="event-dot"></i>Bestätigte Termine</span>
+          <span><i class="request-dot"></i>Offene Anfragen</span>
+          <span><i class="block-dot"></i>Von Ihnen blockiert</span>
         </div>
       </article>
 
@@ -197,12 +211,19 @@
             class="agenda-item"
             *ngFor="let reservation of reservations; trackBy: trackByReservation"
             [class.agenda-item--blocked]="reservation.isBlock"
+            [class.agenda-item--request]="reservation.isRequest"
           >
             <div class="agenda-time">{{ reservation.time }}<small>Uhr</small></div>
             <div class="agenda-line"></div>
             <div class="agenda-content">
               <span class="agenda-type">{{
-                reservation.isBlock ? 'Sperrzeit' : isSalon ? 'Termin' : 'Reservierung'
+                reservation.isRequest
+                  ? 'Anfrage'
+                  : reservation.isBlock
+                    ? 'Sperrzeit'
+                    : isSalon
+                      ? 'Termin'
+                      : 'Reservierung'
               }}</span>
               <h3>
                 {{
@@ -220,6 +241,7 @@
               <p *ngIf="!reservation.isBlock && reservation.phone">{{ reservation.phone }}</p>
             </div>
             <button
+              *ngIf="!reservation.isRequest"
               class="item-menu"
               type="button"
               (click)="deleteReservation(reservation)"
@@ -227,6 +249,7 @@
             >
               ×
             </button>
+            <span class="request-status" *ngIf="reservation.isRequest">Offen</span>
           </article>
         </div>
       </aside>

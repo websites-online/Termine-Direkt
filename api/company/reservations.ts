@@ -82,7 +82,7 @@ const extractInternalId = (note: string | null): string | undefined => {
   return match?.[1]?.trim() || undefined;
 };
 
-const toReservationResponse = (row: any) => ({
+const toReservationResponse = (row: any, isRequest = false) => ({
   id: row.id,
   date: row.date,
   time: row.time,
@@ -96,8 +96,27 @@ const toReservationResponse = (row: any) => ({
   isBlock: Boolean(extractBlockId(row.note || null)),
   isInternal: Boolean(extractBlockId(row.note || null) || extractInternalId(row.note || null)),
   blockId: extractBlockId(row.note || null),
+  isRequest,
+  requestStatus: isRequest ? row.status || 'pending' : undefined,
   createdAt: row.created_at,
 });
+
+const isMissingTableError = (error: any, tableName: string): boolean => {
+  const message = String(error?.message || '').toLowerCase();
+  return (
+    error?.code === '42P01' ||
+    (message.includes('does not exist') && message.includes(tableName.toLowerCase()))
+  );
+};
+
+const isMissingStatusColumnError = (error: any): boolean => {
+  const message = String(error?.message || '').toLowerCase();
+  return (
+    error?.code === '42703' ||
+    error?.code === 'PGRST204' ||
+    (message.includes('status') && message.includes('column'))
+  );
+};
 
 module.exports = async function handler(req: any, res: any) {
   try {
@@ -135,31 +154,76 @@ module.exports = async function handler(req: any, res: any) {
         return;
       }
 
-      let query = supabase
+      const applyDateFilter = (query: any) =>
+        date ? query.eq('date', date) : query.gte('date', startDate).lte('date', endDate);
+
+      let reservationsQuery = supabase
         .from('reservations')
         .select('id,date,time,guest_name,guest_email,phone,people,note,created_at')
         .eq('restaurant_slug', company.slug);
-      query = date ? query.eq('date', date) : query.gte('date', startDate).lte('date', endDate);
-      const { data, error } = await query
-        .order('date', { ascending: true })
-        .order('time', { ascending: true });
+      reservationsQuery = applyDateFilter(reservationsQuery);
 
-      if (error) {
-        res.status(500).json({ error: error.message });
+      let requestsQuery = supabase
+        .from('booking_requests')
+        .select('id,date,time,guest_name,guest_email,phone,people,note,status,created_at')
+        .eq('restaurant_slug', company.slug);
+      requestsQuery = applyDateFilter(requestsQuery);
+
+      const [reservationsResult, requestsResult] = await Promise.all([
+        reservationsQuery.order('date', { ascending: true }).order('time', { ascending: true }),
+        requestsQuery.order('date', { ascending: true }).order('time', { ascending: true }),
+      ]);
+
+      if (reservationsResult.error) {
+        res.status(500).json({ error: reservationsResult.error.message });
         return;
       }
 
+      let requestRows = requestsResult.data || [];
+      if (requestsResult.error) {
+        if (isMissingTableError(requestsResult.error, 'booking_requests')) {
+          requestRows = [];
+        } else if (isMissingStatusColumnError(requestsResult.error)) {
+          let fallbackQuery = supabase
+            .from('booking_requests')
+            .select('id,date,time,guest_name,guest_email,phone,people,note,created_at')
+            .eq('restaurant_slug', company.slug);
+          fallbackQuery = applyDateFilter(fallbackQuery);
+          const fallbackResult = await fallbackQuery
+            .order('date', { ascending: true })
+            .order('time', { ascending: true });
+          if (fallbackResult.error) {
+            res.status(500).json({ error: fallbackResult.error.message });
+            return;
+          }
+          requestRows = fallbackResult.data || [];
+        } else {
+          res.status(500).json({ error: requestsResult.error.message });
+          return;
+        }
+      }
+
       const seenBlocks = new Set<string>();
-      const mapped = (data || []).map(toReservationResponse).filter((item: any) => {
-        if (!item.blockId) {
+      const mappedReservations = (reservationsResult.data || [])
+        .map((row: any) => toReservationResponse(row))
+        .filter((item: any) => {
+          if (!item.blockId) {
+            return true;
+          }
+          if (seenBlocks.has(item.blockId)) {
+            return false;
+          }
+          seenBlocks.add(item.blockId);
           return true;
-        }
-        if (seenBlocks.has(item.blockId)) {
-          return false;
-        }
-        seenBlocks.add(item.blockId);
-        return true;
-      });
+        });
+
+      const mappedRequests = requestRows
+        .filter((row: any) => row.status !== 'approved')
+        .map((row: any) => toReservationResponse(row, true));
+
+      const mapped = [...mappedReservations, ...mappedRequests].sort((left, right) =>
+        `${left.date}-${left.time}`.localeCompare(`${right.date}-${right.time}`),
+      );
 
       res.status(200).json(mapped);
       return;

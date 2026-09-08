@@ -158,6 +158,10 @@ export class AdminDashboardComponent implements OnInit {
     this.resetForm();
   }
 
+  scrollToSection(sectionId: string): void {
+    document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   formatBookingBufferMinutes(value: number | undefined): string {
     const minutes = Number(value ?? 120);
     if (!Number.isFinite(minutes) || minutes <= 0) {
