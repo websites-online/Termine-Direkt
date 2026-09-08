@@ -271,6 +271,34 @@
   cursor: pointer;
 }
 
+.demo-login-button {
+  width: 100%;
+  min-height: 45px;
+  margin-top: 12px;
+  border: 1px solid #ddd8a9;
+  border-radius: 10px;
+  background: #fffdf3;
+  color: #6f5812;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.demo-login-button span {
+  margin-right: 7px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: #ffefad;
+  font-size: 0.56rem;
+  letter-spacing: 0.06em;
+}
+
+.demo-login-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .login-submit:disabled {
   opacity: 0.65;
   cursor: wait;

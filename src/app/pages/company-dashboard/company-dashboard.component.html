@@ -12,7 +12,12 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg
         ><span>Termin eintragen</span>
       </button>
-      <button class="nav-item" type="button" (click)="copyBookingLink()">
+      <a class="nav-item" routerLink="/unternehmen/statistik">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 19V9M10 19V5M16 19v-7M22 19H2"></path></svg
+        ><span>Statistik</span>
+      </a>
+      <button class="nav-item nav-item--copy" type="button" (click)="copyBookingLink()">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M10 13a5 5 0 0 0 7.1.1l2-2A5 5 0 0 0 12 4l-1.1 1.1"></path>
           <path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"></path></svg

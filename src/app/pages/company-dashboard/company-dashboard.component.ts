@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 import { CompanyAuthService, CompanySession } from '../../services/company-auth.service';
 import { Company, CompanyApiService } from '../../services/company-api.service';
@@ -83,6 +83,7 @@ export class CompanyDashboardComponent implements OnInit {
     private readonly reservationsService: CompanyReservationsService,
     private readonly companyService: CompanyApiService,
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
@@ -91,6 +92,15 @@ export class CompanyDashboardComponent implements OnInit {
     this.buildCalendarDays();
     this.loadCompanyDetails();
     this.loadReservations();
+    if (this.route.snapshot.queryParamMap.get('action') === 'termin') {
+      this.openEntryPanel('appointment');
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { action: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
   }
 
   logout(): void {

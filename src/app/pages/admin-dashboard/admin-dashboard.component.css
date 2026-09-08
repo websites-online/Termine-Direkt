@@ -447,6 +447,20 @@
   color: #0f8a68;
 }
 
+.company-tier {
+  padding: 5px 9px;
+  border-radius: 99px;
+  background: #f1f3f7;
+  color: #667085;
+  font-size: 0.6rem;
+  font-weight: 800;
+}
+
+.company-tier--pro {
+  background: #fff4d8;
+  color: #a15c05;
+}
+
 .company-card h3 {
   margin: 17px 0 5px;
   color: #273349;

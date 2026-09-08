@@ -20,6 +20,7 @@ type CompanyRow = {
   stylists?: unknown;
   logo_url?: string | null;
   brand_color?: string | null;
+  plan_tier?: string | null;
   created_at: string;
 };
 
@@ -58,6 +59,7 @@ const toCompanyResponse = (row: CompanyRow) => ({
   stylists: row.service_type === 'friseur' ? normalizeStylists(row.stylists) : [],
   logoUrl: normalizeLogoUrl(row.logo_url) || undefined,
   brandColor: normalizeBrandColor(row.brand_color),
+  planTier: row.plan_tier === 'pro' ? 'pro' : 'starter',
   createdAt: row.created_at,
 });
 
@@ -125,6 +127,7 @@ const optionalCompanyColumns = [
   'women_services_email',
   'logo_url',
   'brand_color',
+  'plan_tier',
 ] as const;
 
 const removeMissingOptionalColumns = <T extends Record<string, any>>(record: T, error: any): T => {
@@ -243,6 +246,7 @@ module.exports = async function handler(req: any, res: any) {
         stylists,
         logo_url: normalizeLogoUrl(body.logoUrl),
         brand_color: normalizeBrandColor(body.brandColor),
+        plan_tier: body.planTier === 'pro' ? 'pro' : 'starter',
       };
       let { data, error } = await supabase.from('companies').insert(insert).select('*').single();
       if (error && splitServiceEmails && isMissingMailSplitColumn(error)) {
@@ -324,6 +328,7 @@ module.exports = async function handler(req: any, res: any) {
         stylists,
         logo_url: normalizeLogoUrl(body.logoUrl),
         brand_color: normalizeBrandColor(body.brandColor),
+        plan_tier: body.planTier === 'pro' ? 'pro' : 'starter',
       };
       if (body.loginPin) {
         updates.login_pin = String(body.loginPin).trim();

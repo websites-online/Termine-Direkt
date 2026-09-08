@@ -2,6 +2,7 @@
 @import './styles/landing.css';
 @import './styles/company-branding.css';
 @import './app/pages/company-dashboard/company-dashboard.component.css';
+@import './styles/company-statistics.css';
 
 * {
   box-sizing: border-box;

@@ -60,6 +60,15 @@
             {{ isSubmitting ? 'Anmeldung läuft…' : 'Zum Dashboard' }} <span>→</span>
           </button>
         </form>
+        <button
+          class="demo-login-button"
+          type="button"
+          *ngIf="isLocalDemoAvailable"
+          [disabled]="isSubmitting"
+          (click)="openProDemo()"
+        >
+          <span>PRO</span> Beispiel-Statistik ansehen
+        </button>
         <div class="login-help">
           <span>?</span>
           <p>Keine Zugangsdaten? Wenden Sie sich an den Betreiber von Nextime.</p>

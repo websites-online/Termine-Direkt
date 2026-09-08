@@ -11,6 +11,7 @@ import { AdminStatsComponent } from './pages/admin-stats/admin-stats.component';
 import { adminGuard } from './guards/admin.guard';
 import { CompanyLoginComponent } from './pages/company-login/company-login.component';
 import { CompanyDashboardComponent } from './pages/company-dashboard/company-dashboard.component';
+import { CompanyStatsComponent } from './pages/company-stats/company-stats.component';
 import { companyGuard } from './guards/company.guard';
 
 export const routes: Routes = [
@@ -53,6 +54,11 @@ export const routes: Routes = [
   {
     path: 'unternehmen/login',
     component: CompanyLoginComponent,
+  },
+  {
+    path: 'unternehmen/statistik',
+    component: CompanyStatsComponent,
+    canActivate: [companyGuard],
   },
   {
     path: 'unternehmen',

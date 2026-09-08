@@ -11,10 +11,11 @@ export interface CompanySession {
   name: string;
   email: string;
   serviceType: 'restaurant' | 'friseur';
+  planTier?: 'starter' | 'pro';
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CompanyAuthService {
   private readonly tokenKey = 'company_token';
@@ -38,7 +39,8 @@ export class CompanyAuthService {
         slug: company.slug,
         name: company.name,
         email: company.email,
-        serviceType: (company.serviceType || 'restaurant') as 'restaurant' | 'friseur'
+        serviceType: (company.serviceType || 'restaurant') as 'restaurant' | 'friseur',
+        planTier: company.planTier === 'pro' ? 'pro' : 'starter',
       };
       this.storeSession(session);
       return of(session).pipe(delay(200));
@@ -53,7 +55,7 @@ export class CompanyAuthService {
             : { ...response.company, token: response.token };
           this.storeSession(session);
           return session;
-        })
+        }),
       );
   }
 
@@ -87,7 +89,11 @@ export class CompanyAuthService {
 
   private resolveLoginUrl(): string {
     const baseUrl = environment.API_BASE_URL || '';
-    if (typeof window !== 'undefined' && baseUrl.includes('localhost') && window.location.hostname !== 'localhost') {
+    if (
+      typeof window !== 'undefined' &&
+      baseUrl.includes('localhost') &&
+      window.location.hostname !== 'localhost'
+    ) {
       return '/api/company/login';
     }
     return baseUrl.length > 0 ? `${baseUrl}/api/company/login` : '/api/company/login';
@@ -112,10 +118,31 @@ export class CompanyAuthService {
     }
     try {
       const raw = window.localStorage.getItem('termine-direkt.companies');
-      if (!raw) {
-        return [];
+      const companies = raw ? (JSON.parse(raw) as Company[]) : [];
+      if (!companies.some((company) => company.slug === 'new-city-barber-demo')) {
+        companies.push({
+          id: 'local-pro-demo',
+          name: 'New City Barber (Demo)',
+          slug: 'new-city-barber-demo',
+          address: 'Musterstraße 24, 10115 Berlin',
+          hours: 'Mo–Fr 09:00–19:00; Sa 09:00–16:00',
+          email: 'demo@nextime.de',
+          serviceType: 'friseur',
+          loginPin: '123456',
+          slotCapacity: 1,
+          slotIntervalMinutes: 30,
+          bookingBufferMinutes: 120,
+          timeSelectionMode: 'slots',
+          bookingMode: 'request',
+          stylistSelectionEnabled: true,
+          stylists: ['Marco', 'Sarah', 'Deniz'],
+          brandColor: '#111827',
+          planTier: 'pro',
+          createdAt: new Date().toISOString(),
+        });
+        window.localStorage.setItem('termine-direkt.companies', JSON.stringify(companies));
       }
-      return JSON.parse(raw) as Company[];
+      return companies;
     } catch {
       return [];
     }

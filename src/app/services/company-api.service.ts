@@ -7,6 +7,7 @@ import { environment } from '../../environments/environment';
 export type ServiceType = 'restaurant' | 'friseur';
 export type BookingMode = 'confirm' | 'request';
 export type TimeSelectionMode = 'slots' | 'free';
+export type PlanTier = 'starter' | 'pro';
 
 export interface Company {
   id?: string;
@@ -30,6 +31,7 @@ export interface Company {
   stylists?: string[];
   logoUrl?: string;
   brandColor?: string;
+  planTier?: PlanTier;
   createdAt?: string;
 }
 
@@ -53,6 +55,7 @@ export interface CompanyPayload {
   stylists?: string[];
   logoUrl?: string;
   brandColor?: string;
+  planTier?: PlanTier;
 }
 
 @Injectable({
@@ -101,6 +104,7 @@ export class CompanyApiService {
         stylists: payload.serviceType === 'friseur' ? this.normalizeStylists(payload.stylists) : [],
         logoUrl: this.normalizeLogoUrl(payload.logoUrl),
         brandColor: this.normalizeBrandColor(payload.brandColor),
+        planTier: payload.planTier === 'pro' ? 'pro' : 'starter',
         splitServiceEmails:
           payload.serviceType === 'friseur' && payload.splitServiceEmails === true,
         womenServicesEmail:
@@ -164,6 +168,7 @@ export class CompanyApiService {
         updated.serviceType === 'friseur' ? this.normalizeStylists(payload.stylists) : [];
       updated.logoUrl = this.normalizeLogoUrl(payload.logoUrl);
       updated.brandColor = this.normalizeBrandColor(payload.brandColor);
+      updated.planTier = payload.planTier === 'pro' ? 'pro' : 'starter';
       updated.splitServiceEmails =
         updated.serviceType === 'friseur' && payload.splitServiceEmails === true;
       updated.womenServicesEmail =
@@ -202,10 +207,11 @@ export class CompanyApiService {
     }
     try {
       const raw = window.localStorage.getItem(this.storageKey);
-      if (!raw) {
-        return [];
+      const parsed = raw ? (JSON.parse(raw) as Company[]) : [];
+      if (!parsed.some((company) => company.slug === 'new-city-barber-demo')) {
+        parsed.push(this.createLocalProDemoCompany());
+        this.saveLocalCompanies(parsed);
       }
-      const parsed = JSON.parse(raw) as Company[];
       return parsed.map((company) => ({
         ...company,
         slotIntervalMinutes:
@@ -219,6 +225,7 @@ export class CompanyApiService {
         stylists: company.serviceType === 'friseur' ? this.normalizeStylists(company.stylists) : [],
         logoUrl: this.normalizeLogoUrl(company.logoUrl),
         brandColor: this.normalizeBrandColor(company.brandColor),
+        planTier: company.planTier === 'pro' ? 'pro' : 'starter',
         splitServiceEmails:
           company.serviceType === 'friseur' && company.splitServiceEmails === true,
         womenServicesEmail:
@@ -236,6 +243,29 @@ export class CompanyApiService {
       return;
     }
     window.localStorage.setItem(this.storageKey, JSON.stringify(companies));
+  }
+
+  private createLocalProDemoCompany(): Company {
+    return {
+      id: 'local-pro-demo',
+      name: 'New City Barber (Demo)',
+      slug: 'new-city-barber-demo',
+      address: 'Musterstraße 24, 10115 Berlin',
+      hours: 'Mo–Fr 09:00–19:00; Sa 09:00–16:00',
+      email: 'demo@nextime.de',
+      serviceType: 'friseur',
+      loginPin: '123456',
+      slotCapacity: 1,
+      slotIntervalMinutes: 30,
+      bookingBufferMinutes: 120,
+      timeSelectionMode: 'slots',
+      bookingMode: 'request',
+      stylistSelectionEnabled: true,
+      stylists: ['Marco', 'Sarah', 'Deniz'],
+      brandColor: '#111827',
+      planTier: 'pro',
+      createdAt: new Date().toISOString(),
+    };
   }
 
   private createUniqueSlug(name: string, taken: string[]): string {

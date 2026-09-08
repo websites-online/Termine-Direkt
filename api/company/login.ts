@@ -25,7 +25,7 @@ module.exports = async function handler(req: any, res: any) {
     const supabase = getClient();
     const { data, error } = await supabase
       .from('companies')
-      .select('slug,name,email,service_type,login_pin')
+      .select('*')
       .or(`slug.eq.${slug},name.eq.${slug}`)
       .single();
 
@@ -53,8 +53,9 @@ module.exports = async function handler(req: any, res: any) {
         slug: data.slug,
         name: data.name,
         email: data.email,
-        serviceType: data.service_type || 'restaurant'
-      }
+        serviceType: data.service_type || 'restaurant',
+        planTier: data.plan_tier === 'pro' ? 'pro' : 'starter',
+      },
     });
   } catch (error: any) {
     console.error('company login error', error);

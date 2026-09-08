@@ -370,7 +370,17 @@
                 <p>PIN für den geschützten Kalenderbereich.</p>
               </div>
             </div>
-            <div class="settings-fields settings-fields--single">
+            <div class="settings-fields">
+              <label>
+                <span class="label">Tarif</span>
+                <select class="input" formControlName="planTier">
+                  <option value="starter">Starter – 18,99 €</option>
+                  <option value="pro">PRO – 24,99 €</option>
+                </select>
+                <span class="helptext"
+                  >PRO schaltet die ausführliche Unternehmensstatistik frei.</span
+                >
+              </label>
               <label>
                 <span class="label">Login-PIN</span>
                 <div class="pin-row">
@@ -447,11 +457,9 @@
               <img *ngIf="company.logoUrl" [src]="company.logoUrl" [alt]="company.name + ' Logo'" />
               <span *ngIf="!company.logoUrl">{{ company.name.slice(0, 2).toUpperCase() }}</span>
             </span>
-            <span
-              class="company-tag"
-              [class.company-tag--salon]="company.serviceType === 'friseur'"
-              >{{ company.serviceType === 'friseur' ? 'Friseur' : 'Restaurant' }}</span
-            >
+            <span class="company-tier" [class.company-tier--pro]="company.planTier === 'pro'">{{
+              company.planTier === 'pro' ? 'PRO' : 'Starter'
+            }}</span>
           </div>
           <h3>{{ company.name }}</h3>
           <p>{{ company.address || 'Keine Adresse hinterlegt' }}</p>
@@ -463,6 +471,10 @@
             <div>
               <dt>Buchungsmodus</dt>
               <dd>{{ company.bookingMode === 'request' ? 'Anfrage' : 'Direkt' }}</dd>
+            </div>
+            <div>
+              <dt>Tarif</dt>
+              <dd>{{ company.planTier === 'pro' ? 'PRO – 24,99 €' : 'Starter – 18,99 €' }}</dd>
             </div>
             <div>
               <dt>URL</dt>

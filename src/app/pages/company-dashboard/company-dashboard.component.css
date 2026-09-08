@@ -922,7 +922,7 @@
 
   .brand,
   .sidebar-profile,
-  .workspace-nav .nav-item:nth-child(3) {
+  .workspace-nav .nav-item--copy {
     display: none;
   }
 
@@ -930,7 +930,7 @@
     height: 100%;
     margin: 0;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 
   .nav-item {
