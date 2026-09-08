@@ -28,6 +28,8 @@ export interface Company {
   seatingOptionsEnabled?: boolean;
   stylistSelectionEnabled?: boolean;
   stylists?: string[];
+  logoUrl?: string;
+  brandColor?: string;
   createdAt?: string;
 }
 
@@ -49,10 +51,12 @@ export interface CompanyPayload {
   seatingOptionsEnabled?: boolean;
   stylistSelectionEnabled?: boolean;
   stylists?: string[];
+  logoUrl?: string;
+  brandColor?: string;
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CompanyApiService {
   private readonly baseUrl = '/api/companies';
@@ -78,7 +82,10 @@ export class CompanyApiService {
   createCompany(payload: CompanyPayload): Observable<Company> {
     if (this.isLocalMock()) {
       const companies = this.loadLocalCompanies();
-      const slug = this.createUniqueSlug(payload.name, companies.map((item) => item.slug));
+      const slug = this.createUniqueSlug(
+        payload.name,
+        companies.map((item) => item.slug),
+      );
       const created: Company = {
         id: `${Date.now()}`,
         slug,
@@ -92,12 +99,14 @@ export class CompanyApiService {
         stylistSelectionEnabled:
           payload.serviceType === 'friseur' && payload.stylistSelectionEnabled === true,
         stylists: payload.serviceType === 'friseur' ? this.normalizeStylists(payload.stylists) : [],
+        logoUrl: this.normalizeLogoUrl(payload.logoUrl),
+        brandColor: this.normalizeBrandColor(payload.brandColor),
         splitServiceEmails:
           payload.serviceType === 'friseur' && payload.splitServiceEmails === true,
         womenServicesEmail:
           payload.serviceType === 'friseur' && payload.splitServiceEmails === true
             ? this.normalizeOptionalEmail(payload.womenServicesEmail)
-            : undefined
+            : undefined,
       };
       companies.unshift(created);
       this.saveLocalCompanies(companies);
@@ -115,12 +124,12 @@ export class CompanyApiService {
       }
       const nextSlug = this.createUniqueSlug(
         payload.name,
-        companies.filter((item) => item.slug !== slug).map((item) => item.slug)
+        companies.filter((item) => item.slug !== slug).map((item) => item.slug),
       );
       const updated: Company = {
         ...companies[index],
         ...payload,
-        slug: nextSlug
+        slug: nextSlug,
       };
       if (!payload.loginPin) {
         updated.loginPin = companies[index].loginPin;
@@ -133,10 +142,12 @@ export class CompanyApiService {
       }
       if (payload.bookingBufferMinutes === undefined || payload.bookingBufferMinutes === null) {
         updated.bookingBufferMinutes = this.normalizeBookingBufferMinutes(
-          companies[index].bookingBufferMinutes
+          companies[index].bookingBufferMinutes,
         );
       } else {
-        updated.bookingBufferMinutes = this.normalizeBookingBufferMinutes(payload.bookingBufferMinutes);
+        updated.bookingBufferMinutes = this.normalizeBookingBufferMinutes(
+          payload.bookingBufferMinutes,
+        );
       }
       if (!payload.timeSelectionMode) {
         updated.timeSelectionMode = companies[index].timeSelectionMode || 'slots';
@@ -149,7 +160,10 @@ export class CompanyApiService {
       }
       updated.stylistSelectionEnabled =
         updated.serviceType === 'friseur' && payload.stylistSelectionEnabled === true;
-      updated.stylists = updated.serviceType === 'friseur' ? this.normalizeStylists(payload.stylists) : [];
+      updated.stylists =
+        updated.serviceType === 'friseur' ? this.normalizeStylists(payload.stylists) : [];
+      updated.logoUrl = this.normalizeLogoUrl(payload.logoUrl);
+      updated.brandColor = this.normalizeBrandColor(payload.brandColor);
       updated.splitServiceEmails =
         updated.serviceType === 'friseur' && payload.splitServiceEmails === true;
       updated.womenServicesEmail =
@@ -169,7 +183,9 @@ export class CompanyApiService {
       this.saveLocalCompanies(companies);
       return of({ success: true }).pipe(delay(200));
     }
-    return this.http.delete<{ success: boolean }>(`${this.baseUrl}?slug=${encodeURIComponent(slug)}`);
+    return this.http.delete<{ success: boolean }>(
+      `${this.baseUrl}?slug=${encodeURIComponent(slug)}`,
+    );
   }
 
   private isLocalMock(): boolean {
@@ -201,11 +217,14 @@ export class CompanyApiService {
         stylistSelectionEnabled:
           company.serviceType === 'friseur' && company.stylistSelectionEnabled === true,
         stylists: company.serviceType === 'friseur' ? this.normalizeStylists(company.stylists) : [],
-        splitServiceEmails: company.serviceType === 'friseur' && company.splitServiceEmails === true,
+        logoUrl: this.normalizeLogoUrl(company.logoUrl),
+        brandColor: this.normalizeBrandColor(company.brandColor),
+        splitServiceEmails:
+          company.serviceType === 'friseur' && company.splitServiceEmails === true,
         womenServicesEmail:
           company.serviceType === 'friseur' && company.splitServiceEmails === true
             ? this.normalizeOptionalEmail(company.womenServicesEmail)
-            : undefined
+            : undefined,
       }));
     } catch {
       return [];
@@ -252,16 +271,22 @@ export class CompanyApiService {
       return [];
     }
     return Array.from(
-      new Set(
-        value
-          .map((item) => String(item || '').trim())
-          .filter((item) => item.length > 0)
-      )
+      new Set(value.map((item) => String(item || '').trim()).filter((item) => item.length > 0)),
     );
   }
 
   private normalizeOptionalEmail(value: unknown): string | undefined {
     const email = String(value || '').trim();
     return email.length > 0 ? email : undefined;
+  }
+
+  private normalizeLogoUrl(value: unknown): string | undefined {
+    const logoUrl = String(value || '').trim();
+    return logoUrl.length > 0 ? logoUrl : undefined;
+  }
+
+  private normalizeBrandColor(value: unknown): string {
+    const color = String(value || '').trim();
+    return /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : '#4f46e5';
   }
 }

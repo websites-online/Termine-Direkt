@@ -47,6 +47,7 @@
       <aside class="settings-nav" *ngIf="standaloneEditSlug">
         <span>Einstellungen</span>
         <button type="button" (click)="scrollToSection('grunddaten')">Grunddaten</button>
+        <button type="button" (click)="scrollToSection('design')">Erscheinungsbild</button>
         <button type="button" (click)="scrollToSection('buchung')">Buchung & Zeiten</button>
         <button type="button" (click)="scrollToSection('angebot')">Angebot</button>
         <button type="button" (click)="scrollToSection('kontakt')">Benachrichtigungen</button>
@@ -91,9 +92,96 @@
             </div>
           </section>
 
-          <section class="settings-section" id="buchung">
+          <section class="settings-section" id="design">
             <div class="settings-section-heading">
               <span class="section-number">02</span>
+              <div>
+                <h2>Erscheinungsbild</h2>
+                <p>Logo und Farbe für die öffentliche Buchungsseite.</p>
+              </div>
+            </div>
+            <div class="branding-settings">
+              <div class="branding-preview" [style.--preview-color]="brandPreviewColor">
+                <div class="branding-logo">
+                  <img *ngIf="logoPreview" [src]="logoPreview" alt="Logo-Vorschau" />
+                  <span *ngIf="!logoPreview">{{ companyInitials }}</span>
+                </div>
+                <div>
+                  <small>{{
+                    companyForm.value.serviceType === 'friseur' ? 'Friseursalon' : 'Restaurant'
+                  }}</small>
+                  <strong>{{ companyForm.value.name || 'Unternehmensname' }}</strong>
+                  <span>{{ companyForm.value.address || 'Adresse des Unternehmens' }}</span>
+                </div>
+              </div>
+
+              <div class="branding-controls">
+                <div class="logo-control">
+                  <span class="label">Unternehmenslogo</span>
+                  <input
+                    #logoInput
+                    class="visually-hidden"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    (change)="onLogoSelected($event)"
+                  />
+                  <div class="logo-actions">
+                    <button
+                      class="btn btn-outline"
+                      type="button"
+                      [disabled]="isProcessingLogo"
+                      (click)="logoInput.click()"
+                    >
+                      {{
+                        isProcessingLogo
+                          ? 'Wird verarbeitet…'
+                          : logoPreview
+                            ? 'Logo ändern'
+                            : 'Logo hochladen'
+                      }}
+                    </button>
+                    <button
+                      class="remove-logo-button"
+                      type="button"
+                      *ngIf="logoPreview"
+                      (click)="removeLogo()"
+                    >
+                      Entfernen
+                    </button>
+                  </div>
+                  <span class="helptext"
+                    >PNG, JPG oder WebP, maximal 5 MB. Das Bild wird automatisch verkleinert.</span
+                  >
+                  <span class="error" *ngIf="logoError">{{ logoError }}</span>
+                </div>
+
+                <label class="color-control">
+                  <span class="label">Akzentfarbe</span>
+                  <span class="color-input-row">
+                    <input
+                      type="color"
+                      formControlName="brandColor"
+                      aria-label="Akzentfarbe auswählen"
+                    />
+                    <input
+                      class="input"
+                      type="text"
+                      formControlName="brandColor"
+                      placeholder="#4f46e5"
+                      maxlength="7"
+                    />
+                  </span>
+                  <span class="helptext"
+                    >Wird für Buttons, Kalenderauswahl und Details verwendet.</span
+                  >
+                </label>
+              </div>
+            </div>
+          </section>
+
+          <section class="settings-section" id="buchung">
+            <div class="settings-section-heading">
+              <span class="section-number">03</span>
               <div>
                 <h2>Buchung & Zeiten</h2>
                 <p>Regeln für verfügbare Termine und Kundenbuchungen.</p>
@@ -168,7 +256,7 @@
 
           <section class="settings-section" id="angebot">
             <div class="settings-section-heading">
-              <span class="section-number">03</span>
+              <span class="section-number">04</span>
               <div>
                 <h2>
                   {{
@@ -213,7 +301,7 @@
 
           <section class="settings-section" id="kontakt">
             <div class="settings-section-heading">
-              <span class="section-number">04</span>
+              <span class="section-number">05</span>
               <div>
                 <h2>Benachrichtigungen</h2>
                 <p>Wohin neue Buchungen und Anfragen gesendet werden.</p>
@@ -276,7 +364,7 @@
 
           <section class="settings-section" id="zugang">
             <div class="settings-section-heading">
-              <span class="section-number">05</span>
+              <span class="section-number">06</span>
               <div>
                 <h2>Unternehmenszugang</h2>
                 <p>PIN für den geschützten Kalenderbereich.</p>
@@ -355,7 +443,10 @@
       <div class="company-grid" *ngIf="companies.length > 0">
         <article class="company-card" *ngFor="let company of companies">
           <div class="company-card-top">
-            <span class="company-logo">{{ company.name.slice(0, 2).toUpperCase() }}</span>
+            <span class="company-logo" [style.background]="company.brandColor || '#4f46e5'">
+              <img *ngIf="company.logoUrl" [src]="company.logoUrl" [alt]="company.name + ' Logo'" />
+              <span *ngIf="!company.logoUrl">{{ company.name.slice(0, 2).toUpperCase() }}</span>
+            </span>
             <span
               class="company-tag"
               [class.company-tag--salon]="company.serviceType === 'friseur'"

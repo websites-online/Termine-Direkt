@@ -20,8 +20,10 @@ export class AdminDashboardComponent implements OnInit {
   editingSlug: string | null = null;
   readonly standaloneEditSlug: string | null;
   isSaving = false;
+  isProcessingLogo = false;
   formError = '';
   formSuccess = '';
+  logoError = '';
   readonly companyForm = this.formBuilder.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     address: ['Beispielstraße 12, 12345 Musterstadt', Validators.required],
@@ -40,6 +42,8 @@ export class AdminDashboardComponent implements OnInit {
     slotIntervalMinutes: [45, Validators.required],
     bookingBufferMinutes: [120, [Validators.required, Validators.min(0), Validators.max(1440)]],
     timeSelectionMode: ['slots', Validators.required],
+    logoUrl: [''],
+    brandColor: ['#4f46e5', [Validators.required, Validators.pattern(/^#[0-9a-fA-F]{6}$/)]],
   });
 
   constructor(
@@ -97,6 +101,8 @@ export class AdminDashboardComponent implements OnInit {
       slotIntervalMinutes: Number(value.slotIntervalMinutes || 45) as 30 | 45 | 60,
       bookingBufferMinutes: Number(value.bookingBufferMinutes ?? 120),
       timeSelectionMode: (value.timeSelectionMode || 'slots') as TimeSelectionMode,
+      logoUrl: value.logoUrl?.trim() || undefined,
+      brandColor: value.brandColor || '#4f46e5',
     };
 
     const request$ = this.editingSlug
@@ -146,6 +152,8 @@ export class AdminDashboardComponent implements OnInit {
       slotIntervalMinutes: company.slotIntervalMinutes ?? 45,
       bookingBufferMinutes: company.bookingBufferMinutes ?? 120,
       timeSelectionMode: company.timeSelectionMode || 'slots',
+      logoUrl: company.logoUrl || '',
+      brandColor: company.brandColor || '#4f46e5',
     });
     this.updateWomenServicesEmailValidators();
   }
@@ -222,7 +230,10 @@ export class AdminDashboardComponent implements OnInit {
       slotIntervalMinutes: 45,
       bookingBufferMinutes: 120,
       timeSelectionMode: 'slots',
+      logoUrl: '',
+      brandColor: '#4f46e5',
     });
+    this.logoError = '';
     this.updateWomenServicesEmailValidators();
     this.companyForm.markAsPristine();
   }
@@ -230,6 +241,94 @@ export class AdminDashboardComponent implements OnInit {
   generateLoginPin(): void {
     this.companyForm.patchValue({ loginPin: this.createRandomPin() });
     this.companyForm.markAsDirty();
+  }
+
+  get logoPreview(): string {
+    return this.companyForm.value.logoUrl?.trim() || '';
+  }
+
+  get companyInitials(): string {
+    const name = this.companyForm.value.name?.trim() || 'Unternehmen';
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('');
+  }
+
+  get brandPreviewColor(): string {
+    const color = this.companyForm.value.brandColor || '';
+    return /^#[0-9a-f]{6}$/i.test(color) ? color : '#4f46e5';
+  }
+
+  async onLogoSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) {
+      return;
+    }
+
+    this.logoError = '';
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+      this.logoError = 'Bitte ein PNG-, JPG- oder WebP-Bild auswählen.';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.logoError = 'Das Logo darf maximal 5 MB groß sein.';
+      return;
+    }
+
+    this.isProcessingLogo = true;
+    try {
+      const logoUrl = await this.compressLogo(file);
+      this.companyForm.patchValue({ logoUrl });
+      this.companyForm.markAsDirty();
+    } catch {
+      this.logoError = 'Das Logo konnte nicht verarbeitet werden. Bitte ein anderes Bild wählen.';
+    } finally {
+      this.isProcessingLogo = false;
+    }
+  }
+
+  removeLogo(): void {
+    this.companyForm.patchValue({ logoUrl: '' });
+    this.companyForm.markAsDirty();
+    this.logoError = '';
+  }
+
+  private compressLogo(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const objectUrl = URL.createObjectURL(file);
+      const image = new Image();
+      image.onload = () => {
+        const maxDimension = 320;
+        const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+        const context = canvas.getContext('2d');
+        if (!context) {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error('Canvas unavailable'));
+          return;
+        }
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(objectUrl);
+        const compressed = canvas.toDataURL('image/webp', 0.86);
+        if (compressed.length > 500_000) {
+          reject(new Error('Compressed logo is too large'));
+          return;
+        }
+        resolve(compressed);
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Invalid image'));
+      };
+      image.src = objectUrl;
+    });
   }
 
   private createRandomPin(): string {

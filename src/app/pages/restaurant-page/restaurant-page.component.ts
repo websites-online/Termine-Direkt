@@ -18,7 +18,7 @@ type ParsedSchedule = {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, HttpClientModule],
   templateUrl: './restaurant-page.component.html',
-  styleUrl: './restaurant-page.component.css'
+  styleUrl: './restaurant-page.component.css',
 })
 export class RestaurantPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -45,13 +45,13 @@ export class RestaurantPageComponent implements OnInit {
     'September',
     'Oktober',
     'November',
-    'Dezember'
+    'Dezember',
   ];
   private readonly baseDate = new Date();
   private readonly today = new Date(
     this.baseDate.getFullYear(),
     this.baseDate.getMonth(),
-    this.baseDate.getDate()
+    this.baseDate.getDate(),
   );
   private parsedScheduleCache: { source: string; value: ParsedSchedule } | null = null;
   private holidayCache = new Map<number, Set<string>>();
@@ -61,19 +61,20 @@ export class RestaurantPageComponent implements OnInit {
   calendarDays = this.generateCalendar(
     this.baseDate.getFullYear(),
     this.baseDate.getMonth(),
-    this.baseDate.getDate()
+    this.baseDate.getDate(),
   );
   selectedDate = this.formatDateISO(this.baseDate);
   selectedDateLabel = this.formatDate(this.baseDate);
   private selectedDateObj = new Date(
     this.baseDate.getFullYear(),
     this.baseDate.getMonth(),
-    this.baseDate.getDate()
+    this.baseDate.getDate(),
   );
   successMessage = '';
   errorMessage = '';
   isSubmitting = false;
   showThanksModal = false;
+  logoLoadFailed = false;
   lastReservationDate = '';
   lastReservationTime = '';
 
@@ -86,7 +87,7 @@ export class RestaurantPageComponent implements OnInit {
     service: [''],
     stylist: [''],
     note: [''],
-    time: ['', Validators.required]
+    time: ['', Validators.required],
   });
 
   ngOnInit(): void {
@@ -145,48 +146,52 @@ export class RestaurantPageComponent implements OnInit {
       serviceAudience: this.isSalon
         ? this.getSalonServiceAudience(this.bookingForm.value.service ?? '')
         : undefined,
-      stylist: this.hasStylistChoice ? this.getStylistLabel(this.bookingForm.value.stylist ?? '') : undefined,
+      stylist: this.hasStylistChoice
+        ? this.getStylistLabel(this.bookingForm.value.stylist ?? '')
+        : undefined,
       date: this.selectedDate,
       time: this.bookingForm.value.time ?? '',
       people: this.isSalon ? 1 : (this.bookingForm.value.people ?? 2),
       phone: this.bookingForm.value.phone ?? '',
-      note: this.bookingForm.value.note ?? ''
+      note: this.bookingForm.value.note ?? '',
     };
 
     const reservationDate = this.selectedDateLabel;
     const reservationTime = requestedTime;
 
     this.isSubmitting = true;
-    this.http.post<{ success: boolean; requestMode?: boolean }>('/api/reservations', payload).subscribe({
-      next: () => {
-        this.isSubmitting = false;
-        this.lastReservationDate = reservationDate;
-        this.lastReservationTime = reservationTime;
-        this.showThanksModal = true;
-        this.successMessage = this.getSuccessMessage();
-        this.loadSlotAvailability();
-        this.bookingForm.reset({
-          name: '',
-          email: '',
-          phone: '',
-          people: 2,
-          seating: 'egal',
-          service: '',
-          stylist: '',
-          note: '',
-          time: this.getDefaultTimeForCurrentDate()
-        });
-      },
-      error: (error) => {
-        this.isSubmitting = false;
-        if (error?.status === 409) {
-          this.errorMessage = 'Dieser Slot ist leider ausgebucht.';
+    this.http
+      .post<{ success: boolean; requestMode?: boolean }>('/api/reservations', payload)
+      .subscribe({
+        next: () => {
+          this.isSubmitting = false;
+          this.lastReservationDate = reservationDate;
+          this.lastReservationTime = reservationTime;
+          this.showThanksModal = true;
+          this.successMessage = this.getSuccessMessage();
           this.loadSlotAvailability();
-          return;
-        }
-        this.errorMessage = 'Senden fehlgeschlagen. Bitte später erneut versuchen.';
-      }
-    });
+          this.bookingForm.reset({
+            name: '',
+            email: '',
+            phone: '',
+            people: 2,
+            seating: 'egal',
+            service: '',
+            stylist: '',
+            note: '',
+            time: this.getDefaultTimeForCurrentDate(),
+          });
+        },
+        error: (error) => {
+          this.isSubmitting = false;
+          if (error?.status === 409) {
+            this.errorMessage = 'Dieser Slot ist leider ausgebucht.';
+            this.loadSlotAvailability();
+            return;
+          }
+          this.errorMessage = 'Senden fehlgeschlagen. Bitte später erneut versuchen.';
+        },
+      });
   }
 
   closeThanksModal(): void {
@@ -195,6 +200,44 @@ export class RestaurantPageComponent implements OnInit {
 
   get isSalon(): boolean {
     return this.company?.serviceType === 'friseur';
+  }
+
+  get companyInitials(): string {
+    const name = this.company?.name?.trim() || 'Unternehmen';
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('');
+  }
+
+  get hasCompanyLogo(): boolean {
+    return Boolean(this.company?.logoUrl) && !this.logoLoadFailed;
+  }
+
+  get brandColor(): string {
+    const color = this.company?.brandColor || '';
+    return /^#[0-9a-f]{6}$/i.test(color) ? color : '#4f46e5';
+  }
+
+  get brandColorDark(): string {
+    return this.mixHexColor(this.brandColor, '#000000', 0.24);
+  }
+
+  get brandColorRgb(): string {
+    const [red, green, blue] = this.hexToRgb(this.brandColor);
+    return `${red}, ${green}, ${blue}`;
+  }
+
+  get brandTextColor(): string {
+    const [red, green, blue] = this.hexToRgb(this.brandColor);
+    const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
+    return luminance > 0.66 ? '#172033' : '#ffffff';
+  }
+
+  handleLogoError(): void {
+    this.logoLoadFailed = true;
   }
 
   get isRequestMode(): boolean {
@@ -206,7 +249,11 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   get hasStylistChoice(): boolean {
-    return this.isSalon && this.company?.stylistSelectionEnabled === true && this.stylistOptions.length > 0;
+    return (
+      this.isSalon &&
+      this.company?.stylistSelectionEnabled === true &&
+      this.stylistOptions.length > 0
+    );
   }
 
   get stylistOptions(): string[] {
@@ -267,13 +314,15 @@ export class RestaurantPageComponent implements OnInit {
     return [
       { value: 'egal', label: 'Beliebig' },
       { value: 'inside', label: 'Tisch drinnen' },
-      { value: 'outside', label: 'Tisch draußen' }
+      { value: 'outside', label: 'Tisch draußen' },
     ];
   }
 
   private getSuccessMessage(): string {
     if (this.isRequestMode) {
-      return this.isSalon ? 'Terminanfrage wurde gesendet.' : 'Reservierungsanfrage wurde gesendet.';
+      return this.isSalon
+        ? 'Terminanfrage wurde gesendet.'
+        : 'Reservierungsanfrage wurde gesendet.';
     }
     return this.isSalon ? 'Termin wurde gesendet.' : 'Reservierung wurde gesendet.';
   }
@@ -375,7 +424,7 @@ export class RestaurantPageComponent implements OnInit {
     window.requestAnimationFrame(() => {
       this.detailsCard?.nativeElement.scrollIntoView({
         behavior: 'smooth',
-        block: 'start'
+        block: 'start',
       });
     });
   }
@@ -387,7 +436,7 @@ export class RestaurantPageComponent implements OnInit {
     window.requestAnimationFrame(() => {
       this.calendarCard?.nativeElement.scrollIntoView({
         behavior: 'smooth',
-        block: 'start'
+        block: 'start',
       });
     });
   }
@@ -423,7 +472,7 @@ export class RestaurantPageComponent implements OnInit {
     const date = new Date(
       this.baseDate.getFullYear(),
       this.baseDate.getMonth() + this.monthOffset,
-      1
+      1,
     );
     return `${this.monthNames[date.getMonth()]} ${date.getFullYear()}`;
   }
@@ -463,8 +512,7 @@ export class RestaurantPageComponent implements OnInit {
       this.selectedDate = this.formatDateISO(firstActive.date);
       this.selectedDateLabel = this.formatDate(firstActive.date);
       this.calendarDays.forEach((entry) => {
-        entry.active =
-          !entry.muted && entry.date?.getTime() === this.selectedDateObj.getTime();
+        entry.active = !entry.muted && entry.date?.getTime() === this.selectedDateObj.getTime();
       });
       this.slots = this.generateSlots(this.selectedDateObj);
       this.syncSelectedTimeWithMode();
@@ -522,10 +570,7 @@ export class RestaurantPageComponent implements OnInit {
 
   private getHoursRangesForDate(date: Date | null): TimeRange[] {
     const schedule = this.parseHoursSchedule();
-    if (
-      !date ||
-      (schedule.weekdays.size === 0 && schedule.holidays.length === 0)
-    ) {
+    if (!date || (schedule.weekdays.size === 0 && schedule.holidays.length === 0)) {
       return [this.getFallbackHoursRange()];
     }
 
@@ -539,7 +584,10 @@ export class RestaurantPageComponent implements OnInit {
 
   private parseHoursSchedule(): ParsedSchedule {
     const hours = this.company?.hours?.trim();
-    const emptySchedule: ParsedSchedule = { weekdays: new Map<number, TimeRange[]>(), holidays: [] };
+    const emptySchedule: ParsedSchedule = {
+      weekdays: new Map<number, TimeRange[]>(),
+      holidays: [],
+    };
     if (this.parsedScheduleCache && this.parsedScheduleCache.source === (hours || '')) {
       return this.parsedScheduleCache.value;
     }
@@ -567,12 +615,12 @@ export class RestaurantPageComponent implements OnInit {
       Do: 3,
       Fr: 4,
       Sa: 5,
-      So: 6
+      So: 6,
     };
 
     for (const segment of segments) {
       const matches = Array.from(
-        segment.matchAll(/(\d{1,2}(?::\d{2})?)\s*[–-]\s*(\d{1,2}(?::\d{2})?)/g)
+        segment.matchAll(/(\d{1,2}(?::\d{2})?)\s*[–-]\s*(\d{1,2}(?::\d{2})?)/g),
       );
       if (matches.length === 0) {
         continue;
@@ -678,7 +726,7 @@ export class RestaurantPageComponent implements OnInit {
       sa: 'Sa',
       samstag: 'Sa',
       so: 'So',
-      sonntag: 'So'
+      sonntag: 'So',
     };
     return map[trimmed] || (trimmed.length >= 2 ? trimmed[0].toUpperCase() + trimmed[1] : trimmed);
   }
@@ -714,7 +762,7 @@ export class RestaurantPageComponent implements OnInit {
       .filter((match): match is RegExpMatchArray => Boolean(match))
       .map((match) => ({
         start: this.toMinutes(match[1]),
-        end: this.toMinutes(match[2])
+        end: this.toMinutes(match[2]),
       }))
       .filter((range) => !Number.isNaN(range.start) && !Number.isNaN(range.end));
   }
@@ -730,7 +778,14 @@ export class RestaurantPageComponent implements OnInit {
     }
     const hour = Number(match[1]);
     const minute = match[2] ? Number(match[2]) : 0;
-    if (Number.isNaN(hour) || Number.isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    if (
+      Number.isNaN(hour) ||
+      Number.isNaN(minute) ||
+      hour < 0 ||
+      hour > 23 ||
+      minute < 0 ||
+      minute > 59
+    ) {
       return NaN;
     }
     return hour * 60 + minute;
@@ -739,13 +794,19 @@ export class RestaurantPageComponent implements OnInit {
   private generateCalendar(
     year: number,
     monthIndex: number,
-    activeDay: number
+    activeDay: number,
   ): Array<{ label: number; muted: boolean; active: boolean; date?: Date; today?: boolean }> {
     const firstDay = new Date(year, monthIndex, 1);
     const startOffset = (firstDay.getDay() + 6) % 7;
     const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
     const daysInPrevMonth = new Date(year, monthIndex, 0).getDate();
-    const cells: Array<{ label: number; muted: boolean; active: boolean; date?: Date; today?: boolean }> = [];
+    const cells: Array<{
+      label: number;
+      muted: boolean;
+      active: boolean;
+      date?: Date;
+      today?: boolean;
+    }> = [];
 
     for (let i = 0; i < 42; i += 1) {
       if (i < startOffset) {
@@ -765,7 +826,7 @@ export class RestaurantPageComponent implements OnInit {
           muted: isPast || isClosed,
           active: !isPast && !isClosed && dayNumber === activeDay,
           date,
-          today: isToday
+          today: isToday,
         });
         continue;
       }
@@ -781,7 +842,7 @@ export class RestaurantPageComponent implements OnInit {
     return date.toLocaleDateString('de-DE', {
       day: 'numeric',
       month: 'long',
-      year: 'numeric'
+      year: 'numeric',
     });
   }
 
@@ -851,6 +912,7 @@ export class RestaurantPageComponent implements OnInit {
     this.companyService.getCompany(this.slug).subscribe({
       next: (company) => {
         this.company = company;
+        this.logoLoadFailed = false;
         this.updateServiceValidators();
         this.updateSeatingValidators();
         this.refreshCalendar();
@@ -858,7 +920,7 @@ export class RestaurantPageComponent implements OnInit {
       },
       error: () => {
         this.company = null;
-      }
+      },
     });
   }
 
@@ -867,13 +929,13 @@ export class RestaurantPageComponent implements OnInit {
       return;
     }
     const query = `restaurantSlug=${encodeURIComponent(this.slug)}&date=${encodeURIComponent(
-      this.selectedDate
+      this.selectedDate,
     )}`;
     this.http.get<{ slots: Record<string, number> }>(`/api/reservations?${query}`).subscribe({
       next: (response) => {
         this.slotCounts = response.slots || {};
         this.syncSelectedTimeWithMode();
-      }
+      },
     });
   }
 
@@ -895,7 +957,7 @@ export class RestaurantPageComponent implements OnInit {
       selectedDate.getMonth(),
       selectedDate.getDate(),
       Math.floor(slotMinutes / 60),
-      slotMinutes % 60
+      slotMinutes % 60,
     );
     return slotDateTime.getTime() < this.getEarliestBookableTime().getTime();
   }
@@ -932,6 +994,24 @@ export class RestaurantPageComponent implements OnInit {
     return Math.min(Math.max(capacity, 1), 3);
   }
 
+  private hexToRgb(color: string): [number, number, number] {
+    const normalized = color.replace('#', '');
+    return [
+      Number.parseInt(normalized.slice(0, 2), 16),
+      Number.parseInt(normalized.slice(2, 4), 16),
+      Number.parseInt(normalized.slice(4, 6), 16),
+    ];
+  }
+
+  private mixHexColor(color: string, target: string, targetWeight: number): string {
+    const sourceRgb = this.hexToRgb(color);
+    const targetRgb = this.hexToRgb(target);
+    const mixed = sourceRgb.map((channel, index) =>
+      Math.round(channel * (1 - targetWeight) + targetRgb[index] * targetWeight),
+    );
+    return `#${mixed.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`;
+  }
+
   private getSlotIntervalMinutes(): 30 | 45 | 60 {
     const value = this.company?.slotIntervalMinutes;
     if (value === 30 || value === 60) {
@@ -951,7 +1031,12 @@ export class RestaurantPageComponent implements OnInit {
     }
 
     const nextSlot = this.slots.find((slot) => !this.isSlotFull(slot) && !this.isSlotTooSoon(slot));
-    if (!current || !this.slots.includes(current) || this.isSlotFull(current) || this.isSlotTooSoon(current)) {
+    if (
+      !current ||
+      !this.slots.includes(current) ||
+      this.isSlotFull(current) ||
+      this.isSlotTooSoon(current)
+    ) {
       this.bookingForm.patchValue({ time: nextSlot || '' }, { emitEvent: false });
     }
   }

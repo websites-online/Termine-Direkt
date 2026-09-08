@@ -18,6 +18,8 @@ type CompanyRow = {
   seating_options_enabled?: boolean | null;
   stylist_selection_enabled?: boolean | null;
   stylists?: unknown;
+  logo_url?: string | null;
+  brand_color?: string | null;
   created_at: string;
 };
 
@@ -54,7 +56,9 @@ const toCompanyResponse = (row: CompanyRow) => ({
   seatingOptionsEnabled: row.seating_options_enabled ?? false,
   stylistSelectionEnabled: row.service_type === 'friseur' && row.stylist_selection_enabled === true,
   stylists: row.service_type === 'friseur' ? normalizeStylists(row.stylists) : [],
-  createdAt: row.created_at
+  logoUrl: normalizeLogoUrl(row.logo_url) || undefined,
+  brandColor: normalizeBrandColor(row.brand_color),
+  createdAt: row.created_at,
 });
 
 const normalizeSlotInterval = (value: unknown): 30 | 45 | 60 => {
@@ -81,19 +85,26 @@ const normalizeOptionalEmail = (value: unknown): string | null => {
   return email.length > 0 ? email : null;
 };
 
+const normalizeLogoUrl = (value: unknown): string | null => {
+  const logoUrl = String(value || '').trim();
+  if (!logoUrl) {
+    return null;
+  }
+  const isCompressedImage = /^data:image\/(?:png|jpe?g|webp);base64,/i.test(logoUrl);
+  const isSecureUrl = /^https:\/\//i.test(logoUrl);
+  return (isCompressedImage || isSecureUrl) && logoUrl.length <= 500_000 ? logoUrl : null;
+};
+
+const normalizeBrandColor = (value: unknown): string => {
+  const color = String(value || '').trim();
+  return /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : '#4f46e5';
+};
+
 const normalizeStylists = (value: unknown): string[] => {
   const source =
-    typeof value === 'string'
-      ? value.split(/\r?\n|,/)
-      : Array.isArray(value)
-        ? value
-        : [];
+    typeof value === 'string' ? value.split(/\r?\n|,/) : Array.isArray(value) ? value : [];
   return Array.from(
-    new Set(
-      source
-        .map((item) => String(item || '').trim())
-        .filter((item) => item.length > 0)
-    )
+    new Set(source.map((item) => String(item || '').trim()).filter((item) => item.length > 0)),
   );
 };
 
@@ -111,11 +122,17 @@ const optionalCompanyColumns = [
   'stylist_selection_enabled',
   'stylists',
   'split_service_emails',
-  'women_services_email'
+  'women_services_email',
+  'logo_url',
+  'brand_color',
 ] as const;
 
 const removeMissingOptionalColumns = <T extends Record<string, any>>(record: T, error: any): T => {
   const fallback = { ...record };
+  if (isMissingColumnError(error, 'logo_url') || isMissingColumnError(error, 'brand_color')) {
+    delete fallback.logo_url;
+    delete fallback.brand_color;
+  }
   optionalCompanyColumns.forEach((columnName) => {
     if (isMissingColumnError(error, columnName)) {
       delete fallback[columnName];
@@ -149,7 +166,11 @@ module.exports = async function handler(req: any, res: any) {
 
     if (req.method === 'GET') {
       if (slug) {
-        const { data, error } = await supabase.from('companies').select('*').eq('slug', slug).single();
+        const { data, error } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('slug', slug)
+          .single();
         if (error) {
           res.status(404).json({ error: 'Company not found' });
           return;
@@ -158,7 +179,10 @@ module.exports = async function handler(req: any, res: any) {
         return;
       }
 
-      const { data, error } = await supabase.from('companies').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .order('created_at', { ascending: false });
       if (error) {
         res.status(500).json({ error: error.message });
         return;
@@ -172,8 +196,9 @@ module.exports = async function handler(req: any, res: any) {
       const serviceType = body.serviceType || 'restaurant';
       const stylists = serviceType === 'friseur' ? normalizeStylists(body.stylists) : [];
       const splitServiceEmails = serviceType === 'friseur' && body.splitServiceEmails === true;
-      const womenServicesEmail =
-        splitServiceEmails ? normalizeOptionalEmail(body.womenServicesEmail) : null;
+      const womenServicesEmail = splitServiceEmails
+        ? normalizeOptionalEmail(body.womenServicesEmail)
+        : null;
       if (!body.name || !body.address || !body.hours || !body.email) {
         res.status(400).json({ error: 'Missing required fields' });
         return;
@@ -183,7 +208,11 @@ module.exports = async function handler(req: any, res: any) {
       let uniqueSlug = baseSlug;
       let suffix = 2;
       while (true) {
-        const { data } = await supabase.from('companies').select('id').eq('slug', uniqueSlug).maybeSingle();
+        const { data } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('slug', uniqueSlug)
+          .maybeSingle();
         if (!data) {
           break;
         }
@@ -207,22 +236,29 @@ module.exports = async function handler(req: any, res: any) {
         booking_buffer_minutes: normalizeBookingBufferMinutes(body.bookingBufferMinutes),
         time_selection_mode: normalizeTimeSelectionMode(body.timeSelectionMode),
         booking_mode: body.bookingMode === 'request' ? 'request' : 'confirm',
-        seating_options_enabled: serviceType === 'restaurant' && body.seatingOptionsEnabled === true,
+        seating_options_enabled:
+          serviceType === 'restaurant' && body.seatingOptionsEnabled === true,
         stylist_selection_enabled:
           serviceType === 'friseur' && body.stylistSelectionEnabled === true && stylists.length > 0,
-        stylists
+        stylists,
+        logo_url: normalizeLogoUrl(body.logoUrl),
+        brand_color: normalizeBrandColor(body.brandColor),
       };
       let { data, error } = await supabase.from('companies').insert(insert).select('*').single();
       if (error && splitServiceEmails && isMissingMailSplitColumn(error)) {
         res.status(500).json({
           error:
-            'Supabase-Spalten fuer Mail-Trennung fehlen oder Schema-Cache ist noch nicht aktualisiert.'
+            'Supabase-Spalten fuer Mail-Trennung fehlen oder Schema-Cache ist noch nicht aktualisiert.',
         });
         return;
       }
       if (error && hasMissingOptionalColumn(error)) {
         const fallbackInsert = removeMissingOptionalColumns(insert, error);
-        const fallbackResult = await supabase.from('companies').insert(fallbackInsert).select('*').single();
+        const fallbackResult = await supabase
+          .from('companies')
+          .insert(fallbackInsert)
+          .select('*')
+          .single();
         data = fallbackResult.data;
         error = fallbackResult.error;
       }
@@ -243,8 +279,9 @@ module.exports = async function handler(req: any, res: any) {
       const serviceType = body.serviceType || 'restaurant';
       const stylists = serviceType === 'friseur' ? normalizeStylists(body.stylists) : [];
       const splitServiceEmails = serviceType === 'friseur' && body.splitServiceEmails === true;
-      const womenServicesEmail =
-        splitServiceEmails ? normalizeOptionalEmail(body.womenServicesEmail) : null;
+      const womenServicesEmail = splitServiceEmails
+        ? normalizeOptionalEmail(body.womenServicesEmail)
+        : null;
       if (!body.name || !body.address || !body.hours || !body.email) {
         res.status(400).json({ error: 'Missing required fields' });
         return;
@@ -280,10 +317,13 @@ module.exports = async function handler(req: any, res: any) {
         booking_buffer_minutes: normalizeBookingBufferMinutes(body.bookingBufferMinutes),
         time_selection_mode: normalizeTimeSelectionMode(body.timeSelectionMode),
         booking_mode: body.bookingMode === 'request' ? 'request' : 'confirm',
-        seating_options_enabled: serviceType === 'restaurant' && body.seatingOptionsEnabled === true,
+        seating_options_enabled:
+          serviceType === 'restaurant' && body.seatingOptionsEnabled === true,
         stylist_selection_enabled:
           serviceType === 'friseur' && body.stylistSelectionEnabled === true && stylists.length > 0,
-        stylists
+        stylists,
+        logo_url: normalizeLogoUrl(body.logoUrl),
+        brand_color: normalizeBrandColor(body.brandColor),
       };
       if (body.loginPin) {
         updates.login_pin = String(body.loginPin).trim();
@@ -294,17 +334,27 @@ module.exports = async function handler(req: any, res: any) {
       if (body.slotIntervalMinutes !== undefined && body.slotIntervalMinutes !== null) {
         updates.slot_interval_minutes = normalizeSlotInterval(body.slotIntervalMinutes);
       }
-      let { data, error } = await supabase.from('companies').update(updates).eq('slug', slug).select('*').single();
+      let { data, error } = await supabase
+        .from('companies')
+        .update(updates)
+        .eq('slug', slug)
+        .select('*')
+        .single();
       if (error && splitServiceEmails && isMissingMailSplitColumn(error)) {
         res.status(500).json({
           error:
-            'Supabase-Spalten fuer Mail-Trennung fehlen oder Schema-Cache ist noch nicht aktualisiert.'
+            'Supabase-Spalten fuer Mail-Trennung fehlen oder Schema-Cache ist noch nicht aktualisiert.',
         });
         return;
       }
       if (error && hasMissingOptionalColumn(error)) {
         const fallbackUpdates = removeMissingOptionalColumns(updates, error);
-        const fallbackResult = await supabase.from('companies').update(fallbackUpdates).eq('slug', slug).select('*').single();
+        const fallbackResult = await supabase
+          .from('companies')
+          .update(fallbackUpdates)
+          .eq('slug', slug)
+          .select('*')
+          .single();
         data = fallbackResult.data;
         error = fallbackResult.error;
       }
