@@ -18,6 +18,28 @@
   border-bottom: 1px solid #e3e7ee;
 }
 
+.admin-leads-page .admin-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #1d2939;
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.admin-leads-page .admin-brand > span {
+  width: 31px;
+  height: 31px;
+  display: grid;
+  flex: 0 0 31px;
+  place-items: center;
+  border-radius: 9px;
+  background: linear-gradient(145deg, #4f46e5, #14b8a6);
+  color: #fff;
+  font-size: 0.75rem;
+}
+
 .leads-topbar nav {
   display: flex;
   align-items: center;

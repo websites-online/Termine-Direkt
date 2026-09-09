@@ -136,20 +136,33 @@ export class AdminLeadsComponent implements OnInit {
       return;
     }
     const isSalon = lead.category === 'friseur';
-    const subject = `Online-${isSalon ? 'Termine' : 'Reservierungen'} für ${lead.name}`;
+    const exampleName = isSalon ? 'Atelier7' : 'Osteria da Michele in Fürth';
+    const exampleUrl = isSalon
+      ? 'https://nextime-booking.de/atelier7'
+      : 'https://nextime-booking.de/osteria-da-michele';
+    const subject = `Eine Idee für ${lead.name}`;
     const body = [
-      `Guten Tag liebes Team von ${lead.name},`,
+      `Hallo liebes Team von ${lead.name},`,
       '',
-      `ich bin Daniel von Nextime. Wir helfen ${isSalon ? 'Friseursalons' : 'Restaurants'} dabei, ${
-        isSalon ? 'Termine' : 'Reservierungen'
-      } einfach online anzunehmen – über eine eigene Buchungsseite und ohne komplizierte Software.`,
+      `ich bin Daniel aus Nürnberg und habe Nextime als eigenes Projekt entwickelt. Gerade suche ich in der Umgebung nach ein paar sympathischen ${
+        isSalon ? 'Friseursalons' : 'Restaurants'
+      }, die meine Buchungssoftware kostenlos ausprobieren und mir ehrliches Feedback geben möchten.`,
       '',
-      `Bei meiner Recherche habe ich auf Ihrer Website noch keine direkte Online-${
-        isSalon ? 'Terminbuchung' : 'Reservierung'
-      } gefunden. Falls das für Sie interessant ist, zeige ich Ihnen gern unverbindlich, wie eine passende Seite für ${lead.name} aussehen könnte.`,
+      `Dabei bin ich auf ${lead.name} gestoßen und dachte, dass es gut passen könnte. Sie bekommen eine eigene Buchungsseite, über die Ihre ${
+        isSalon ? 'Kunden unkompliziert Termine' : 'Gäste unkompliziert Reservierungen'
+      } eintragen können.`,
       '',
-      'Freundliche Grüße',
-      'Daniel O. – Nextime',
+      'Die ersten 3 Monate sind komplett kostenlos und unverbindlich. Danach kostet Nextime 18,99 € pro Monat – natürlich nur, wenn Sie es weiter nutzen möchten.',
+      '',
+      `So sieht das zum Beispiel bei ${exampleName} aus:`,
+      exampleUrl,
+      '',
+      'Wenn Sie möchten, kann ich auch gerne bei Ihnen vorbeikommen und Ihnen Nextime vor Ort zeigen.',
+      '',
+      'Wenn Sie Lust haben, es auszuprobieren, antworten Sie mir einfach kurz. Ich richte Ihnen alles ein.',
+      '',
+      'Viele Grüße',
+      'Daniel von Nextime',
       'https://nextime-booking.de',
       '',
       'Falls Sie keine weitere Nachricht wünschen, genügt eine kurze Rückmeldung.',
