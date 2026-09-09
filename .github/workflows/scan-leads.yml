@@ -1,0 +1,48 @@
+name: Neue Leads rund um Nürnberg finden
+
+on:
+  schedule:
+    - cron: '15 7 * * 1'
+      timezone: 'Europe/Berlin'
+  workflow_dispatch:
+    inputs:
+      region:
+        description: 'Optional: nur eine Region scannen, z. B. Nürnberg oder Fürth'
+        required: false
+        type: string
+      max_new_leads:
+        description: 'Maximale Zahl neuer Leads'
+        required: false
+        default: '75'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lead-scanner
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Öffentliche Unternehmensdaten prüfen
+        run: node scripts/scan-leads.mjs
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SCAN_REGION: ${{ inputs.region }}
+          MAX_NEW_LEADS: ${{ inputs.max_new_leads || '75' }}
+          MAX_PER_REGION: '25'
+          MAX_CHECKED: '240'

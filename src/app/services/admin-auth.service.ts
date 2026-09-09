@@ -9,7 +9,7 @@ interface AdminLoginResponse {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AdminAuthService {
   private readonly tokenKey = 'admin_token';
@@ -18,7 +18,7 @@ export class AdminAuthService {
   constructor(private readonly http: HttpClient) {}
 
   login(email: string, password: string): Observable<boolean> {
-    if (environment.mockApi) {
+    if (this.isLocalMock()) {
       if (email !== environment.ADMIN_EMAIL || password.length < 6) {
         return throwError(() => new Error('Nicht berechtigt.'));
       }
@@ -29,13 +29,17 @@ export class AdminAuthService {
 
     return this.http.post<AdminLoginResponse>(this.loginUrl, { email, password }).pipe(
       tap((response) => this.storeToken(response.token)),
-      map(() => true)
+      map(() => true),
     );
   }
 
   private resolveLoginUrl(): string {
     const baseUrl = environment.API_BASE_URL || '';
-    if (typeof window !== 'undefined' && baseUrl.includes('localhost') && window.location.hostname !== 'localhost') {
+    if (
+      typeof window !== 'undefined' &&
+      baseUrl.includes('localhost') &&
+      window.location.hostname !== 'localhost'
+    ) {
       return '/api/admin/login';
     }
     return baseUrl.length > 0 ? `${baseUrl}/api/admin/login` : '/api/admin/login';
@@ -46,10 +50,27 @@ export class AdminAuthService {
   }
 
   isAuthenticated(): boolean {
-    return Boolean(localStorage.getItem(this.tokenKey));
+    const token = localStorage.getItem(this.tokenKey);
+    if (token === 'mock' && !this.isLocalMock()) {
+      localStorage.removeItem(this.tokenKey);
+      return false;
+    }
+    return Boolean(token);
+  }
+
+  getAuthToken(): string | null {
+    return localStorage.getItem(this.tokenKey);
   }
 
   private storeToken(token: string): void {
     localStorage.setItem(this.tokenKey, token);
+  }
+
+  private isLocalMock(): boolean {
+    return (
+      environment.mockApi &&
+      typeof window !== 'undefined' &&
+      window.location.hostname === 'localhost'
+    );
   }
 }

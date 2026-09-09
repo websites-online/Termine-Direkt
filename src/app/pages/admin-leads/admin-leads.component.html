@@ -1,0 +1,272 @@
+<section class="page admin-leads-page">
+  <div class="admin-leads-shell">
+    <header class="leads-topbar">
+      <a class="admin-brand" routerLink="/admin"><span>N</span>Nextime Admin</a>
+      <nav>
+        <a routerLink="/admin">Unternehmen</a>
+        <a routerLink="/admin/statistiken">Statistiken</a>
+        <a class="active" routerLink="/admin/leads">Leads</a>
+        <button type="button" (click)="logout()">Logout</button>
+      </nav>
+    </header>
+
+    <main>
+      <header class="leads-header">
+        <div>
+          <p class="admin-eyebrow">Vertrieb rund um Nürnberg</p>
+          <h1>Neue Unternehmen entdecken.</h1>
+          <p>
+            Jeden Montag werden Friseure und Restaurants ohne erkennbares Online-Buchungssystem
+            ergänzt.
+          </p>
+        </div>
+        <div class="scan-status">
+          <span class="scan-dot"></span>
+          <span><small>Nächster automatischer Scan</small><strong>Montag · 07:15 Uhr</strong></span>
+        </div>
+      </header>
+
+      <div class="lead-notice lead-notice--success" *ngIf="successMessage">
+        {{ successMessage }}<button type="button" (click)="successMessage = ''">×</button>
+      </div>
+      <div class="lead-notice lead-notice--error" *ngIf="errorMessage">
+        {{ errorMessage }}<button type="button" (click)="errorMessage = ''">×</button>
+      </div>
+
+      <section class="lead-summary" aria-label="Lead-Zusammenfassung">
+        <article>
+          <span class="lead-summary-icon lead-summary-icon--indigo">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
+          </span>
+          <span
+            ><small>Neue Leads</small><strong>{{ newCount }}</strong></span
+          >
+        </article>
+        <article>
+          <span class="lead-summary-icon lead-summary-icon--teal">
+            <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 7l8 6 8-6"></path></svg>
+          </span>
+          <span
+            ><small>Mit E-Mail</small><strong>{{ emailCount }}</strong></span
+          >
+        </article>
+        <article>
+          <span class="lead-summary-icon lead-summary-icon--orange">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M6 3h4l2 5-3 2c1.4 3 3 4.6 6 6l2-3 5 2v4c0 1.1-.9 2-2 2C10.6 21 3 13.4 3 4c0-.6.4-1 1-1z"
+              ></path>
+            </svg>
+          </span>
+          <span
+            ><small>Mit Telefon</small><strong>{{ phoneCount }}</strong></span
+          >
+        </article>
+        <article>
+          <span class="lead-summary-icon lead-summary-icon--green">
+            <svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></svg>
+          </span>
+          <span
+            ><small>Hohe Sicherheit</small><strong>{{ highConfidenceCount }}</strong></span
+          >
+        </article>
+      </section>
+
+      <section class="lead-toolbar">
+        <label class="lead-search">
+          <svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path>
+          </svg>
+          <input
+            [(ngModel)]="search"
+            type="search"
+            placeholder="Name, Ort, E-Mail oder Telefon suchen"
+          />
+        </label>
+        <label>
+          <span>Status</span>
+          <select [(ngModel)]="statusFilter">
+            <option value="open">Offene Leads</option>
+            <option value="all">Alle Status</option>
+            <option *ngFor="let option of statusOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </label>
+        <label>
+          <span>Art</span>
+          <select [(ngModel)]="categoryFilter">
+            <option value="all">Alle</option>
+            <option value="friseur">Friseure</option>
+            <option value="restaurant">Restaurants</option>
+          </select>
+        </label>
+        <label>
+          <span>Kontakt</span>
+          <select [(ngModel)]="contactFilter">
+            <option value="all">Alle</option>
+            <option value="email">Mit E-Mail</option>
+            <option value="phone">Mit Telefon</option>
+          </select>
+        </label>
+      </section>
+
+      <div class="leads-loading" *ngIf="isLoading"><span></span><span></span><span></span></div>
+
+      <section class="lead-list" *ngIf="!isLoading">
+        <div class="lead-list-heading">
+          <div>
+            <p class="admin-eyebrow">Gefundene Unternehmen</p>
+            <h2>{{ visibleLeads.length }} passende Leads</h2>
+          </div>
+          <span>Priorität: Nürnberg → Fürth → Erlangen → Umgebung</span>
+        </div>
+
+        <p class="leads-empty" *ngIf="visibleLeads.length === 0">
+          Für diese Filter wurden keine Leads gefunden.
+        </p>
+
+        <article
+          class="lead-card"
+          *ngFor="let lead of visibleLeads; trackBy: trackByLead"
+          [class.lead-card--new]="lead.status === 'new'"
+        >
+          <div class="lead-main">
+            <div class="lead-title-row">
+              <span
+                class="lead-category-icon"
+                [class.lead-category-icon--salon]="lead.category === 'friseur'"
+              >
+                <svg *ngIf="lead.category === 'friseur'" viewBox="0 0 24 24">
+                  <circle cx="6" cy="7" r="3"></circle>
+                  <circle cx="6" cy="17" r="3"></circle>
+                  <path d="m8.5 8.5 11-6M8.5 15.5l11 6M9 12h5"></path>
+                </svg>
+                <svg *ngIf="lead.category === 'restaurant'" viewBox="0 0 24 24">
+                  <path d="M7 3v8M4 3v5c0 2 1 3 3 3s3-1 3-3V3M7 11v10M16 3c3 3 3 8 0 11v7"></path>
+                </svg>
+              </span>
+              <div>
+                <span class="lead-type">{{ categoryLabel(lead.category) }} · {{ lead.city }}</span>
+                <h3>{{ lead.name }}</h3>
+                <p>
+                  {{
+                    lead.address || (lead.postcode ? lead.postcode + ' ' + lead.city : lead.city)
+                  }}
+                </p>
+              </div>
+            </div>
+
+            <div class="lead-contact-grid">
+              <div>
+                <small>E-Mail</small>
+                <a *ngIf="lead.email" [href]="'mailto:' + lead.email">{{ lead.email }}</a>
+                <span *ngIf="!lead.email">Nicht gefunden</span>
+              </div>
+              <div>
+                <small>Telefon</small>
+                <button *ngIf="lead.phone" type="button" (click)="copyPhone(lead)">
+                  {{ lead.phone }}
+                </button>
+                <span *ngIf="!lead.phone">Nicht gefunden</span>
+              </div>
+              <div>
+                <small>Website</small>
+                <a
+                  *ngIf="lead.website"
+                  [href]="lead.website"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >Website öffnen ↗</a
+                >
+                <span *ngIf="!lead.website">Nicht gefunden</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="lead-assessment">
+            <div class="confidence-ring" [style.--confidence]="lead.confidence + '%'">
+              <strong>{{ lead.confidence }} %</strong>
+            </div>
+            <div>
+              <strong>{{ confidenceLabel(lead.confidence) }}</strong>
+              <p>{{ lead.bookingEvidence || 'Noch keine Begründung vorhanden.' }}</p>
+            </div>
+          </div>
+
+          <div class="lead-meta">
+            <span>Gefunden {{ formatDate(lead.discoveredAt) }}</span>
+            <a
+              *ngIf="lead.sourceUrl"
+              [href]="lead.sourceUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Quelle prüfen ↗</a
+            >
+            <select
+              [ngModel]="lead.status"
+              (ngModelChange)="updateStatus(lead, $event)"
+              [disabled]="updatingIds.has(lead.id)"
+              [attr.aria-label]="'Status von ' + lead.name"
+            >
+              <option *ngFor="let option of statusOptions" [value]="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="lead-actions">
+            <button
+              class="lead-action lead-action--email"
+              type="button"
+              *ngIf="lead.email"
+              (click)="prepareEmail(lead)"
+            >
+              <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 7l8 6 8-6"></path></svg>E-Mail
+              vorbereiten
+            </button>
+            <a class="lead-action" *ngIf="lead.phone" [href]="'tel:' + lead.phone">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M6 3h4l2 5-3 2c1.4 3 3 4.6 6 6l2-3 5 2v4c0 1.1-.9 2-2 2C10.6 21 3 13.4 3 4c0-.6.4-1 1-1z"
+                ></path></svg
+              >Anrufen
+            </a>
+            <a
+              class="lead-action"
+              *ngIf="!lead.email && lead.contactUrl"
+              [href]="lead.contactUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Kontaktseite</a
+            >
+            <button
+              class="lead-action lead-action--muted"
+              type="button"
+              (click)="updateStatus(lead, 'excluded')"
+            >
+              Hat bereits System
+            </button>
+          </div>
+        </article>
+      </section>
+
+      <aside class="lead-legal-note">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 3 4 6v6c0 5 3.4 8.2 8 9 4.6-.8 8-4 8-9V6zM12 8v5M12 17h.01"></path>
+        </svg>
+        <p>
+          Der Scanner versendet nichts automatisch. Prüfe Website und Kontaktdaten vor jeder
+          Kontaktaufnahme. Öffentlich angegebene E-Mail-Adressen sind keine automatische
+          Werbeeinwilligung.
+        </p>
+      </aside>
+
+      <footer class="lead-source-note">
+        Unternehmensdaten © OpenStreetMap-Mitwirkende. Websites werden nur zur Lead-Prüfung
+        aufgerufen.
+      </footer>
+    </main>
+  </div>
+</section>

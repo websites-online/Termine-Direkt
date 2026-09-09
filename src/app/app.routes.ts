@@ -8,6 +8,7 @@ import { DatenschutzComponent } from './pages/datenschutz/datenschutz.component'
 import { AdminLoginComponent } from './pages/admin-login/admin-login.component';
 import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard.component';
 import { AdminStatsComponent } from './pages/admin-stats/admin-stats.component';
+import { AdminLeadsComponent } from './pages/admin-leads/admin-leads.component';
 import { adminGuard } from './guards/admin.guard';
 import { CompanyLoginComponent } from './pages/company-login/company-login.component';
 import { CompanyDashboardComponent } from './pages/company-dashboard/company-dashboard.component';
@@ -39,6 +40,11 @@ export const routes: Routes = [
   {
     path: 'admin/unternehmen/:slug',
     component: AdminDashboardComponent,
+    canActivate: [adminGuard],
+  },
+  {
+    path: 'admin/leads',
+    component: AdminLeadsComponent,
     canActivate: [adminGuard],
   },
   {

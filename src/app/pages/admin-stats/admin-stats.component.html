@@ -8,6 +8,7 @@
         </div>
         <div class="stats-actions">
           <a class="btn btn-outline" routerLink="/admin">Zum Dashboard</a>
+          <a class="btn btn-outline" routerLink="/admin/leads">Leads</a>
           <a class="btn btn-outline" routerLink="/">Zur Startseite</a>
           <button class="btn btn-outline" type="button" (click)="logout()">Logout</button>
         </div>
@@ -18,7 +19,9 @@
       <label>
         <span class="label">Zeitraum</span>
         <select class="input" [(ngModel)]="period" (change)="onPeriodChange()">
-          <option *ngFor="let option of periodOptions" [value]="option.value">{{ option.label }}</option>
+          <option *ngFor="let option of periodOptions" [value]="option.value">
+            {{ option.label }}
+          </option>
         </select>
       </label>
       <label *ngIf="period === 'month'">
@@ -49,7 +52,8 @@
         </div>
       </div>
       <p class="helptext" *ngIf="stats.requestsTableAvailable === false">
-        Hinweis: Die Tabelle <code>booking_requests</code> fehlt in Supabase. Anfragen werden aktuell nicht gezaehlt.
+        Hinweis: Die Tabelle <code>booking_requests</code> fehlt in Supabase. Anfragen werden
+        aktuell nicht gezaehlt.
       </p>
     </div>
 
