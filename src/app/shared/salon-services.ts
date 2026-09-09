@@ -4,6 +4,7 @@ export type SalonServiceOption = {
   value: string;
   label: string;
   audience: SalonServiceAudience;
+  price?: number;
 };
 
 export const SALON_SERVICES: SalonServiceOption[] = [
@@ -18,16 +19,20 @@ export const SALON_SERVICES: SalonServiceOption[] = [
   {
     value: 'waschen_schneiden_foehnen_frauen',
     label: 'Waschen, Schneiden & Föhnen (Frauen)',
-    audience: 'women'
+    audience: 'women',
   },
   { value: 'waschen_foehnen_frauen', label: 'Waschen & Föhnen (Frauen)', audience: 'women' },
   {
     value: 'faerben_schneiden_frauen',
     label: 'Färben und Schneiden (Frauen)',
-    audience: 'women'
+    audience: 'women',
   },
   { value: 'ansatzfarbe_frauen', label: 'Ansatzfarbe (Frauen)', audience: 'women' },
   { value: 'balayage_frauen', label: 'Balayage (Frauen)', audience: 'women' },
-  { value: 'straehnen_highlights_frauen', label: 'Strähnen / Highlights (Frauen)', audience: 'women' },
-  { value: 'sonstiges', label: 'Sonstiges', audience: 'general' }
+  {
+    value: 'straehnen_highlights_frauen',
+    label: 'Strähnen / Highlights (Frauen)',
+    audience: 'women',
+  },
+  { value: 'sonstiges', label: 'Sonstiges', audience: 'general' },
 ];

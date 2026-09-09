@@ -297,6 +297,90 @@
                   placeholder="Ali&#10;Merve&#10;Sarah"
                 ></textarea>
               </label>
+              <div *ngIf="companyForm.value.serviceType === 'friseur'" class="salon-services-panel">
+                <div class="salon-services-heading">
+                  <div>
+                    <strong>Leistungen und Preise</strong>
+                    <small>Trage die Leistungen dieses Salons frei ein.</small>
+                  </div>
+                  <span>{{ salonServiceSettings.length }} Leistungen</span>
+                </div>
+
+                <label class="switch-row salon-price-switch">
+                  <span
+                    ><strong>Preise auf der Buchungsseite anzeigen</strong
+                    ><small
+                      >Ausgeschaltet bleiben die Preise gespeichert, sind für Kunden aber nicht
+                      sichtbar.</small
+                    ></span
+                  >
+                  <input type="checkbox" formControlName="showServicePrices" />
+                </label>
+
+                <div class="salon-service-list">
+                  <p class="salon-service-empty" *ngIf="salonServiceSettings.length === 0">
+                    Noch keine Leistungen eingetragen. Füge die erste Leistung hinzu.
+                  </p>
+                  <div class="salon-service-row" *ngFor="let service of salonServiceSettings">
+                    <div class="salon-service-row-top">
+                      <label class="salon-service-name">
+                        <span>Name der Leistung*</span>
+                        <input
+                          class="salon-service-name-input"
+                          type="text"
+                          maxlength="120"
+                          placeholder="z. B. Waschen, Schneiden & Föhnen"
+                          [value]="service.label"
+                          (input)="updateSalonServiceLabel(service, $event)"
+                        />
+                      </label>
+                      <button
+                        class="salon-service-remove"
+                        type="button"
+                        aria-label="Leistung entfernen"
+                        (click)="removeSalonService(service)"
+                      >
+                        Entfernen
+                      </button>
+                    </div>
+                    <div class="salon-service-fields">
+                      <label class="salon-service-audience">
+                        <span>Kategorie</span>
+                        <select
+                          [value]="service.audience"
+                          (change)="updateSalonServiceAudience(service, $event)"
+                        >
+                          <option value="general">Allgemein</option>
+                          <option value="men">Herren</option>
+                          <option value="women">Damen</option>
+                        </select>
+                      </label>
+                      <label class="salon-service-price">
+                        <span>Preis</span>
+                        <div>
+                          <input
+                            type="number"
+                            min="0"
+                            max="10000"
+                            step="0.01"
+                            inputmode="decimal"
+                            placeholder="0,00"
+                            [value]="service.price ?? ''"
+                            (input)="updateSalonServicePrice(service, $event)"
+                          />
+                          <span>€</span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <button class="salon-service-add" type="button" (click)="addSalonService()">
+                  <span>+</span> Service hinzufügen
+                </button>
+                <p class="salon-service-hint" *ngIf="companyForm.value.showServicePrices">
+                  Bei aktivierter Preisanzeige benötigt jede Leistung einen Preis.
+                </p>
+              </div>
             </div>
           </section>
 

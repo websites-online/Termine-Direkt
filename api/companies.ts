@@ -18,6 +18,8 @@ type CompanyRow = {
   seating_options_enabled?: boolean | null;
   stylist_selection_enabled?: boolean | null;
   stylists?: unknown;
+  salon_services?: unknown;
+  show_service_prices?: boolean | null;
   logo_url?: string | null;
   brand_color?: string | null;
   plan_tier?: string | null;
@@ -57,6 +59,8 @@ const toCompanyResponse = (row: CompanyRow) => ({
   seatingOptionsEnabled: row.seating_options_enabled ?? false,
   stylistSelectionEnabled: row.service_type === 'friseur' && row.stylist_selection_enabled === true,
   stylists: row.service_type === 'friseur' ? normalizeStylists(row.stylists) : [],
+  salonServices: row.service_type === 'friseur' ? normalizeSalonServices(row.salon_services) : [],
+  showServicePrices: row.service_type === 'friseur' && row.show_service_prices === true,
   logoUrl: normalizeLogoUrl(row.logo_url) || undefined,
   brandColor: normalizeBrandColor(row.brand_color),
   planTier: row.plan_tier === 'pro' ? 'pro' : 'starter',
@@ -110,6 +114,55 @@ const normalizeStylists = (value: unknown): string[] => {
   );
 };
 
+const normalizeSalonServices = (
+  value: unknown,
+): Array<{
+  value: string;
+  label: string;
+  audience: 'men' | 'women' | 'general';
+  price?: number;
+}> => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const services = new Map<
+    string,
+    {
+      value: string;
+      label: string;
+      audience: 'men' | 'women' | 'general';
+      price?: number;
+    }
+  >();
+  value.forEach((item) => {
+    if (!item || typeof item !== 'object') {
+      return;
+    }
+    const record = item as Record<string, unknown>;
+    const serviceValue = String(record.value || '').trim();
+    const label = String(record.label || '').trim();
+    if (!/^[a-z0-9_]{1,80}$/.test(serviceValue) || !label || label.length > 120) {
+      return;
+    }
+    const audience =
+      record.audience === 'men' || record.audience === 'women' ? record.audience : 'general';
+    const price = Number(record.price);
+    services.set(serviceValue, {
+      value: serviceValue,
+      label,
+      audience,
+      ...(record.price !== undefined &&
+      record.price !== null &&
+      Number.isFinite(price) &&
+      price >= 0 &&
+      price <= 10000
+        ? { price: Math.round(price * 100) / 100 }
+        : {}),
+    });
+  });
+  return Array.from(services.values()).slice(0, 100);
+};
+
 const isMissingColumnError = (error: any, columnName: string): boolean => {
   const message = String(error?.message || '').toLowerCase();
   return (
@@ -123,6 +176,8 @@ const optionalCompanyColumns = [
   'booking_buffer_minutes',
   'stylist_selection_enabled',
   'stylists',
+  'salon_services',
+  'show_service_prices',
   'split_service_emails',
   'women_services_email',
   'logo_url',
@@ -132,6 +187,13 @@ const optionalCompanyColumns = [
 
 const removeMissingOptionalColumns = <T extends Record<string, any>>(record: T, error: any): T => {
   const fallback = { ...record };
+  if (
+    isMissingColumnError(error, 'salon_services') ||
+    isMissingColumnError(error, 'show_service_prices')
+  ) {
+    delete fallback.salon_services;
+    delete fallback.show_service_prices;
+  }
   if (isMissingColumnError(error, 'logo_url') || isMissingColumnError(error, 'brand_color')) {
     delete fallback.logo_url;
     delete fallback.brand_color;
@@ -198,6 +260,8 @@ module.exports = async function handler(req: any, res: any) {
       const body = req.body || {};
       const serviceType = body.serviceType || 'restaurant';
       const stylists = serviceType === 'friseur' ? normalizeStylists(body.stylists) : [];
+      const salonServices =
+        serviceType === 'friseur' ? normalizeSalonServices(body.salonServices) : [];
       const splitServiceEmails = serviceType === 'friseur' && body.splitServiceEmails === true;
       const womenServicesEmail = splitServiceEmails
         ? normalizeOptionalEmail(body.womenServicesEmail)
@@ -244,6 +308,8 @@ module.exports = async function handler(req: any, res: any) {
         stylist_selection_enabled:
           serviceType === 'friseur' && body.stylistSelectionEnabled === true && stylists.length > 0,
         stylists,
+        salon_services: salonServices,
+        show_service_prices: serviceType === 'friseur' && body.showServicePrices === true,
         logo_url: normalizeLogoUrl(body.logoUrl),
         brand_color: normalizeBrandColor(body.brandColor),
         plan_tier: body.planTier === 'pro' ? 'pro' : 'starter',
@@ -282,6 +348,8 @@ module.exports = async function handler(req: any, res: any) {
       const body = req.body || {};
       const serviceType = body.serviceType || 'restaurant';
       const stylists = serviceType === 'friseur' ? normalizeStylists(body.stylists) : [];
+      const salonServices =
+        serviceType === 'friseur' ? normalizeSalonServices(body.salonServices) : [];
       const splitServiceEmails = serviceType === 'friseur' && body.splitServiceEmails === true;
       const womenServicesEmail = splitServiceEmails
         ? normalizeOptionalEmail(body.womenServicesEmail)
@@ -326,6 +394,8 @@ module.exports = async function handler(req: any, res: any) {
         stylist_selection_enabled:
           serviceType === 'friseur' && body.stylistSelectionEnabled === true && stylists.length > 0,
         stylists,
+        salon_services: salonServices,
+        show_service_prices: serviceType === 'friseur' && body.showServicePrices === true,
         logo_url: normalizeLogoUrl(body.logoUrl),
         brand_color: normalizeBrandColor(body.brandColor),
         plan_tier: body.planTier === 'pro' ? 'pro' : 'starter',

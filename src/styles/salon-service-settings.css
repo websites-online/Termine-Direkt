@@ -1,0 +1,236 @@
+.admin-workspace .salon-services-panel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #e4e8ef;
+  border-radius: 12px;
+  background: #fafbfc;
+}
+
+.admin-workspace .salon-services-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-workspace .salon-services-heading > div {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-workspace .salon-services-heading strong {
+  color: #344054;
+  font-size: 0.8rem;
+}
+
+.admin-workspace .salon-services-heading small,
+.admin-workspace .salon-service-hint {
+  color: #8a94a6;
+  font-size: 0.66rem;
+  line-height: 1.45;
+}
+
+.admin-workspace .salon-services-heading > span {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border-radius: 99px;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 0.6rem;
+  font-weight: 750;
+}
+
+.admin-workspace .salon-price-switch {
+  background: #fff;
+}
+
+.admin-workspace .salon-service-list {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-workspace .salon-service-row {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e4e8ef;
+  border-radius: 9px;
+  background: #fff;
+  border-color: #cfd5ff;
+}
+
+.admin-workspace .salon-service-row-top {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-workspace .salon-service-name {
+  flex: 1;
+  min-width: 0;
+  display: grid !important;
+  gap: 4px !important;
+}
+
+.admin-workspace .salon-service-name-input,
+.admin-workspace .salon-service-audience select {
+  width: 100%;
+  border: 1px solid #dfe4eb;
+  border-radius: 8px;
+  outline: 0;
+  background: #fff;
+  color: #344054;
+  font: inherit;
+  font-size: 0.68rem;
+}
+
+.admin-workspace .salon-service-name-input {
+  min-height: 34px;
+  padding: 7px 9px;
+}
+
+.admin-workspace .salon-service-name-input:focus,
+.admin-workspace .salon-service-audience select:focus,
+.admin-workspace .salon-service-price > div:focus-within {
+  border-color: #7770df;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.09);
+}
+
+.admin-workspace .salon-service-remove {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: #fff1f1;
+  color: #b4232e;
+  font: inherit;
+  font-size: 0.58rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.admin-workspace .salon-service-fields {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 9px;
+}
+
+.admin-workspace .salon-service-audience {
+  min-width: 0;
+  display: grid !important;
+  gap: 4px !important;
+}
+
+.admin-workspace .salon-service-name > span,
+.admin-workspace .salon-service-audience > span {
+  color: #98a2b3;
+  font-size: 0.56rem;
+  font-weight: 700;
+}
+
+.admin-workspace .salon-service-audience select {
+  min-height: 34px;
+  padding: 6px 8px;
+}
+
+.admin-workspace .salon-service-price {
+  display: grid !important;
+  gap: 4px !important;
+}
+
+.admin-workspace .salon-service-price > span {
+  color: #98a2b3;
+  font-size: 0.56rem;
+  font-weight: 700;
+}
+
+.admin-workspace .salon-service-price > div {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid #dfe4eb;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.admin-workspace .salon-service-price input {
+  width: 100%;
+  min-width: 0;
+  padding: 7px 4px 7px 9px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #344054;
+  font: inherit;
+  font-size: 0.68rem;
+}
+
+.admin-workspace .salon-service-price > div > span {
+  padding-right: 8px;
+  color: #667085;
+  font-size: 0.65rem;
+  font-weight: 750;
+}
+
+.admin-workspace .salon-service-hint {
+  margin: 0;
+  color: #6b63d9;
+}
+
+.admin-workspace .salon-service-add {
+  min-height: 39px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px dashed #b9bdf2;
+  border-radius: 9px;
+  background: #f7f7ff;
+  color: #5149c6;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.admin-workspace .salon-service-empty {
+  margin: 0;
+  padding: 16px;
+  border: 1px dashed #d8dce6;
+  border-radius: 9px;
+  color: #8a94a6;
+  font-size: 0.67rem;
+  text-align: center;
+}
+
+.admin-workspace .salon-service-add > span {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+@media (max-width: 720px) {
+  .admin-workspace .salon-service-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-workspace .salon-services-panel {
+    padding: 12px;
+  }
+
+  .admin-workspace .salon-services-heading {
+    align-items: flex-start;
+  }
+
+  .admin-workspace .salon-service-row-top {
+    align-items: flex-start;
+  }
+}

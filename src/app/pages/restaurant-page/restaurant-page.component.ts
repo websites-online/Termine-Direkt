@@ -5,7 +5,11 @@ import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { Company, CompanyApiService } from '../../services/company-api.service';
-import { SALON_SERVICES, SalonServiceAudience } from '../../shared/salon-services';
+import {
+  SALON_SERVICES,
+  SalonServiceAudience,
+  SalonServiceOption,
+} from '../../shared/salon-services';
 
 type TimeRange = { start: number; end: number };
 type ParsedSchedule = {
@@ -306,8 +310,18 @@ export class RestaurantPageComponent implements OnInit {
     return this.isSalon ? 'Kunden*' : 'Personen*';
   }
 
-  get salonServices() {
-    return SALON_SERVICES;
+  get salonServices(): SalonServiceOption[] {
+    return this.company?.salonServices?.length ? this.company.salonServices : SALON_SERVICES;
+  }
+
+  formatSalonServiceOption(service: SalonServiceOption): string {
+    if (this.company?.showServicePrices !== true || service.price === undefined) {
+      return service.label;
+    }
+    return `${service.label} – ${new Intl.NumberFormat('de-DE', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(service.price)}`;
   }
 
   get seatingOptions(): Array<{ value: string; label: string }> {

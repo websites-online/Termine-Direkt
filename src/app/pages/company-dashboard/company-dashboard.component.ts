@@ -55,10 +55,21 @@ export class CompanyDashboardComponent implements OnInit {
   isEntryPanelOpen = false;
   entryMode: 'appointment' | 'block' = 'appointment';
 
-  readonly serviceOptions = SALON_SERVICES.map((service) => ({
-    value: service.label,
-    label: service.label,
-  }));
+  get serviceOptions(): Array<{ value: string; label: string }> {
+    const services = this.company?.salonServices?.length
+      ? this.company.salonServices
+      : SALON_SERVICES;
+    return services.map((service) => ({
+      value: service.label,
+      label:
+        this.company?.showServicePrices === true && service.price !== undefined
+          ? `${service.label} – ${new Intl.NumberFormat('de-DE', {
+              style: 'currency',
+              currency: 'EUR',
+            }).format(service.price)}`
+          : service.label,
+    }));
+  }
 
   readonly bookingForm = this.formBuilder.group({
     date: [this.getToday(), Validators.required],

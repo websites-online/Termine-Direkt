@@ -6,6 +6,9 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { AdminAuthService } from '../../services/admin-auth.service';
 import { Company, CompanyApiService, TimeSelectionMode } from '../../services/company-api.service';
+import { SalonServiceAudience, SalonServiceOption } from '../../shared/salon-services';
+
+type SalonServiceSetting = SalonServiceOption;
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -24,6 +27,7 @@ export class AdminDashboardComponent implements OnInit {
   formError = '';
   formSuccess = '';
   logoError = '';
+  salonServiceSettings: SalonServiceSetting[] = this.createDefaultSalonServiceSettings();
   readonly companyForm = this.formBuilder.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     address: ['Beispielstraße 12, 12345 Musterstadt', Validators.required],
@@ -38,6 +42,7 @@ export class AdminDashboardComponent implements OnInit {
     seatingOptionsEnabled: [false],
     stylistSelectionEnabled: [false],
     stylistsText: [''],
+    showServicePrices: [false],
     loginPin: [''],
     slotCapacity: [3, [Validators.required, Validators.min(1), Validators.max(3)]],
     slotIntervalMinutes: [45, Validators.required],
@@ -81,6 +86,34 @@ export class AdminDashboardComponent implements OnInit {
     const serviceType = (value.serviceType || 'restaurant') as 'restaurant' | 'friseur';
     const splitServiceEmails = serviceType === 'friseur' && value.splitServiceEmails === true;
     const stylists = this.parseStylistNames(value.stylistsText);
+    const salonServices =
+      serviceType === 'friseur'
+        ? this.salonServiceSettings.map((service) => ({
+            ...service,
+            label: service.label.trim(),
+          }))
+        : [];
+    if (serviceType === 'friseur' && salonServices.length === 0) {
+      this.formError = 'Bitte mindestens eine Friseur-Leistung auswählen.';
+      return;
+    }
+    if (serviceType === 'friseur' && salonServices.some((service) => !service.label)) {
+      this.formError = 'Bitte für jede ausgewählte Leistung einen Namen eintragen.';
+      return;
+    }
+    const serviceNames = salonServices.map((service) => service.label.toLocaleLowerCase('de'));
+    if (serviceType === 'friseur' && new Set(serviceNames).size !== serviceNames.length) {
+      this.formError = 'Jeder Service darf nur einmal vorkommen.';
+      return;
+    }
+    if (
+      serviceType === 'friseur' &&
+      value.showServicePrices === true &&
+      salonServices.some((service) => service.price === undefined)
+    ) {
+      this.formError = 'Bitte für jede ausgewählte Leistung einen Preis eintragen.';
+      return;
+    }
     const payload = {
       name: value.name || 'Neues Unternehmen',
       address: value.address || 'Beispielstraße 12, 12345 Musterstadt',
@@ -98,6 +131,8 @@ export class AdminDashboardComponent implements OnInit {
       stylistSelectionEnabled:
         serviceType === 'friseur' && value.stylistSelectionEnabled === true && stylists.length > 0,
       stylists: serviceType === 'friseur' ? stylists : [],
+      salonServices,
+      showServicePrices: serviceType === 'friseur' && value.showServicePrices === true,
       loginPin: value.loginPin?.trim() || undefined,
       slotCapacity: Number(value.slotCapacity || 3),
       slotIntervalMinutes: Number(value.slotIntervalMinutes || 45) as 30 | 45 | 60,
@@ -150,6 +185,7 @@ export class AdminDashboardComponent implements OnInit {
       seatingOptionsEnabled: company.seatingOptionsEnabled || false,
       stylistSelectionEnabled: company.stylistSelectionEnabled || false,
       stylistsText: (company.stylists || []).join('\n'),
+      showServicePrices: company.showServicePrices || false,
       loginPin: '',
       slotCapacity: company.slotCapacity ?? 3,
       slotIntervalMinutes: company.slotIntervalMinutes ?? 45,
@@ -158,6 +194,7 @@ export class AdminDashboardComponent implements OnInit {
       logoUrl: company.logoUrl || '',
       brandColor: company.brandColor || '#4f46e5',
     });
+    this.configureSalonServiceSettings(company.salonServices);
     this.updateWomenServicesEmailValidators();
   }
 
@@ -229,6 +266,7 @@ export class AdminDashboardComponent implements OnInit {
       seatingOptionsEnabled: false,
       stylistSelectionEnabled: false,
       stylistsText: '',
+      showServicePrices: false,
       loginPin: this.createRandomPin(),
       slotCapacity: 3,
       slotIntervalMinutes: 45,
@@ -237,6 +275,7 @@ export class AdminDashboardComponent implements OnInit {
       logoUrl: '',
       brandColor: '#4f46e5',
     });
+    this.salonServiceSettings = this.createDefaultSalonServiceSettings();
     this.logoError = '';
     this.updateWomenServicesEmailValidators();
     this.companyForm.markAsPristine();
@@ -244,6 +283,46 @@ export class AdminDashboardComponent implements OnInit {
 
   generateLoginPin(): void {
     this.companyForm.patchValue({ loginPin: this.createRandomPin() });
+    this.companyForm.markAsDirty();
+  }
+
+  updateSalonServicePrice(service: SalonServiceSetting, event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    const price = Number(value);
+    service.price =
+      value !== '' && Number.isFinite(price) && price >= 0
+        ? Math.round(Math.min(price, 10000) * 100) / 100
+        : undefined;
+    this.companyForm.markAsDirty();
+  }
+
+  addSalonService(): void {
+    if (this.salonServiceSettings.length >= 100) {
+      this.formError = 'Es können maximal 100 Leistungen angelegt werden.';
+      return;
+    }
+    this.salonServiceSettings.push({
+      value: `custom_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+      label: '',
+      audience: 'general',
+    });
+    this.companyForm.markAsDirty();
+  }
+
+  removeSalonService(service: SalonServiceSetting): void {
+    this.salonServiceSettings = this.salonServiceSettings.filter((item) => item !== service);
+    this.companyForm.markAsDirty();
+  }
+
+  updateSalonServiceLabel(service: SalonServiceSetting, event: Event): void {
+    service.label = (event.target as HTMLInputElement).value.slice(0, 120);
+    this.companyForm.markAsDirty();
+  }
+
+  updateSalonServiceAudience(service: SalonServiceSetting, event: Event): void {
+    const audience = (event.target as HTMLSelectElement).value;
+    service.audience =
+      audience === 'men' || audience === 'women' ? audience : ('general' as SalonServiceAudience);
     this.companyForm.markAsDirty();
   }
 
@@ -365,5 +444,13 @@ export class AdminDashboardComponent implements OnInit {
       control.setErrors(null);
     }
     control.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private createDefaultSalonServiceSettings(): SalonServiceSetting[] {
+    return [];
+  }
+
+  private configureSalonServiceSettings(services: SalonServiceOption[] | undefined): void {
+    this.salonServiceSettings = (services || []).map((service) => ({ ...service }));
   }
 }

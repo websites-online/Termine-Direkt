@@ -202,7 +202,7 @@
             <select class="input" formControlName="service">
               <option value="" disabled>Bitte wählen</option>
               <option *ngFor="let service of salonServices" [value]="service.value">
-                {{ service.label }}
+                {{ formatSalonServiceOption(service) }}
               </option>
             </select>
             <span

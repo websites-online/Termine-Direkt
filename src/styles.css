@@ -4,6 +4,7 @@
 @import './app/pages/company-dashboard/company-dashboard.component.css';
 @import './styles/company-statistics.css';
 @import './styles/admin-leads.css';
+@import './styles/salon-service-settings.css';
 
 * {
   box-sizing: border-box;
