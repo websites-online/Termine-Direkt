@@ -46,3 +46,4 @@ jobs:
           MAX_NEW_LEADS: ${{ inputs.max_new_leads || '75' }}
           MAX_PER_REGION: '25'
           MAX_CHECKED: '240'
+          OVERPASS_TIMEOUT_MS: '45000'

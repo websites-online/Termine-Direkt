@@ -15,6 +15,10 @@ const supabase = dryRun
 const maxNewLeads = Math.min(Math.max(Number(process.env.MAX_NEW_LEADS || 75), 1), 200);
 const maxPerRegion = Math.min(Math.max(Number(process.env.MAX_PER_REGION || 25), 1), 60);
 const maxChecked = Math.min(Math.max(Number(process.env.MAX_CHECKED || 240), 10), 500);
+const overpassTimeoutMs = Math.min(
+  Math.max(Number(process.env.OVERPASS_TIMEOUT_MS || 45_000), 15_000),
+  90_000,
+);
 const forcedRegion = String(process.env.SCAN_REGION || '')
   .trim()
   .toLocaleLowerCase('de');
@@ -68,6 +72,13 @@ const bookingProviders = [
 ];
 
 const pause = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+const errorMessage = (error) => {
+  if (error?.name === 'TimeoutError' || error?.name === 'AbortError') {
+    return `Timeout nach ${Math.round(overpassTimeoutMs / 1000)} Sekunden`;
+  }
+  return String(error?.message || error).slice(0, 180);
+};
 
 const normalizeUrl = (value) => {
   const raw = String(value || '').trim();
@@ -284,12 +295,14 @@ const inspectWebsite = async (website) => {
 };
 
 const fetchPlaces = async (region) => {
-  const query = `[out:json][timeout:50];(
+  const queryTimeoutSeconds = Math.max(10, Math.floor(overpassTimeoutMs / 1000) - 5);
+  const query = `[out:json][timeout:${queryTimeoutSeconds}];(
     nwr["amenity"="restaurant"](around:${region.radius},${region.lat},${region.lon});
     nwr["shop"="hairdresser"](around:${region.radius},${region.lat},${region.lon});
   );out center tags;`;
   let lastError;
-  for (const endpoint of overpassEndpoints) {
+  for (let index = 0; index < overpassEndpoints.length; index += 1) {
+    const endpoint = overpassEndpoints[index];
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -298,13 +311,20 @@ const fetchPlaces = async (region) => {
           'User-Agent': userAgent,
         },
         body: new URLSearchParams({ data: query }),
-        signal: AbortSignal.timeout(70_000),
+        signal: AbortSignal.timeout(overpassTimeoutMs),
       });
       if (!response.ok) throw new Error(`Overpass HTTP ${response.status}`);
       const payload = await response.json();
       return Array.isArray(payload.elements) ? payload.elements : [];
     } catch (error) {
       lastError = error;
+      const endpointName = new URL(endpoint).hostname;
+      console.warn(
+        `  ⚠ ${region.name}: ${endpointName} nicht erreichbar (${errorMessage(error)}).`,
+      );
+      if (index < overpassEndpoints.length - 1) {
+        await pause(1500);
+      }
     }
   }
   throw lastError || new Error('Overpass konnte nicht erreicht werden.');
@@ -381,11 +401,23 @@ const seenThisRun = new Set();
 let newLeadCount = 0;
 let checkedCount = 0;
 let excludedCount = 0;
+let successfulRegionCount = 0;
+const failedRegions = [];
 
 for (const region of selectedRegions) {
   if (newLeadCount >= maxNewLeads || checkedCount >= maxChecked) break;
   console.log(`Prüfe ${region.name} …`);
-  const places = (await fetchPlaces(region))
+  let fetchedPlaces;
+  try {
+    fetchedPlaces = await fetchPlaces(region);
+    successfulRegionCount += 1;
+  } catch (error) {
+    const reason = errorMessage(error);
+    failedRegions.push({ name: region.name, reason });
+    console.warn(`  ⚠ ${region.name} wird diesmal übersprungen (${reason}).`);
+    continue;
+  }
+  const places = fetchedPlaces
     .filter((element) => cleanText(element.tags?.name))
     .filter((element) => {
       const key = `osm:${element.type}:${element.id}`;
@@ -437,6 +469,8 @@ console.log(
   JSON.stringify(
     {
       regions: selectedRegions.map((region) => region.name),
+      successfulRegions: successfulRegionCount,
+      failedRegions,
       checked: checkedCount,
       newLeads: newLeadCount,
       excluded: excludedCount,
@@ -445,3 +479,7 @@ console.log(
     2,
   ),
 );
+
+if (successfulRegionCount === 0) {
+  throw new Error('Keine Region konnte vom Kartendienst geladen werden.');
+}
