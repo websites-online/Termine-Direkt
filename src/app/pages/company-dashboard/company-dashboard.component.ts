@@ -7,6 +7,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CompanyAuthService, CompanySession } from '../../services/company-auth.service';
 import { Company, CompanyApiService } from '../../services/company-api.service';
 import {
+  AlternativeSuggestion,
   CompanyReservation,
   CompanyReservationPayload,
   CompanyReservationsService,
@@ -55,6 +56,13 @@ export class CompanyDashboardComponent implements OnInit {
   approvingRequestIds = new Set<string>();
   isEntryPanelOpen = false;
   entryMode: 'appointment' | 'block' = 'appointment';
+  isAlternativePanelOpen = false;
+  alternativeRequest: CompanyReservation | null = null;
+  alternativeSuggestions: AlternativeSuggestion[] = [];
+  isLoadingAlternatives = false;
+  isSendingAlternative = false;
+  alternativeError = '';
+  private pendingAlternativeRequestId = '';
 
   get serviceOptions(): Array<{ value: string; label: string }> {
     const services = this.company?.salonServices?.length
@@ -90,6 +98,11 @@ export class CompanyDashboardComponent implements OnInit {
     note: ['Privater Termin'],
   });
 
+  readonly alternativeForm = this.formBuilder.group({
+    date: ['', Validators.required],
+    time: ['', Validators.required],
+  });
+
   constructor(
     private readonly authService: CompanyAuthService,
     private readonly reservationsService: CompanyReservationsService,
@@ -103,6 +116,9 @@ export class CompanyDashboardComponent implements OnInit {
     this.updateValidators();
     this.buildCalendarDays();
     this.loadCompanyDetails();
+    if (this.route.snapshot.queryParamMap.get('action') === 'alternative') {
+      this.pendingAlternativeRequestId = this.route.snapshot.queryParamMap.get('requestId') || '';
+    }
     this.loadReservations();
     if (this.route.snapshot.queryParamMap.get('action') === 'termin') {
       this.openEntryPanel('appointment');
@@ -137,6 +153,23 @@ export class CompanyDashboardComponent implements OnInit {
         this.isLoading = false;
         this.buildCalendarDays();
         this.refreshSelectedDate();
+        if (this.pendingAlternativeRequestId) {
+          const request = items.find(
+            (item) => item.id === this.pendingAlternativeRequestId && item.isRequest,
+          );
+          this.pendingAlternativeRequestId = '';
+          if (request) {
+            this.openAlternativePanel(request);
+          } else {
+            this.listError = 'Die verlinkte Anfrage wurde nicht gefunden oder bereits bestätigt.';
+          }
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { action: null, requestId: null },
+            queryParamsHandling: 'merge',
+            replaceUrl: true,
+          });
+        }
       },
       error: () => {
         this.isLoading = false;
@@ -376,9 +409,12 @@ export class CompanyDashboardComponent implements OnInit {
     this.successMessage = '';
     this.approvingRequestIds.add(reservation.id);
     this.reservationsService.approveRequest(reservation.id).subscribe({
-      next: () => {
+      next: (result) => {
         this.approvingRequestIds.delete(reservation.id);
-        this.successMessage = 'Anfrage angenommen. Der Termin ist jetzt fest im Kalender.';
+        this.successMessage = result.confirmationEmailSent
+          ? 'Anfrage angenommen. Der Termin ist fest und die Bestätigung wurde automatisch versendet.'
+          : result.warning ||
+            'Anfrage angenommen. Der Termin ist fest, aber die E-Mail konnte nicht versendet werden.';
         this.loadReservations();
       },
       error: (err) => {
@@ -391,6 +427,120 @@ export class CompanyDashboardComponent implements OnInit {
 
   isApprovingRequest(id: string): boolean {
     return this.approvingRequestIds.has(id);
+  }
+
+  openAlternativePanel(reservation: CompanyReservation): void {
+    if (!reservation.isRequest) {
+      return;
+    }
+    this.alternativeRequest = reservation;
+    this.isAlternativePanelOpen = true;
+    this.alternativeError = '';
+    this.alternativeSuggestions = [];
+    this.alternativeForm.patchValue({
+      date: reservation.proposedDate || reservation.date,
+      time: reservation.proposedTime || '',
+    });
+    this.isLoadingAlternatives = true;
+    this.reservationsService.getAlternativeSuggestions(reservation.id).subscribe({
+      next: (suggestions) => {
+        this.isLoadingAlternatives = false;
+        this.alternativeSuggestions = suggestions;
+        if (suggestions[0] && !reservation.proposedDate) {
+          this.selectAlternative(suggestions[0]);
+        }
+      },
+      error: (err) => {
+        this.isLoadingAlternatives = false;
+        this.alternativeError =
+          err?.error?.error || err?.message || 'Freie Vorschläge konnten nicht geladen werden.';
+      },
+    });
+  }
+
+  closeAlternativePanel(): void {
+    if (this.isSendingAlternative) {
+      return;
+    }
+    this.isAlternativePanelOpen = false;
+    this.alternativeRequest = null;
+    this.alternativeError = '';
+  }
+
+  selectAlternative(suggestion: AlternativeSuggestion): void {
+    this.alternativeForm.setValue({ date: suggestion.date, time: suggestion.time });
+    this.alternativeError = '';
+  }
+
+  isSelectedAlternative(suggestion: AlternativeSuggestion): boolean {
+    return (
+      this.alternativeForm.value.date === suggestion.date &&
+      this.alternativeForm.value.time === suggestion.time
+    );
+  }
+
+  submitAlternative(): void {
+    if (!this.alternativeRequest || this.alternativeForm.invalid) {
+      this.alternativeForm.markAllAsTouched();
+      this.alternativeError = 'Bitte Datum und Uhrzeit auswählen.';
+      return;
+    }
+    const date = this.alternativeForm.value.date || '';
+    const time = this.alternativeForm.value.time || '';
+    this.isSendingAlternative = true;
+    this.alternativeError = '';
+    this.reservationsService.offerAlternative(this.alternativeRequest.id, date, time).subscribe({
+      next: () => {
+        this.isSendingAlternative = false;
+        this.isAlternativePanelOpen = false;
+        this.alternativeRequest = null;
+        this.successMessage =
+          'Der Vorschlag wurde automatisch per E-Mail versendet und ist 24 Stunden reserviert.';
+        this.loadReservations();
+      },
+      error: (err) => {
+        this.isSendingAlternative = false;
+        this.alternativeError =
+          err?.error?.error || err?.message || 'Die Alternative konnte nicht versendet werden.';
+      },
+    });
+  }
+
+  requestStatusLabel(reservation: CompanyReservation): string {
+    if (reservation.requestStatus !== 'alternative_sent') {
+      return 'Offen';
+    }
+    const expiresAt = new Date(reservation.alternativeExpiresAt || 0).getTime();
+    return expiresAt > Date.now() ? 'Wartet auf Kunde' : 'Vorschlag abgelaufen';
+  }
+
+  isAlternativeActive(reservation: CompanyReservation): boolean {
+    return (
+      reservation.requestStatus === 'alternative_sent' &&
+      new Date(reservation.alternativeExpiresAt || 0).getTime() > Date.now()
+    );
+  }
+
+  formatAlternativeDate(date: string): string {
+    return new Intl.DateTimeFormat('de-DE', {
+      weekday: 'short',
+      day: '2-digit',
+      month: '2-digit',
+    }).format(this.parseDate(date));
+  }
+
+  formatAlternativeExpiry(value?: string): string {
+    if (!value) return '';
+    return new Intl.DateTimeFormat('de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(value));
+  }
+
+  get todayValue(): string {
+    return this.getToday();
   }
 
   get isSalon(): boolean {
@@ -939,7 +1089,7 @@ export class CompanyDashboardComponent implements OnInit {
       .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
     const counts: Record<string, number> = {};
     this.reservations.forEach((item) => {
-      if (item.time && !item.isRequest) {
+      if (item.time && (!item.isRequest || this.isAlternativeActive(item))) {
         counts[item.time] = (counts[item.time] || 0) + (item.isBlock ? this.getSlotCapacity() : 1);
       }
     });
