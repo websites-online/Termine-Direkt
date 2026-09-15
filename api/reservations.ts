@@ -68,6 +68,11 @@ const createApprovalLink = (requestId: string): string => {
   )}`;
 };
 
+const createMailtoLink = (email: string, subject: string, body: string): string =>
+  `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
+    body.replace(/\r?\n/g, '\r\n'),
+  )}`;
+
 const getTimeBasedGreeting = (): string => {
   try {
     const hourText = new Intl.DateTimeFormat('de-DE', {
@@ -98,6 +103,20 @@ const formatDisplayDate = (dateValue?: string): string => {
     return `${isoMatch[3]}.${isoMatch[2]}.${isoMatch[1]}`;
   }
   return dateValue;
+};
+
+const formatLongDisplayDate = (dateValue?: string): string => {
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateValue || '').trim());
+  if (!isoMatch) {
+    return formatDisplayDate(dateValue);
+  }
+  return new Intl.DateTimeFormat('de-DE', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Europe/Berlin',
+  }).format(new Date(`${dateValue}T12:00:00Z`));
 };
 
 const normalizeBookingBufferMinutes = (value: unknown): number => {
@@ -234,7 +253,7 @@ const buildEmailLayout = ({
         <td align="center">
           <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden">
             <tr>
-              <td style="background:linear-gradient(90deg,#4338ca,#4f46e5);padding:18px 24px">
+              <td bgcolor="#4338ca" style="background-color:#4338ca;background-image:linear-gradient(90deg,#4338ca,#4f46e5);padding:18px 24px">
                 <div style="font-family:Arial,Helvetica,sans-serif;color:#ffffff;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700">${escapeHtml(
                   brand,
                 )}</div>
@@ -300,37 +319,6 @@ const isMissingTableError = (error: any, tableName: string): boolean => {
   );
 };
 
-const isMissingAlternativeColumnsError = (error: any): boolean => {
-  const message = String(error?.message || '').toLowerCase();
-  return (
-    error?.code === '42703' ||
-    error?.code === 'PGRST204' ||
-    message.includes('proposed_time') ||
-    message.includes('alternative_expires_at')
-  );
-};
-
-const loadActiveHolds = async (supabase: any, restaurantSlug: string, date: string) => {
-  const result = await supabase
-    .from('booking_requests')
-    .select('proposed_time')
-    .eq('restaurant_slug', restaurantSlug)
-    .eq('status', 'alternative_sent')
-    .eq('proposed_date', date)
-    .gt('alternative_expires_at', new Date().toISOString());
-  if (result.error) {
-    // Während einer gestaffelten Bereitstellung bleiben bestehende Buchungen funktionsfähig.
-    if (
-      isMissingTableError(result.error, 'booking_requests') ||
-      isMissingAlternativeColumnsError(result.error)
-    ) {
-      return [];
-    }
-    throw new Error(result.error.message);
-  }
-  return result.data || [];
-};
-
 module.exports = async function handler(req: any, res: any) {
   if (req.method === 'GET') {
     try {
@@ -342,14 +330,11 @@ module.exports = async function handler(req: any, res: any) {
         return;
       }
       const supabase = getClient();
-      const [{ data, error }, activeHolds] = await Promise.all([
-        supabase
-          .from('reservations')
-          .select('time')
-          .eq('restaurant_slug', restaurantSlug)
-          .eq('date', date),
-        loadActiveHolds(supabase, restaurantSlug, date),
-      ]);
+      const { data, error } = await supabase
+        .from('reservations')
+        .select('time')
+        .eq('restaurant_slug', restaurantSlug)
+        .eq('date', date);
       if (error) {
         res.status(500).json({ error: error.message });
         return;
@@ -357,11 +342,6 @@ module.exports = async function handler(req: any, res: any) {
       const counts: Record<string, number> = {};
       (data || []).forEach((row: { time: string }) => {
         counts[row.time] = (counts[row.time] || 0) + 1;
-      });
-      activeHolds.forEach((row: { proposed_time: string }) => {
-        if (row.proposed_time) {
-          counts[row.proposed_time] = (counts[row.proposed_time] || 0) + 1;
-        }
       });
       res.status(200).json({ slots: counts });
       return;
@@ -423,23 +403,17 @@ module.exports = async function handler(req: any, res: any) {
       return;
     }
 
-    const [{ count, error: countError }, activeHolds] = await Promise.all([
-      supabase
-        .from('reservations')
-        .select('id', { count: 'exact', head: true })
-        .eq('restaurant_slug', body.restaurantSlug)
-        .eq('date', body.date)
-        .eq('time', body.time),
-      loadActiveHolds(supabase, body.restaurantSlug, body.date),
-    ]);
+    const { count, error: countError } = await supabase
+      .from('reservations')
+      .select('id', { count: 'exact', head: true })
+      .eq('restaurant_slug', body.restaurantSlug)
+      .eq('date', body.date)
+      .eq('time', body.time);
     if (countError) {
       res.status(500).json({ error: countError.message });
       return;
     }
-    const heldCount = activeHolds.filter(
-      (row: { proposed_time: string }) => row.proposed_time === body.time,
-    ).length;
-    if ((count || 0) + heldCount >= slotCapacity) {
+    if ((count || 0) >= slotCapacity) {
       res.status(409).json({ error: 'Diese Uhrzeit ist bereits belegt.' });
       return;
     }
@@ -485,7 +459,6 @@ module.exports = async function handler(req: any, res: any) {
     };
 
     let approvalLink = '';
-    let requestId = '';
     if (requestMode) {
       const { data: insertedRequest, error: requestInsertError } = await supabase
         .from('booking_requests')
@@ -503,8 +476,7 @@ module.exports = async function handler(req: any, res: any) {
         res.status(500).json({ error: requestInsertError.message });
         return;
       }
-      requestId = String(insertedRequest?.id || '');
-      approvalLink = createApprovalLink(requestId);
+      approvalLink = createApprovalLink(String(insertedRequest?.id || ''));
     } else {
       const { error: insertError } = await supabase.from('reservations').insert(bookingRecord);
       if (insertError) {
@@ -518,6 +490,7 @@ module.exports = async function handler(req: any, res: any) {
     const guestName = body.guestName?.trim() || 'Gast';
     const greeting = getTimeBasedGreeting();
     const displayDate = formatDisplayDate(body.date);
+    const longDisplayDate = formatLongDisplayDate(body.date);
     const bookingNounLower = isSalon ? 'Termin' : 'Reservierung';
     const bookingCopy = isSalon
       ? {
@@ -556,18 +529,82 @@ module.exports = async function handler(req: any, res: any) {
       { label: 'Notiz', value: body.note || '-' },
     ];
 
-    const acceptActionLink = approvalLink || `${normalizedPlatformUrl}/unternehmen`;
-    const alternativeActionLink = `${normalizedPlatformUrl}/unternehmen?requestId=${encodeURIComponent(
-      requestId,
-    )}&action=alternative`;
-    const requestActionHint =
-      'Beim Annehmen wird die Bestätigung automatisch versendet. Über „Alternative anbieten“ wählen Sie einen neuen freien Zeitpunkt.';
+    const approveMailto = createMailtoLink(
+      body.guestEmail || '',
+      `${isSalon ? 'Ihr Termin ist bestätigt' : 'Ihre Reservierung ist bestätigt'} | ${displayDate} ${body.time ? `um ${body.time}` : ''}`.trim(),
+      [
+        `${greeting} ${guestName},`,
+        '',
+        'vielen Dank für Ihre Anfrage – wir haben gute Nachrichten:',
+        isSalon
+          ? `Ihr Termin bei ${businessName} ist bestätigt. ✓`
+          : `Ihre Reservierung bei ${businessName} ist bestätigt. ✓`,
+        '',
+        isSalon ? 'Ihre Termindetails' : 'Ihre Reservierungsdetails',
+        '────────────────────────',
+        `Datum: ${longDisplayDate}`,
+        `Uhrzeit: ${body.time ? `${body.time} Uhr` : '-'}`,
+        isSalon
+          ? body.service
+            ? `Service: ${body.service}`
+            : null
+          : body.people
+            ? `Personen: ${body.people}`
+            : null,
+        isSalon && body.stylist ? `Friseur: ${body.stylist}` : null,
+        !isSalon && body.seating ? `Sitzplatz: ${body.seating}` : null,
+        body.note ? `Notiz: ${body.note}` : null,
+        '────────────────────────',
+        '',
+        'Wir freuen uns auf Ihren Besuch!',
+        '',
+        'Falls Sie noch eine Frage haben oder etwas ändern möchten, antworten Sie einfach auf diese E-Mail.',
+        '',
+        'Herzliche Grüße',
+        `Ihr Team von ${businessName}`,
+        '',
+        '—',
+        'Terminbuchung mit NexTime',
+        normalizedPlatformUrl,
+      ]
+        .filter((line): line is string => line !== null && line !== undefined)
+        .join('\r\n'),
+    );
+    const declineMailto = createMailtoLink(
+      body.guestEmail || '',
+      `Alternativvorschlag von ${businessName}`,
+      [
+        `Guten Tag ${guestName},`,
+        '',
+        `vielen Dank für Ihre Anfrage bei ${businessName}.`,
+        '',
+        isSalon
+          ? `der gewünschte Termin am ${displayDate} um ${body.time || '-'} Uhr passt uns leider nicht.`
+          : `die gewünschte Reservierung am ${displayDate} um ${body.time || '-'} Uhr passt uns leider nicht.`,
+        '',
+        'Wir können Ihnen stattdessen folgenden Termin anbieten:',
+        '',
+        '[DATUM EINFÜGEN] um [UHRZEIT EINFÜGEN] Uhr',
+        '',
+        'Passt dieser Termin für Sie? Antworten Sie uns einfach kurz auf diese E-Mail.',
+        '',
+        'Herzliche Grüße',
+        `Ihr Team von ${businessName}`,
+      ]
+        .filter((line): line is string => line !== null && line !== undefined)
+        .join('\r\n'),
+    );
+
+    const acceptActionLink = approvalLink || approveMailto;
+    const requestActionHint = approvalLink
+      ? 'Annehmen speichert den Termin und versendet die Bestätigung automatisch. Ablehnen öffnet nur eine Mailvorlage für Ihren eigenen Vorschlag.'
+      : 'Beide Aktionen öffnen direkt eine Mailvorlage in Ihrem Mailprogramm.';
     const actionsHtml = requestMode
       ? `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%"><tr><td style="padding:0 0 10px;text-align:center"><a href="${escapeHtml(
           acceptActionLink,
         )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#4338ca;color:#ffffff;text-decoration:none;font-weight:700">Anfrage annehmen</a></td></tr><tr><td style="text-align:center"><a href="${escapeHtml(
-          alternativeActionLink,
-        )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#ffffff;color:#4338ca;text-decoration:none;font-weight:700;border:1px solid #c7d2fe">Alternative anbieten</a></td></tr><tr><td style="padding-top:10px;color:#64748b;font-size:12px;line-height:1.4;text-align:center">${escapeHtml(
+          declineMailto,
+        )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#ffffff;color:#4338ca;text-decoration:none;font-weight:700;border:1px solid #c7d2fe">Ablehnen / Alternative vorschlagen</a></td></tr><tr><td style="padding-top:10px;color:#64748b;font-size:12px;line-height:1.4;text-align:center">${escapeHtml(
           requestActionHint,
         )}</td></tr></table>`
       : undefined;
@@ -635,11 +672,7 @@ module.exports = async function handler(req: any, res: any) {
         .filter(Boolean)
         .concat(
           requestMode
-            ? [
-                '',
-                `Anfrage annehmen: ${acceptActionLink}`,
-                `Alternative anbieten: ${alternativeActionLink}`,
-              ]
+            ? ['', `Anfrage annehmen: ${acceptActionLink}`, `Anfrage ablehnen: ${declineMailto}`]
             : [],
         )
         .concat([

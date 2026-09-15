@@ -692,44 +692,12 @@
   text-transform: uppercase;
 }
 
-.request-status--waiting {
-  background: #eef2ff;
-  color: #4f46e5;
-}
-
 .request-actions {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   align-self: start;
   gap: 7px;
-}
-
-.request-action-buttons {
-  display: flex;
-  gap: 6px;
-}
-
-.request-alternative {
-  min-height: 29px;
-  padding: 5px 9px;
-  border: 1px solid #c7d2fe;
-  border-radius: 8px;
-  background: #fff;
-  color: #4f46e5;
-  font: inherit;
-  font-size: 0.64rem;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.request-alternative:hover:not(:disabled) {
-  background: #eef2ff;
-}
-
-.request-alternative:disabled {
-  cursor: wait;
-  opacity: 0.62;
 }
 
 .request-approve {
@@ -754,11 +722,6 @@
   opacity: 0.62;
 }
 
-.alternative-summary {
-  color: #4f46e5 !important;
-  font-weight: 750;
-}
-
 .panel-backdrop {
   position: fixed;
   inset: 0;
@@ -775,165 +738,6 @@
   overflow-y: auto;
   padding: 30px;
   background: #fff;
-}
-
-.alternative-panel {
-  width: min(570px, 100%);
-}
-
-.requested-slot {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 5px 18px;
-  margin: 24px 0;
-  padding: 15px 17px;
-  border: 1px solid #e4e8ef;
-  border-radius: 12px;
-  background: #f8fafc;
-}
-
-.requested-slot span {
-  grid-column: 1 / -1;
-  color: #7c8799;
-  font-size: 0.68rem;
-  font-weight: 750;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.requested-slot strong {
-  color: #344057;
-  font-size: 0.86rem;
-}
-
-.requested-slot strong:last-child {
-  color: #4f46e5;
-}
-
-.suggestion-section {
-  display: grid;
-  gap: 11px;
-}
-
-.section-label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  color: #4d5a70;
-  font-size: 0.76rem;
-  font-weight: 800;
-}
-
-.section-label small {
-  color: #0f8f82;
-  font-size: 0.64rem;
-}
-
-.suggestion-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 9px;
-}
-
-.suggestion-card {
-  min-width: 0;
-  display: grid;
-  justify-items: start;
-  gap: 4px;
-  padding: 13px;
-  border: 1px solid #dfe4ec;
-  border-radius: 12px;
-  background: #fff;
-  color: #68748a;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.suggestion-card strong {
-  color: #263147;
-  font-size: 0.88rem;
-}
-
-.suggestion-card span,
-.suggestion-card small {
-  font-size: 0.66rem;
-  font-weight: 700;
-}
-
-.suggestion-card small {
-  margin-top: 3px;
-  color: #818cf8;
-}
-
-.suggestion-card.selected {
-  border-color: #6366f1;
-  background: #eef2ff;
-  box-shadow: 0 0 0 2px #e0e7ff;
-}
-
-.suggestion-loading,
-.suggestion-empty {
-  margin: 0;
-  padding: 15px;
-  border-radius: 10px;
-  background: #f8fafc;
-  color: #7c8799;
-  font-size: 0.74rem;
-  line-height: 1.5;
-}
-
-.custom-time-divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #9aa3b2;
-  font-size: 0.66rem;
-  font-weight: 750;
-  text-transform: uppercase;
-}
-
-.custom-time-divider::before,
-.custom-time-divider::after {
-  height: 1px;
-  flex: 1;
-  background: #e7eaf0;
-  content: '';
-}
-
-.hold-explanation {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 15px;
-  border: 1px solid #ccefe9;
-  border-radius: 12px;
-  background: #f0fdfa;
-}
-
-.hold-icon {
-  display: grid;
-  flex: 0 0 40px;
-  height: 40px;
-  place-items: center;
-  border-radius: 50%;
-  background: #ccfbf1;
-  color: #0f766e;
-  font-size: 0.7rem;
-  font-weight: 850;
-}
-
-.hold-explanation strong {
-  color: #176b64;
-  font-size: 0.76rem;
-}
-
-.hold-explanation p {
-  margin: 4px 0 0;
-  color: #4c756f;
-  font-size: 0.72rem;
-  line-height: 1.5;
 }
 
 .entry-panel-header {
@@ -1298,44 +1102,6 @@
   .panel-actions .action-button {
     flex: 1;
     min-width: 0;
-  }
-
-  .request-action-buttons {
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 480px) {
-  .suggestion-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .suggestion-card {
-    grid-template-columns: 1fr auto;
-    align-items: center;
-  }
-
-  .suggestion-card small {
-    grid-column: 1 / -1;
-  }
-
-  .agenda-item--request {
-    grid-template-columns: 45px 2px minmax(0, 1fr);
-  }
-
-  .agenda-item--request .request-actions {
-    grid-column: 3;
-    width: 100%;
-    align-items: stretch;
-  }
-
-  .agenda-item--request .request-status {
-    align-self: flex-start;
-  }
-
-  .agenda-item--request .request-action-buttons {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
   }
 }
 

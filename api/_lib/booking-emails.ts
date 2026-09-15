@@ -69,16 +69,16 @@ const renderEmail = ({
 }): string => `<!doctype html>
 <html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;background:#f3f5f9;font-family:Arial,Helvetica,sans-serif;color:#172033">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f5f9;padding:28px 12px">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f3f5f9" style="background-color:#f3f5f9;padding:24px 12px">
     <tr><td align="center">
-      <table role="presentation" width="620" cellpadding="0" cellspacing="0" style="width:100%;max-width:620px;background:#fff;border:1px solid #e4e8f0;border-radius:20px;overflow:hidden;box-shadow:0 14px 40px rgba(25,35,58,.08)">
-        <tr><td style="padding:28px;background:linear-gradient(135deg,${escapeHtml(accent)},#6366f1);color:#fff">
+      <table role="presentation" width="640" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:640px;background-color:#ffffff;border:1px solid #e4e8f0;border-radius:16px;overflow:hidden">
+        <tr><td bgcolor="${escapeHtml(accent)}" style="padding:20px 24px;background-color:${escapeHtml(accent)};background-image:linear-gradient(90deg,${escapeHtml(accent)},#6366f1);color:#fff">
           <div style="font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.9">${escapeHtml(businessName)}</div>
           <div style="margin-top:16px"><span style="display:inline-block;padding:6px 11px;border-radius:99px;background:rgba(255,255,255,.18);font-size:12px;font-weight:800">${escapeHtml(badge)}</span></div>
-          <h1 style="margin:12px 0 0;font-size:28px;line-height:1.18">${escapeHtml(title)}</h1>
+          <h1 style="margin:10px 0 0;font-size:24px;line-height:1.2">${escapeHtml(title)}</h1>
         </td></tr>
-        <tr><td style="padding:28px 28px 10px;font-size:16px;line-height:1.65;color:#3e4a60">${escapeHtml(intro)}</td></tr>
-        <tr><td style="padding:6px 28px 16px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${renderRows(rows)}</table></td></tr>
+        <tr><td style="padding:20px 24px 8px;font-size:15px;line-height:1.55;color:#3e4a60">${escapeHtml(intro)}</td></tr>
+        <tr><td style="padding:4px 24px 14px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${renderRows(rows)}</table></td></tr>
         ${
           notice
             ? `<tr><td style="padding:0 28px 18px"><div style="padding:13px 15px;border-radius:12px;background:#f8fafc;color:#536078;font-size:13px;line-height:1.5">${escapeHtml(notice)}</div></td></tr>`
@@ -172,34 +172,4 @@ const sendBookingConfirmation = async (request: any, company: any) => {
   });
 };
 
-const sendAlternativeProposal = async (
-  request: any,
-  company: any,
-  proposedDate: string,
-  proposedTime: string,
-  confirmUrl: string,
-) => {
-  const context = getEmailContext({ ...request, date: proposedDate, time: proposedTime }, company);
-  const noun = context.isSalon ? 'Termin' : 'Reservierung';
-  const intro = `Hallo ${context.guestName}, der ursprünglich gewünschte Zeitpunkt passt leider nicht. ${context.businessName} bietet Ihnen gern diese Alternative an:`;
-  const textRows = context.rows.map((row) => `${row.label}: ${row.value}`).join('\n');
-  await sendEmail({
-    company,
-    request,
-    subject: `Neuer Terminvorschlag von ${context.businessName}`,
-    text: `${intro}\n\n${textRows}\n\nDiesen Vorschlag innerhalb von 24 Stunden bestätigen:\n${confirmUrl}`,
-    html: renderEmail({
-      businessName: context.businessName,
-      badge: 'Neuer Vorschlag',
-      title: `Passt ${context.isSalon ? 'Ihnen dieser Termin' : 'diese Zeit'}?`,
-      intro,
-      rows: context.rows,
-      accent: '#4338ca',
-      action: { href: confirmUrl, label: `${noun} verbindlich bestätigen` },
-      notice:
-        'Dieser Zeitpunkt ist 24 Stunden exklusiv für Sie reserviert. Danach wird er automatisch wieder freigegeben.',
-    }),
-  });
-};
-
-module.exports = { sendBookingConfirmation, sendAlternativeProposal, formatDate };
+module.exports = { sendBookingConfirmation, formatDate };

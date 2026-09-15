@@ -244,18 +244,6 @@
                 {{ reservation.people }} Personen
               </p>
               <p *ngIf="!reservation.isBlock && reservation.phone">{{ reservation.phone }}</p>
-              <p
-                class="alternative-summary"
-                *ngIf="
-                  reservation.isRequest && reservation.proposedDate && reservation.proposedTime
-                "
-              >
-                Vorschlag: {{ formatAlternativeDate(reservation.proposedDate) }} ·
-                {{ reservation.proposedTime }} Uhr
-                <small *ngIf="isAlternativeActive(reservation)">
-                  · reserviert bis {{ formatAlternativeExpiry(reservation.alternativeExpiresAt) }}
-                </small>
-              </p>
             </div>
             <button
               *ngIf="!reservation.isRequest"
@@ -267,30 +255,15 @@
               ×
             </button>
             <div class="request-actions" *ngIf="reservation.isRequest">
-              <span
-                class="request-status"
-                [class.request-status--waiting]="isAlternativeActive(reservation)"
+              <span class="request-status">Offen</span>
+              <button
+                class="request-approve"
+                type="button"
+                [disabled]="isApprovingRequest(reservation.id)"
+                (click)="approveRequest(reservation)"
               >
-                {{ requestStatusLabel(reservation) }}
-              </span>
-              <div class="request-action-buttons">
-                <button
-                  class="request-alternative"
-                  type="button"
-                  [disabled]="isApprovingRequest(reservation.id)"
-                  (click)="openAlternativePanel(reservation)"
-                >
-                  {{ isAlternativeActive(reservation) ? 'Andere Zeit' : 'Alternative' }}
-                </button>
-                <button
-                  class="request-approve"
-                  type="button"
-                  [disabled]="isApprovingRequest(reservation.id)"
-                  (click)="approveRequest(reservation)"
-                >
-                  {{ isApprovingRequest(reservation.id) ? 'Speichert…' : 'Annehmen' }}
-                </button>
-              </div>
+                {{ isApprovingRequest(reservation.id) ? 'Wird gespeichert…' : 'Annehmen' }}
+              </button>
             </div>
           </article>
         </div>
@@ -474,117 +447,6 @@
           Abbrechen</button
         ><button class="action-button action-button--block" type="submit" [disabled]="isSubmitting">
           {{ isSubmitting ? 'Blockieren…' : 'Zeit blockieren' }}
-        </button>
-      </div>
-    </form>
-  </aside>
-
-  <div
-    class="panel-backdrop"
-    *ngIf="isAlternativePanelOpen"
-    (click)="closeAlternativePanel()"
-  ></div>
-  <aside
-    class="entry-panel alternative-panel"
-    *ngIf="isAlternativePanelOpen && alternativeRequest"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="alternative-title"
-  >
-    <div class="entry-panel-header">
-      <div>
-        <p class="eyebrow">Anfrage von {{ alternativeRequest.guestName || 'Gast' }}</p>
-        <h2 id="alternative-title">Alternative anbieten</h2>
-      </div>
-      <button
-        class="panel-close"
-        type="button"
-        (click)="closeAlternativePanel()"
-        aria-label="Schließen"
-      >
-        ×
-      </button>
-    </div>
-
-    <div class="requested-slot">
-      <span>Ursprünglich angefragt</span>
-      <strong>{{
-        formatAlternativeDate(alternativeRequest.requestedDate || alternativeRequest.date)
-      }}</strong>
-      <strong>{{ alternativeRequest.requestedTime || alternativeRequest.time }} Uhr</strong>
-    </div>
-
-    <form
-      class="entry-form alternative-form"
-      [formGroup]="alternativeForm"
-      (ngSubmit)="submitAlternative()"
-    >
-      <div class="suggestion-section">
-        <div class="section-label">
-          <span>Automatisch freie Vorschläge</span>
-          <small>Kalender geprüft</small>
-        </div>
-        <div class="suggestion-loading" *ngIf="isLoadingAlternatives">
-          Freie Zeiten werden gesucht…
-        </div>
-        <div
-          class="suggestion-grid"
-          *ngIf="!isLoadingAlternatives && alternativeSuggestions.length"
-        >
-          <button
-            type="button"
-            class="suggestion-card"
-            *ngFor="let suggestion of alternativeSuggestions"
-            [class.selected]="isSelectedAlternative(suggestion)"
-            (click)="selectAlternative(suggestion)"
-          >
-            <span>{{ formatAlternativeDate(suggestion.date) }}</span>
-            <strong>{{ suggestion.time }} Uhr</strong>
-            <small>{{ isSelectedAlternative(suggestion) ? 'Ausgewählt' : 'Auswählen' }}</small>
-          </button>
-        </div>
-        <p
-          class="suggestion-empty"
-          *ngIf="!isLoadingAlternatives && !alternativeSuggestions.length"
-        >
-          Kein automatischer Vorschlag gefunden. Sie können unten selbst eine Zeit eintragen.
-        </p>
-      </div>
-
-      <div class="custom-time-divider"><span>oder eigene Zeit wählen</span></div>
-      <div class="field-grid">
-        <label
-          ><span>Datum*</span><input type="date" formControlName="date" [min]="todayValue"
-        /></label>
-        <label><span>Uhrzeit*</span><input type="time" formControlName="time" step="300" /></label>
-      </div>
-
-      <div class="hold-explanation">
-        <span class="hold-icon">24h</span>
-        <div>
-          <strong>Automatisch reserviert</strong>
-          <p>
-            Die Zeit wird 24 Stunden für den Kunden freigehalten. Bestätigt er per E-Mail, wird
-            daraus automatisch ein fester Termin.
-          </p>
-        </div>
-      </div>
-
-      <p class="panel-error" *ngIf="alternativeError">{{ alternativeError }}</p>
-      <div class="panel-actions">
-        <button
-          type="button"
-          class="action-button action-button--secondary"
-          (click)="closeAlternativePanel()"
-        >
-          Abbrechen
-        </button>
-        <button
-          class="action-button action-button--primary"
-          type="submit"
-          [disabled]="isSendingAlternative"
-        >
-          {{ isSendingAlternative ? 'Wird versendet…' : 'Per E-Mail senden' }}
         </button>
       </div>
     </form>
