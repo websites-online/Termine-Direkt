@@ -18,7 +18,13 @@
           <a routerLink="/unternehmen/login">Unternehmenslogin</a>
           <a class="btn btn-primary" href="#contact">Jetzt starten</a>
         </nav>
-        <button class="nav-toggle" [class.open]="isNavOpen" type="button" aria-label="Menü öffnen" (click)="toggleNav()">
+        <button
+          class="nav-toggle"
+          [class.open]="isNavOpen"
+          type="button"
+          aria-label="Menü öffnen"
+          (click)="toggleNav()"
+        >
           <span></span>
           <span></span>
           <span></span>
@@ -37,8 +43,8 @@
             <span class="badge">Reservierungen ohne App</span>
             <h1>Online-Reservierungen direkt aus Google – ohne App.</h1>
             <p class="section-lead">
-              Gäste reservieren über einen Link in Ihrem Google-Profil.
-              Sie erhalten jede Reservierung sofort per E-Mail.
+              Gäste reservieren über einen Link in Ihrem Google-Profil. Sie erhalten jede
+              Reservierung sofort per E-Mail.
             </p>
             <div class="hero-actions">
               <a class="btn btn-primary" routerLink="/demo-unternehmen">Beispiel ansehen</a>
@@ -50,7 +56,11 @@
             <div class="hero-stage">
               <div class="hero-floor"></div>
               <article class="hero-card hero-card-main">
-                <img class="hero-monitor" src="monitor-mockup.png" alt="Monitor mit Demo-Reservierung" />
+                <img
+                  class="hero-monitor"
+                  src="monitor-mockup.png"
+                  alt="Monitor mit Demo-Reservierung"
+                />
               </article>
               <article class="hero-card hero-card-status">
                 <h3>Live-Status</h3>
@@ -90,7 +100,7 @@
           </div>
         </div>
       </div>
-      <div class="section-band band-muted stage-faq">
+      <div class="section-band band-muted stage-showcase">
         <div class="section-stage">
           <div class="depth-wrap depth-right">
             <app-faq></app-faq>
@@ -113,8 +123,12 @@
     <a routerLink="/demo-unternehmen" (click)="$event.stopPropagation(); closeNav()">Demo</a>
     <a href="#pricing" (click)="$event.stopPropagation(); closeNav()">Preise</a>
     <a href="#contact" (click)="$event.stopPropagation(); closeNav()">Kontakt</a>
-    <a routerLink="/unternehmen/login" (click)="$event.stopPropagation(); closeNav()">Unternehmenslogin</a>
-    <a class="btn btn-primary" href="#contact" (click)="$event.stopPropagation(); closeNav()">Jetzt starten</a>
+    <a routerLink="/unternehmen/login" (click)="$event.stopPropagation(); closeNav()"
+      >Unternehmenslogin</a
+    >
+    <a class="btn btn-primary" href="#contact" (click)="$event.stopPropagation(); closeNav()"
+      >Jetzt starten</a
+    >
   </div>
   <div class="nav-backdrop" [class.open]="isNavOpen" (click)="closeNav()" aria-hidden="true"></div>
 </div>

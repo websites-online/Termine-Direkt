@@ -1,24 +1,77 @@
-<section class="section" id="faq">
+<section class="section" id="examples" aria-labelledby="examples-title">
   <div class="container">
     <div class="section-header">
-      <h2 class="section-title">FAQ</h2>
+      <h2 class="section-title" id="examples-title">So sieht Nextime im Einsatz aus.</h2>
+      <p class="section-lead">
+        Entdecken Sie, wie einfach eine Reservierung für Ihre Kunden sein kann.
+      </p>
     </div>
-    <div class="faq-grid">
-      <div class="card faq-item">
-        <span class="faq-label">Frage 1</span>
-        <h3>Wie schnell ist das eingerichtet?</h3>
-        <p>In der Regel innerhalb eines Tages.</p>
-      </div>
-      <div class="card faq-item">
-        <span class="faq-label">Frage 2</span>
-        <h3>Brauche ich ein Login?</h3>
-        <p>Nein. Sie erhalten Reservierungen per E-Mail.</p>
-      </div>
-      <div class="card faq-item">
-        <span class="faq-label">Frage 3</span>
-        <h3>Kann ich Öffnungszeiten ändern?</h3>
-        <p>Ja, jederzeit.</p>
-      </div>
+
+    <div class="showcase-grid">
+      <a
+        class="card showcase-card"
+        routerLink="/osteria-da-michele"
+        aria-label="Reservierungsseite der Osteria da Michele ansehen"
+      >
+        <div class="showcase-media">
+          <img
+            src="media/examples/osteria-da-michele.jpg"
+            alt="Italienisches Gericht in der Osteria da Michele"
+            loading="lazy"
+            decoding="async"
+          />
+          <span class="showcase-tag">Restaurant</span>
+        </div>
+        <div class="showcase-body">
+          <h3>Osteria da Michele</h3>
+          <p>Gäste wählen Datum, Uhrzeit und Personenzahl direkt online.</p>
+          <span class="showcase-link"
+            >Reservierungsseite ansehen <span aria-hidden="true">→</span></span
+          >
+        </div>
+      </a>
+
+      <a
+        class="card showcase-card"
+        routerLink="/atelier7"
+        aria-label="Buchungsseite von Atelier7 ansehen"
+      >
+        <div class="showcase-media showcase-media--logo">
+          <img
+            src="media/examples/atelier7.jpg"
+            alt="Logo des Friseursalons Atelier7"
+            loading="lazy"
+            decoding="async"
+          />
+          <span class="showcase-tag">Friseursalon</span>
+        </div>
+        <div class="showcase-body">
+          <h3>Atelier7</h3>
+          <p>Kunden wählen ihren Service und senden die Terminanfrage online.</p>
+          <span class="showcase-link">Buchungsseite ansehen <span aria-hidden="true">→</span></span>
+        </div>
+      </a>
+
+      <a class="card showcase-card showcase-card--cta" href="#contact">
+        <div class="showcase-media showcase-media--preview" aria-hidden="true">
+          <div class="mini-booking">
+            <span class="mini-logo">N</span>
+            <span class="mini-line mini-line--strong"></span>
+            <span class="mini-line"></span>
+            <span class="mini-date mini-date--active">12</span>
+            <span class="mini-date">13</span>
+            <span class="mini-date">14</span>
+          </div>
+          <span class="showcase-tag">Ihre Seite</span>
+        </div>
+        <div class="showcase-body">
+          <h3>Ihr Unternehmen</h3>
+          <p>Mit eigenem Logo, Farben und Öffnungszeiten in kurzer Zeit startklar.</p>
+          <span class="showcase-link"
+            >3 Monate kostenlos testen <span aria-hidden="true">→</span></span
+          >
+        </div>
+      </a>
     </div>
   </div>
 </section>
