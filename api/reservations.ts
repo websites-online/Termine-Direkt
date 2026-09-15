@@ -105,6 +105,20 @@ const formatDisplayDate = (dateValue?: string): string => {
   return dateValue;
 };
 
+const formatLongDisplayDate = (dateValue?: string): string => {
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateValue || '').trim());
+  if (!isoMatch) {
+    return formatDisplayDate(dateValue);
+  }
+  return new Intl.DateTimeFormat('de-DE', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Europe/Berlin',
+  }).format(new Date(`${dateValue}T12:00:00Z`));
+};
+
 const normalizeBookingBufferMinutes = (value: unknown): number => {
   const minutes = Number(value);
   if (!Number.isFinite(minutes)) {
@@ -476,6 +490,7 @@ module.exports = async function handler(req: any, res: any) {
     const guestName = body.guestName?.trim() || 'Gast';
     const greeting = getTimeBasedGreeting();
     const displayDate = formatDisplayDate(body.date);
+    const longDisplayDate = formatLongDisplayDate(body.date);
     const bookingNounLower = isSalon ? 'Termin' : 'Reservierung';
     const bookingCopy = isSalon
       ? {
@@ -516,37 +531,41 @@ module.exports = async function handler(req: any, res: any) {
 
     const approveMailto = createMailtoLink(
       body.guestEmail || '',
-      `${bookingCopy.confirmTitle} | ${displayDate} ${body.time ? `um ${body.time}` : ''}`.trim(),
+      `${isSalon ? 'Ihr Termin ist bestätigt' : 'Ihre Reservierung ist bestätigt'} | ${displayDate} ${body.time ? `um ${body.time}` : ''}`.trim(),
       [
         `${greeting} ${guestName},`,
         '',
+        'vielen Dank für Ihre Anfrage – wir haben gute Nachrichten:',
         isSalon
-          ? `Ihr Termin bei ${businessName} wurde erfolgreich bestätigt.`
-          : `Ihre Reservierung bei ${businessName} wurde erfolgreich bestätigt.`,
+          ? `Ihr Termin bei ${businessName} ist bestätigt. ✓`
+          : `Ihre Reservierung bei ${businessName} ist bestätigt. ✓`,
         '',
-        '',
-        'Details:',
-        `  Datum: ${displayDate}`,
-        `  Uhrzeit: ${body.time || '-'}`,
-        !isSalon && body.seating ? `  Sitzplatz: ${body.seating}` : null,
+        isSalon ? 'Ihre Termindetails' : 'Ihre Reservierungsdetails',
+        '────────────────────────',
+        `Datum: ${longDisplayDate}`,
+        `Uhrzeit: ${body.time ? `${body.time} Uhr` : '-'}`,
         isSalon
           ? body.service
-            ? `  Service: ${body.service}`
+            ? `Service: ${body.service}`
             : null
           : body.people
-            ? `  Personen: ${body.people}`
+            ? `Personen: ${body.people}`
             : null,
-        isSalon && body.stylist ? `  Friseur: ${body.stylist}` : null,
-        body.note ? `  Notiz: ${body.note}` : null,
+        isSalon && body.stylist ? `Friseur: ${body.stylist}` : null,
+        !isSalon && body.seating ? `Sitzplatz: ${body.seating}` : null,
+        body.note ? `Notiz: ${body.note}` : null,
+        '────────────────────────',
         '',
-        'Bei Rückfragen antworten Sie direkt auf diese E-Mail.',
+        'Wir freuen uns auf Ihren Besuch!',
         '',
+        'Falls Sie noch eine Frage haben oder etwas ändern möchten, antworten Sie einfach auf diese E-Mail.',
         '',
-        'Beste Grüße',
-        businessName,
+        'Herzliche Grüße',
+        `Ihr Team von ${businessName}`,
         '',
-        'NexTime - einfache Terminplanung',
-        platformUrl,
+        '—',
+        'Terminbuchung mit NexTime',
+        normalizedPlatformUrl,
       ]
         .filter((line): line is string => line !== null && line !== undefined)
         .join('\r\n'),

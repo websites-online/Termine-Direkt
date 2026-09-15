@@ -118,6 +118,20 @@ const formatDisplayDate = (dateValue?: string): string => {
   return dateValue;
 };
 
+const formatLongDisplayDate = (dateValue?: string): string => {
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateValue || '').trim());
+  if (!isoMatch) {
+    return formatDisplayDate(dateValue);
+  }
+  return new Intl.DateTimeFormat('de-DE', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Europe/Berlin',
+  }).format(new Date(`${dateValue}T12:00:00Z`));
+};
+
 const extractFromNote = (note: string | null, key: string): string => {
   if (!note) {
     return '';
@@ -131,7 +145,6 @@ const renderResultPage = (
   message: string,
   status: 'ok' | 'error',
   actions?: Array<{ href: string; label: string; variant?: 'primary' | 'secondary' }>,
-  autoOpenHref?: string,
 ) => `
 <!doctype html>
 <html lang="de">
@@ -183,13 +196,6 @@ const renderResultPage = (
         </div>
       </div>
     </div>
-    ${
-      autoOpenHref
-        ? `<script>setTimeout(function(){window.location.href=${JSON.stringify(
-            autoOpenHref,
-          )};},120);</script>`
-        : ''
-    }
   </body>
 </html>`;
 
@@ -197,6 +203,12 @@ const sendHtmlResponse = (res: any, statusCode: number, html: string) => {
   res.statusCode = statusCode;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.end(html);
+};
+
+const redirectToMailDraft = (res: any, mailtoLink: string) => {
+  res.statusCode = 302;
+  res.setHeader('Location', mailtoLink);
+  res.end();
 };
 
 const isMissingColumnError = (error: any, columnName: string): boolean => {
@@ -306,6 +318,7 @@ module.exports = async function handler(req: any, res: any) {
     const businessName = (requestRow.restaurant_name || company.name || '').trim() || 'Ihr Betrieb';
     const guestName = (requestRow.guest_name || 'Gast').trim();
     const displayDate = formatDisplayDate(requestRow.date);
+    const longDisplayDate = formatLongDisplayDate(requestRow.date);
     const seating = extractFromNote(requestRow.note || null, 'Sitzplatz');
     const service = extractFromNote(requestRow.note || null, 'Service');
     const stylist =
@@ -486,20 +499,21 @@ module.exports = async function handler(req: any, res: any) {
 
     const greeting = getTimeBasedGreeting();
     const confirmationSubject =
-      `${isSalon ? 'Termin bestätigt' : 'Reservierung bestätigt'} | ${displayDate} ${
+      `${isSalon ? 'Ihr Termin ist bestätigt' : 'Ihre Reservierung ist bestätigt'} | ${displayDate} ${
         requestRow.time ? `um ${requestRow.time}` : ''
       }`.trim();
     const confirmationBody = [
       `${greeting} ${guestName},`,
       '',
+      'vielen Dank für Ihre Anfrage – wir haben gute Nachrichten:',
       isSalon
-        ? `Ihr Termin bei ${businessName} wurde erfolgreich bestätigt.`
-        : `Ihre Reservierung bei ${businessName} wurde erfolgreich bestätigt.`,
+        ? `Ihr Termin bei ${businessName} ist bestätigt. ✓`
+        : `Ihre Reservierung bei ${businessName} ist bestätigt. ✓`,
       '',
-      `Datum: ${displayDate}`,
-      `Uhrzeit: ${requestRow.time || '-'}`,
-      customerNote ? `Notiz: ${customerNote}` : null,
-      !isSalon && seating ? `Sitzplatz: ${seating}` : null,
+      isSalon ? 'Ihre Termindetails' : 'Ihre Reservierungsdetails',
+      '────────────────────────',
+      `Datum: ${longDisplayDate}`,
+      `Uhrzeit: ${requestRow.time ? `${requestRow.time} Uhr` : '-'}`,
       isSalon
         ? service
           ? `Service: ${service}`
@@ -508,10 +522,19 @@ module.exports = async function handler(req: any, res: any) {
           ? `Personen: ${requestRow.people}`
           : null,
       isSalon && stylist ? `Friseur: ${stylist}` : null,
+      !isSalon && seating ? `Sitzplatz: ${seating}` : null,
+      customerNote ? `Notiz: ${customerNote}` : null,
+      '────────────────────────',
       '',
-      'Bei Rückfragen antworten Sie direkt auf diese E-Mail.',
+      'Wir freuen uns auf Ihren Besuch!',
       '',
-      'NexTime - einfache Terminplanung',
+      'Falls Sie noch eine Frage haben oder etwas ändern möchten, antworten Sie einfach auf diese E-Mail.',
+      '',
+      'Herzliche Grüße',
+      `Ihr Team von ${businessName}`,
+      '',
+      '—',
+      'Terminbuchung mit NexTime',
       normalizedPlatformUrl,
     ]
       .filter(Boolean)
@@ -522,17 +545,7 @@ module.exports = async function handler(req: any, res: any) {
       confirmationBody,
     );
 
-    sendHtmlResponse(
-      res,
-      200,
-      renderResultPage(
-        'Anfrage angenommen',
-        `Der ${isSalon ? 'Termin' : 'Reservierungstermin'} wurde fest im Kalender gespeichert. Senden Sie jetzt die Bestätigung an den Gast.`,
-        'ok',
-        [{ href: confirmMailto, label: 'Bestätigungsmail öffnen', variant: 'secondary' }],
-        confirmMailto,
-      ),
-    );
+    redirectToMailDraft(res, confirmMailto);
   } catch (error: any) {
     console.error('booking request approval error', error);
     sendHtmlResponse(
