@@ -117,6 +117,34 @@ export class CompanyReservationsService {
     });
   }
 
+  approveRequest(id: string): Observable<CompanyReservation> {
+    if (this.isLocalMock()) {
+      const slug = this.authService.getSession()?.slug;
+      if (!slug) {
+        return throwError(() => new Error('Nicht eingeloggt.'));
+      }
+      const reservations = this.loadLocalReservations(slug);
+      const index = reservations.findIndex((item) => item.id === id && item.isRequest);
+      if (index === -1) {
+        return throwError(() => new Error('Anfrage nicht gefunden.'));
+      }
+      const approved: CompanyReservation = {
+        ...reservations[index],
+        isRequest: false,
+        requestStatus: 'approved',
+      };
+      reservations[index] = approved;
+      this.saveLocalReservations(slug, reservations);
+      return of(approved).pipe(delay(200));
+    }
+
+    return this.http.patch<CompanyReservation>(
+      this.baseUrl,
+      { id, action: 'approve' },
+      { headers: this.authHeaders() },
+    );
+  }
+
   deleteReservation(id: string): Observable<{ success: boolean }> {
     if (this.isLocalMock()) {
       const slug = this.authService.getSession()?.slug;

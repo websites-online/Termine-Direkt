@@ -254,7 +254,17 @@
             >
               ×
             </button>
-            <span class="request-status" *ngIf="reservation.isRequest">Offen</span>
+            <div class="request-actions" *ngIf="reservation.isRequest">
+              <span class="request-status">Offen</span>
+              <button
+                class="request-approve"
+                type="button"
+                [disabled]="isApprovingRequest(reservation.id)"
+                (click)="approveRequest(reservation)"
+              >
+                {{ isApprovingRequest(reservation.id) ? 'Wird gespeichert…' : 'Annehmen' }}
+              </button>
+            </div>
           </article>
         </div>
       </aside>

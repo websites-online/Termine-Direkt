@@ -681,7 +681,8 @@
 }
 
 .request-status {
-  align-self: start;
+  display: inline-flex;
+  align-self: flex-end;
   padding: 5px 8px;
   border-radius: 99px;
   background: #e8faf6;
@@ -689,6 +690,36 @@
   font-size: 0.58rem;
   font-weight: 800;
   text-transform: uppercase;
+}
+
+.request-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  align-self: start;
+  gap: 7px;
+}
+
+.request-approve {
+  min-height: 29px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: #0f8f82;
+  color: #fff;
+  font: inherit;
+  font-size: 0.64rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.request-approve:hover:not(:disabled) {
+  background: #0b746a;
+}
+
+.request-approve:disabled {
+  cursor: wait;
+  opacity: 0.62;
 }
 
 .panel-backdrop {

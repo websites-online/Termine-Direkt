@@ -43,6 +43,31 @@ const platformUrl =
   process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
   'https://nextime-booking.de';
 
+const normalizedPlatformUrl = platformUrl.replace(/\/+$/, '');
+
+const createApprovalLink = (requestId: string): string => {
+  const secret = process.env.BOOKING_ACTION_SECRET?.trim();
+  if (!secret || !requestId) {
+    return '';
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const crypto = require('crypto');
+  const payloadPart = Buffer.from(
+    JSON.stringify({ requestId, exp: Date.now() + 30 * 24 * 60 * 60 * 1000 }),
+    'utf8',
+  )
+    .toString('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+  const signature = crypto.createHmac('sha256', secret).update(payloadPart).digest('hex');
+
+  return `${normalizedPlatformUrl}/api/booking-requests/approve?token=${encodeURIComponent(
+    `${payloadPart}.${signature}`,
+  )}`;
+};
+
 const createMailtoLink = (email: string, subject: string, body: string): string =>
   `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
     body.replace(/\r?\n/g, '\r\n'),
@@ -419,10 +444,13 @@ module.exports = async function handler(req: any, res: any) {
       time: body.time,
     };
 
+    let approvalLink = '';
     if (requestMode) {
-      const { error: requestInsertError } = await supabase
+      const { data: insertedRequest, error: requestInsertError } = await supabase
         .from('booking_requests')
-        .insert(bookingRecord);
+        .insert(bookingRecord)
+        .select('id')
+        .single();
       if (requestInsertError) {
         if (isMissingTableError(requestInsertError, 'booking_requests')) {
           res.status(500).json({
@@ -434,6 +462,7 @@ module.exports = async function handler(req: any, res: any) {
         res.status(500).json({ error: requestInsertError.message });
         return;
       }
+      approvalLink = createApprovalLink(String(insertedRequest?.id || ''));
     } else {
       const { error: insertError } = await supabase.from('reservations').insert(bookingRecord);
       if (insertError) {
@@ -558,12 +587,18 @@ module.exports = async function handler(req: any, res: any) {
         .join('\r\n'),
     );
 
+    const acceptActionLink = approvalLink || approveMailto;
+    const requestActionHint = approvalLink
+      ? 'Beim Annehmen wird der Termin fest im Kalender gespeichert. Danach öffnet sich die Bestätigungsmail an den Kunden.'
+      : 'Beide Aktionen öffnen direkt eine Mailvorlage in Ihrem Mailprogramm.';
     const actionsHtml = requestMode
       ? `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%"><tr><td style="padding:0 0 10px;text-align:center"><a href="${escapeHtml(
-          approveMailto,
+          acceptActionLink,
         )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#4338ca;color:#ffffff;text-decoration:none;font-weight:700">Anfrage annehmen</a></td></tr><tr><td style="text-align:center"><a href="${escapeHtml(
           declineMailto,
-        )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#ffffff;color:#4338ca;text-decoration:none;font-weight:700;border:1px solid #c7d2fe">Anfrage ablehnen</a></td></tr><tr><td style="padding-top:10px;color:#64748b;font-size:12px;line-height:1.4;text-align:center">Beide Aktionen öffnen direkt eine Mailvorlage in Ihrem Mailprogramm.</td></tr></table>`
+        )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#ffffff;color:#4338ca;text-decoration:none;font-weight:700;border:1px solid #c7d2fe">Anfrage ablehnen</a></td></tr><tr><td style="padding-top:10px;color:#64748b;font-size:12px;line-height:1.4;text-align:center">${escapeHtml(
+          requestActionHint,
+        )}</td></tr></table>`
       : undefined;
 
     const restaurantHtml = buildEmailLayout({
@@ -629,7 +664,7 @@ module.exports = async function handler(req: any, res: any) {
         .filter(Boolean)
         .concat(
           requestMode
-            ? ['', `Anfrage annehmen: ${approveMailto}`, `Anfrage ablehnen: ${declineMailto}`]
+            ? ['', `Anfrage annehmen: ${acceptActionLink}`, `Anfrage ablehnen: ${declineMailto}`]
             : [],
         )
         .concat([

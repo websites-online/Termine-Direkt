@@ -34,7 +34,7 @@ const escapeHtml = (value: unknown): string =>
 
 const createMailtoLink = (email: string, subject: string, body: string): string =>
   `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
-    body.replace(/\r?\n/g, '\r\n')
+    body.replace(/\r?\n/g, '\r\n'),
   )}`;
 
 const fromBase64Url = (value: string): string => {
@@ -92,7 +92,7 @@ const getTimeBasedGreeting = (): string => {
     const hourText = new Intl.DateTimeFormat('de-DE', {
       hour: '2-digit',
       hour12: false,
-      timeZone: 'Europe/Berlin'
+      timeZone: 'Europe/Berlin',
     }).format(new Date());
     const hour = Number.parseInt(hourText, 10);
     if (!Number.isNaN(hour) && hour >= 5 && hour < 11) {
@@ -131,7 +131,7 @@ const renderResultPage = (
   message: string,
   status: 'ok' | 'error',
   actions?: Array<{ href: string; label: string; variant?: 'primary' | 'secondary' }>,
-  autoOpenHref?: string
+  autoOpenHref?: string,
 ) => `
 <!doctype html>
 <html lang="de">
@@ -174,8 +174,8 @@ const renderResultPage = (
               .map(
                 (action) =>
                   `<a class="btn ${action.variant === 'secondary' ? 'btn-secondary' : 'btn-primary'}" href="${escapeHtml(
-                    action.href
-                  )}">${escapeHtml(action.label)}</a>`
+                    action.href,
+                  )}">${escapeHtml(action.label)}</a>`,
               )
               .join('')}
           </div>
@@ -186,7 +186,7 @@ const renderResultPage = (
     ${
       autoOpenHref
         ? `<script>setTimeout(function(){window.location.href=${JSON.stringify(
-            autoOpenHref
+            autoOpenHref,
           )};},120);</script>`
         : ''
     }
@@ -217,8 +217,8 @@ module.exports = async function handler(req: any, res: any) {
       renderResultPage(
         'Konfiguration fehlt',
         'BOOKING_ACTION_SECRET ist nicht gesetzt. Bitte in Vercel Environment Variables hinterlegen.',
-        'error'
-      )
+        'error',
+      ),
     );
     return;
   }
@@ -233,8 +233,8 @@ module.exports = async function handler(req: any, res: any) {
         renderResultPage(
           'Link ungültig oder abgelaufen',
           'Bitte öffnen Sie die aktuelle Anfrage-Mail erneut und klicken Sie auf den Bestätigungslink.',
-          'error'
-        )
+          'error',
+        ),
       );
       return;
     }
@@ -243,7 +243,7 @@ module.exports = async function handler(req: any, res: any) {
     const { data: requestRow, error: requestError } = await supabase
       .from('booking_requests')
       .select(
-        'id,restaurant_slug,restaurant_name,restaurant_email,guest_name,guest_email,phone,people,note,date,time,status'
+        'id,restaurant_slug,restaurant_name,restaurant_email,guest_name,guest_email,phone,people,note,date,time,status',
       )
       .eq('id', parsedToken.requestId)
       .maybeSingle();
@@ -256,15 +256,15 @@ module.exports = async function handler(req: any, res: any) {
           renderResultPage(
             'Migration fehlt',
             'Bitte zuerst die neuen Spalten fuer booking_requests und reservations in Supabase anlegen.',
-            'error'
-          )
+            'error',
+          ),
         );
         return;
       }
       sendHtmlResponse(
         res,
         500,
-        renderResultPage('Fehler beim Laden', `Datenbankfehler: ${requestError.message}`, 'error')
+        renderResultPage('Fehler beim Laden', `Datenbankfehler: ${requestError.message}`, 'error'),
       );
       return;
     }
@@ -276,8 +276,8 @@ module.exports = async function handler(req: any, res: any) {
         renderResultPage(
           'Anfrage nicht gefunden',
           'Die Anfrage existiert nicht mehr oder wurde bereits verarbeitet.',
-          'error'
-        )
+          'error',
+        ),
       );
       return;
     }
@@ -295,8 +295,8 @@ module.exports = async function handler(req: any, res: any) {
         renderResultPage(
           'Unternehmen nicht gefunden',
           'Die zugehoerige Firma konnte nicht geladen werden.',
-          'error'
-        )
+          'error',
+        ),
       );
       return;
     }
@@ -319,9 +319,53 @@ module.exports = async function handler(req: any, res: any) {
         200,
         renderResultPage(
           'Bereits bestätigt',
-          'Diese Anfrage wurde bereits als Buchung übernommen.',
-          'ok'
-        )
+          `Diese Anfrage wurde bereits als ${isSalon ? 'Termin' : 'Reservierung'} übernommen.`,
+          'ok',
+        ),
+      );
+      return;
+    }
+
+    const { data: existingReservation, error: existingReservationError } = await supabase
+      .from('reservations')
+      .select('id')
+      .eq('booking_request_id', requestRow.id)
+      .maybeSingle();
+
+    if (existingReservationError) {
+      if (isMissingColumnError(existingReservationError, 'booking_request_id')) {
+        sendHtmlResponse(
+          res,
+          500,
+          renderResultPage(
+            'Migration fehlt',
+            'Die Spalte booking_request_id in reservations fehlt noch. Bitte SQL-Migration ausführen.',
+            'error',
+          ),
+        );
+        return;
+      }
+      sendHtmlResponse(
+        res,
+        500,
+        renderResultPage('Fehler beim Prüfen', existingReservationError.message, 'error'),
+      );
+      return;
+    }
+
+    if (existingReservation) {
+      await supabase
+        .from('booking_requests')
+        .update({ status: 'approved', approved_at: new Date().toISOString() })
+        .eq('id', requestRow.id);
+      sendHtmlResponse(
+        res,
+        200,
+        renderResultPage(
+          'Bereits bestätigt',
+          `Diese Anfrage wurde bereits als ${isSalon ? 'Termin' : 'Reservierung'} übernommen.`,
+          'ok',
+        ),
       );
       return;
     }
@@ -337,7 +381,7 @@ module.exports = async function handler(req: any, res: any) {
       sendHtmlResponse(
         res,
         500,
-        renderResultPage('Fehler beim Prüfen', countError.message, 'error')
+        renderResultPage('Fehler beim Prüfen', countError.message, 'error'),
       );
       return;
     }
@@ -346,7 +390,7 @@ module.exports = async function handler(req: any, res: any) {
       const declineMailto = createMailtoLink(
         requestRow.guest_email || '',
         `${isSalon ? 'Terminanfrage' : 'Reservierungsanfrage'} zu ${displayDate} ${requestRow.time ? `(${requestRow.time})` : ''}`.trim(),
-        `Guten Tag ${guestName},\n\nleider passt der angefragte Termin aktuell nicht.\n\nAlternative:\n\nBeste Grüße\n${businessName}`
+        `Guten Tag ${guestName},\n\nleider passt der angefragte Termin aktuell nicht.\n\nAlternative:\n\nBeste Grüße\n${businessName}`,
       );
       sendHtmlResponse(
         res,
@@ -355,8 +399,8 @@ module.exports = async function handler(req: any, res: any) {
           'Slot ist bereits voll',
           'Der gewählte Slot ist inzwischen ausgebucht. Bitte senden Sie dem Gast einen Alternativtermin.',
           'error',
-          [{ href: declineMailto, label: 'Gast antworten', variant: 'secondary' }]
-        )
+          [{ href: declineMailto, label: 'Gast antworten', variant: 'secondary' }],
+        ),
       );
       return;
     }
@@ -372,19 +416,23 @@ module.exports = async function handler(req: any, res: any) {
       note: requestRow.note,
       date: requestRow.date,
       time: requestRow.time,
-      booking_request_id: requestRow.id
+      booking_request_id: requestRow.id,
     });
 
     if (insertError) {
       if (insertError.code === '23505') {
+        await supabase
+          .from('booking_requests')
+          .update({ status: 'approved', approved_at: new Date().toISOString() })
+          .eq('id', requestRow.id);
         sendHtmlResponse(
           res,
           200,
           renderResultPage(
             'Bereits bestätigt',
-            'Diese Anfrage wurde bereits als Buchung übernommen.',
-            'ok'
-          )
+            `Diese Anfrage wurde bereits als ${isSalon ? 'Termin' : 'Reservierung'} übernommen.`,
+            'ok',
+          ),
         );
         return;
       }
@@ -395,15 +443,15 @@ module.exports = async function handler(req: any, res: any) {
           renderResultPage(
             'Migration fehlt',
             'Die Spalte booking_request_id in reservations fehlt noch. Bitte SQL-Migration ausführen.',
-            'error'
-          )
+            'error',
+          ),
         );
         return;
       }
       sendHtmlResponse(
         res,
         500,
-        renderResultPage('Bestätigung fehlgeschlagen', insertError.message, 'error')
+        renderResultPage('Bestätigung fehlgeschlagen', insertError.message, 'error'),
       );
       return;
     }
@@ -423,12 +471,24 @@ module.exports = async function handler(req: any, res: any) {
 
     if (updateRequestError) {
       console.error('booking request status update failed', updateRequestError);
+      await supabase.from('reservations').delete().eq('booking_request_id', requestRow.id);
+      sendHtmlResponse(
+        res,
+        500,
+        renderResultPage(
+          'Bestätigung nicht gespeichert',
+          'Die Anfrage konnte nicht vollständig übernommen werden. Bitte versuchen Sie es erneut.',
+          'error',
+        ),
+      );
+      return;
     }
 
     const greeting = getTimeBasedGreeting();
-    const confirmationSubject = `${isSalon ? 'Termin bestätigt' : 'Reservierung bestätigt'} | ${displayDate} ${
-      requestRow.time ? `um ${requestRow.time}` : ''
-    }`.trim();
+    const confirmationSubject =
+      `${isSalon ? 'Termin bestätigt' : 'Reservierung bestätigt'} | ${displayDate} ${
+        requestRow.time ? `um ${requestRow.time}` : ''
+      }`.trim();
     const confirmationBody = [
       `${greeting} ${guestName},`,
       '',
@@ -440,32 +500,38 @@ module.exports = async function handler(req: any, res: any) {
       `Uhrzeit: ${requestRow.time || '-'}`,
       customerNote ? `Notiz: ${customerNote}` : null,
       !isSalon && seating ? `Sitzplatz: ${seating}` : null,
-      isSalon ? (service ? `Service: ${service}` : null) : requestRow.people ? `Personen: ${requestRow.people}` : null,
+      isSalon
+        ? service
+          ? `Service: ${service}`
+          : null
+        : requestRow.people
+          ? `Personen: ${requestRow.people}`
+          : null,
       isSalon && stylist ? `Friseur: ${stylist}` : null,
       '',
       'Bei Rückfragen antworten Sie direkt auf diese E-Mail.',
       '',
       'NexTime - einfache Terminplanung',
-      normalizedPlatformUrl
+      normalizedPlatformUrl,
     ]
       .filter(Boolean)
       .join('\n');
     const confirmMailto = createMailtoLink(
       requestRow.guest_email || '',
       confirmationSubject,
-      confirmationBody
+      confirmationBody,
     );
 
     sendHtmlResponse(
       res,
       200,
       renderResultPage(
-        'Anfrage bestätigt',
-        'Die Anfrage wurde als Buchung übernommen. Senden Sie jetzt die Bestätigung manuell an den Gast.',
+        'Anfrage angenommen',
+        `Der ${isSalon ? 'Termin' : 'Reservierungstermin'} wurde fest im Kalender gespeichert. Senden Sie jetzt die Bestätigung an den Gast.`,
         'ok',
         [{ href: confirmMailto, label: 'Bestätigungsmail öffnen', variant: 'secondary' }],
-        confirmMailto
-      )
+        confirmMailto,
+      ),
     );
   } catch (error: any) {
     console.error('booking request approval error', error);
@@ -475,8 +541,8 @@ module.exports = async function handler(req: any, res: any) {
       renderResultPage(
         'Interner Fehler',
         error?.message || 'Unbekannter Fehler beim Bestätigen der Anfrage.',
-        'error'
-      )
+        'error',
+      ),
     );
   }
 };

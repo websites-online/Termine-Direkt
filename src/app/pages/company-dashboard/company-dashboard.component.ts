@@ -52,6 +52,7 @@ export class CompanyDashboardComponent implements OnInit {
   isSubmitting = false;
   errorMessage = '';
   successMessage = '';
+  approvingRequestIds = new Set<string>();
   isEntryPanelOpen = false;
   entryMode: 'appointment' | 'block' = 'appointment';
 
@@ -365,6 +366,31 @@ export class CompanyDashboardComponent implements OnInit {
         this.loadReservations();
       },
     });
+  }
+
+  approveRequest(reservation: CompanyReservation): void {
+    if (!reservation.isRequest || this.approvingRequestIds.has(reservation.id)) {
+      return;
+    }
+    this.listError = '';
+    this.successMessage = '';
+    this.approvingRequestIds.add(reservation.id);
+    this.reservationsService.approveRequest(reservation.id).subscribe({
+      next: () => {
+        this.approvingRequestIds.delete(reservation.id);
+        this.successMessage = 'Anfrage angenommen. Der Termin ist jetzt fest im Kalender.';
+        this.loadReservations();
+      },
+      error: (err) => {
+        this.approvingRequestIds.delete(reservation.id);
+        this.listError =
+          err?.error?.error || err?.message || 'Die Anfrage konnte nicht angenommen werden.';
+      },
+    });
+  }
+
+  isApprovingRequest(id: string): boolean {
+    return this.approvingRequestIds.has(id);
   }
 
   get isSalon(): boolean {

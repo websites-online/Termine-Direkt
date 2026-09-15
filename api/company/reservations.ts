@@ -118,6 +118,15 @@ const isMissingStatusColumnError = (error: any): boolean => {
   );
 };
 
+const isMissingColumnError = (error: any, columnName: string): boolean => {
+  const message = String(error?.message || '').toLowerCase();
+  return (
+    error?.code === '42703' ||
+    error?.code === 'PGRST204' ||
+    (message.includes(columnName.toLowerCase()) && message.includes('column'))
+  );
+};
+
 module.exports = async function handler(req: any, res: any) {
   try {
     const authHeader = req.headers?.authorization || '';
@@ -226,6 +235,149 @@ module.exports = async function handler(req: any, res: any) {
       );
 
       res.status(200).json(mapped);
+      return;
+    }
+
+    if (req.method === 'PATCH') {
+      const body = req.body || {};
+      const requestId = String(body.id || '').trim();
+      if (body.action !== 'approve' || !requestId) {
+        res.status(400).json({ error: 'Ungültige Anfrage-Aktion.' });
+        return;
+      }
+
+      const { data: requestRow, error: requestError } = await supabase
+        .from('booking_requests')
+        .select(
+          'id,date,time,guest_name,guest_email,phone,people,note,status,created_at,restaurant_name,restaurant_email',
+        )
+        .eq('id', requestId)
+        .eq('restaurant_slug', company.slug)
+        .maybeSingle();
+
+      if (requestError) {
+        if (isMissingStatusColumnError(requestError)) {
+          res.status(500).json({
+            error: 'Die Supabase-Migration für bestätigte Anfragen fehlt noch.',
+          });
+          return;
+        }
+        res.status(500).json({ error: requestError.message });
+        return;
+      }
+      if (!requestRow) {
+        res.status(404).json({ error: 'Anfrage nicht gefunden.' });
+        return;
+      }
+
+      const reservationFields = 'id,date,time,guest_name,guest_email,phone,people,note,created_at';
+      const existingResult = await supabase
+        .from('reservations')
+        .select(reservationFields)
+        .eq('booking_request_id', requestId)
+        .maybeSingle();
+
+      if (existingResult.error) {
+        if (isMissingColumnError(existingResult.error, 'booking_request_id')) {
+          res.status(500).json({
+            error: 'Die Supabase-Migration für bestätigte Anfragen fehlt noch.',
+          });
+          return;
+        }
+        res.status(500).json({ error: existingResult.error.message });
+        return;
+      }
+
+      if (existingResult.data) {
+        let updateResult = await supabase
+          .from('booking_requests')
+          .update({ status: 'approved', approved_at: new Date().toISOString() })
+          .eq('id', requestId)
+          .eq('restaurant_slug', company.slug);
+        if (updateResult.error && isMissingColumnError(updateResult.error, 'approved_at')) {
+          updateResult = await supabase
+            .from('booking_requests')
+            .update({ status: 'approved' })
+            .eq('id', requestId)
+            .eq('restaurant_slug', company.slug);
+        }
+        if (updateResult.error) {
+          res.status(500).json({ error: updateResult.error.message });
+          return;
+        }
+        res.status(200).json(toReservationResponse(existingResult.data));
+        return;
+      }
+
+      const { count, error: countError } = await supabase
+        .from('reservations')
+        .select('id', { count: 'exact', head: true })
+        .eq('restaurant_slug', company.slug)
+        .eq('date', requestRow.date)
+        .eq('time', requestRow.time);
+      if (countError) {
+        res.status(500).json({ error: countError.message });
+        return;
+      }
+
+      const slotCapacity = typeof company.slot_capacity === 'number' ? company.slot_capacity : 3;
+      if ((count || 0) >= slotCapacity) {
+        res.status(409).json({
+          error: 'Diese Uhrzeit ist inzwischen belegt. Die Anfrage bleibt offen.',
+        });
+        return;
+      }
+
+      const { data: insertedReservation, error: insertError } = await supabase
+        .from('reservations')
+        .insert({
+          restaurant_slug: company.slug,
+          restaurant_name: requestRow.restaurant_name || company.name,
+          restaurant_email: requestRow.restaurant_email || company.email,
+          guest_name: requestRow.guest_name,
+          guest_email: requestRow.guest_email,
+          phone: requestRow.phone,
+          people: requestRow.people,
+          note: requestRow.note,
+          date: requestRow.date,
+          time: requestRow.time,
+          booking_request_id: requestId,
+        })
+        .select(reservationFields)
+        .single();
+
+      if (insertError || !insertedReservation) {
+        if (isMissingColumnError(insertError, 'booking_request_id')) {
+          res.status(500).json({
+            error: 'Die Supabase-Migration für bestätigte Anfragen fehlt noch.',
+          });
+          return;
+        }
+        res
+          .status(500)
+          .json({ error: insertError?.message || 'Termin konnte nicht gespeichert werden.' });
+        return;
+      }
+
+      let updateResult = await supabase
+        .from('booking_requests')
+        .update({ status: 'approved', approved_at: new Date().toISOString() })
+        .eq('id', requestId)
+        .eq('restaurant_slug', company.slug);
+      if (updateResult.error && isMissingColumnError(updateResult.error, 'approved_at')) {
+        updateResult = await supabase
+          .from('booking_requests')
+          .update({ status: 'approved' })
+          .eq('id', requestId)
+          .eq('restaurant_slug', company.slug);
+      }
+      if (updateResult.error) {
+        await supabase.from('reservations').delete().eq('booking_request_id', requestId);
+        res.status(500).json({ error: 'Anfrage konnte nicht vollständig übernommen werden.' });
+        return;
+      }
+
+      res.status(200).json(toReservationResponse(insertedReservation));
       return;
     }
 
