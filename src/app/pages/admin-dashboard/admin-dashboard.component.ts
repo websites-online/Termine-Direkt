@@ -127,10 +127,6 @@ export class AdminDashboardComponent implements OnInit {
             label: service.label.trim(),
           }))
         : [];
-    if (serviceType === 'friseur' && salonServices.length === 0) {
-      this.formError = 'Bitte mindestens eine Friseur-Leistung auswählen.';
-      return;
-    }
     if (serviceType === 'friseur' && salonServices.some((service) => !service.label)) {
       this.formError = 'Bitte für jede ausgewählte Leistung einen Namen eintragen.';
       return;
