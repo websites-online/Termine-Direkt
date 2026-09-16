@@ -5,9 +5,6 @@ const platformUrl =
 
 const normalizedPlatformUrl = platformUrl.replace(/\/+$/, '');
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { sendBookingConfirmation } = require('../_lib/booking-emails');
-
 const getActionSecret = (): string => {
   const secret = process.env.BOOKING_ACTION_SECRET?.trim();
   if (!secret) {
@@ -81,12 +78,35 @@ const verifyToken = (token: string): { requestId: string; exp: number } | null =
     if (!payload?.requestId || !payload?.exp) {
       return null;
     }
+    if (payload.action && payload.action !== 'approve') {
+      return null;
+    }
     if (Date.now() > Number(payload.exp)) {
       return null;
     }
     return { requestId: String(payload.requestId), exp: Number(payload.exp) };
   } catch {
     return null;
+  }
+};
+
+const getTimeBasedGreeting = (): string => {
+  try {
+    const hourText = new Intl.DateTimeFormat('de-DE', {
+      hour: '2-digit',
+      hour12: false,
+      timeZone: 'Europe/Berlin',
+    }).format(new Date());
+    const hour = Number.parseInt(hourText, 10);
+    if (!Number.isNaN(hour) && hour >= 5 && hour < 11) {
+      return 'Guten Morgen';
+    }
+    if (!Number.isNaN(hour) && hour >= 11 && hour < 18) {
+      return 'Guten Tag';
+    }
+    return 'Guten Abend';
+  } catch {
+    return 'Guten Tag';
   }
 };
 
@@ -99,6 +119,28 @@ const formatDisplayDate = (dateValue?: string): string => {
     return `${isoMatch[3]}.${isoMatch[2]}.${isoMatch[1]}`;
   }
   return dateValue;
+};
+
+const formatLongDisplayDate = (dateValue?: string): string => {
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateValue || '').trim());
+  if (!isoMatch) {
+    return formatDisplayDate(dateValue);
+  }
+  return new Intl.DateTimeFormat('de-DE', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Europe/Berlin',
+  }).format(new Date(`${dateValue}T12:00:00Z`));
+};
+
+const extractFromNote = (note: string | null, key: string): string => {
+  if (!note) {
+    return '';
+  }
+  const match = note.match(new RegExp(`${key}:\\s*([^|]+)`, 'i'));
+  return match?.[1]?.trim() || '';
 };
 
 const renderResultPage = (
@@ -166,9 +208,9 @@ const sendHtmlResponse = (res: any, statusCode: number, html: string) => {
   res.end(html);
 };
 
-const sendNoContent = (res: any) => {
-  res.statusCode = 204;
-  res.setHeader('Cache-Control', 'no-store');
+const redirectToMailDraft = (res: any, mailtoLink: string) => {
+  res.statusCode = 302;
+  res.setHeader('Location', mailtoLink);
   res.end();
 };
 
@@ -279,8 +321,37 @@ module.exports = async function handler(req: any, res: any) {
     const businessName = (requestRow.restaurant_name || company.name || '').trim() || 'Ihr Betrieb';
     const guestName = (requestRow.guest_name || 'Gast').trim();
     const displayDate = formatDisplayDate(requestRow.date);
+    const longDisplayDate = formatLongDisplayDate(requestRow.date);
+    const seating = extractFromNote(requestRow.note || null, 'Sitzplatz');
+    const service = extractFromNote(requestRow.note || null, 'Service');
+    const stylist =
+      extractFromNote(requestRow.note || null, 'Friseur') ||
+      extractFromNote(requestRow.note || null, 'Wunsch-Friseur');
+    const customerNote = extractFromNote(requestRow.note || null, 'Notiz');
+
+    if (requestRow.status === 'rejected') {
+      sendHtmlResponse(
+        res,
+        409,
+        renderResultPage(
+          'Bereits abgelehnt',
+          'Diese Anfrage wurde bereits abgelehnt und kann nicht mehr angenommen werden.',
+          'error',
+        ),
+      );
+      return;
+    }
+
     if (requestRow.status === 'approved') {
-      sendNoContent(res);
+      sendHtmlResponse(
+        res,
+        200,
+        renderResultPage(
+          'Bereits bestätigt',
+          `Diese Anfrage wurde bereits als ${isSalon ? 'Termin' : 'Reservierung'} übernommen.`,
+          'ok',
+        ),
+      );
       return;
     }
 
@@ -316,12 +387,15 @@ module.exports = async function handler(req: any, res: any) {
         .from('booking_requests')
         .update({ status: 'approved', approved_at: new Date().toISOString() })
         .eq('id', requestRow.id);
-      try {
-        await sendBookingConfirmation(requestRow, company);
-      } catch (emailError) {
-        console.error('automatic confirmation email failed', emailError);
-      }
-      sendNoContent(res);
+      sendHtmlResponse(
+        res,
+        200,
+        renderResultPage(
+          'Bereits bestätigt',
+          `Diese Anfrage wurde bereits als ${isSalon ? 'Termin' : 'Reservierung'} übernommen.`,
+          'ok',
+        ),
+      );
       return;
     }
 
@@ -380,7 +454,15 @@ module.exports = async function handler(req: any, res: any) {
           .from('booking_requests')
           .update({ status: 'approved', approved_at: new Date().toISOString() })
           .eq('id', requestRow.id);
-        sendNoContent(res);
+        sendHtmlResponse(
+          res,
+          200,
+          renderResultPage(
+            'Bereits bestätigt',
+            `Diese Anfrage wurde bereits als ${isSalon ? 'Termin' : 'Reservierung'} übernommen.`,
+            'ok',
+          ),
+        );
         return;
       }
       if (isMissingColumnError(insertError, 'booking_request_id')) {
@@ -431,12 +513,55 @@ module.exports = async function handler(req: any, res: any) {
       return;
     }
 
-    try {
-      await sendBookingConfirmation(requestRow, company);
-    } catch (emailError) {
-      console.error('automatic confirmation email failed', emailError);
-    }
-    sendNoContent(res);
+    const greeting = getTimeBasedGreeting();
+    const confirmationSubject =
+      `${isSalon ? 'Ihr Termin ist bestätigt' : 'Ihre Reservierung ist bestätigt'} | ${displayDate} ${
+        requestRow.time ? `um ${requestRow.time}` : ''
+      }`.trim();
+    const confirmationBody = [
+      `${greeting} ${guestName},`,
+      '',
+      'vielen Dank für Ihre Anfrage – wir haben gute Nachrichten:',
+      isSalon
+        ? `Ihr Termin bei ${businessName} ist bestätigt. ✓`
+        : `Ihre Reservierung bei ${businessName} ist bestätigt. ✓`,
+      '',
+      isSalon ? 'Ihre Termindetails' : 'Ihre Reservierungsdetails',
+      '────────────────────────',
+      `Datum: ${longDisplayDate}`,
+      `Uhrzeit: ${requestRow.time ? `${requestRow.time} Uhr` : '-'}`,
+      isSalon
+        ? service
+          ? `Service: ${service}`
+          : null
+        : requestRow.people
+          ? `Personen: ${requestRow.people}`
+          : null,
+      isSalon && stylist ? `Friseur: ${stylist}` : null,
+      !isSalon && seating ? `Sitzplatz: ${seating}` : null,
+      customerNote ? `Notiz: ${customerNote}` : null,
+      '────────────────────────',
+      '',
+      'Wir freuen uns auf Ihren Besuch!',
+      '',
+      'Falls Sie noch eine Frage haben oder etwas ändern möchten, antworten Sie einfach auf diese E-Mail.',
+      '',
+      'Herzliche Grüße',
+      `Ihr Team von ${businessName}`,
+      '',
+      '—',
+      'Terminbuchung mit NexTime',
+      normalizedPlatformUrl,
+    ]
+      .filter(Boolean)
+      .join('\n');
+    const confirmMailto = createMailtoLink(
+      requestRow.guest_email || '',
+      confirmationSubject,
+      confirmationBody,
+    );
+
+    redirectToMailDraft(res, confirmMailto);
   } catch (error: any) {
     console.error('booking request approval error', error);
     sendHtmlResponse(

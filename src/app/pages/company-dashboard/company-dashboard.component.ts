@@ -53,6 +53,7 @@ export class CompanyDashboardComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   approvingRequestIds = new Set<string>();
+  rejectingRequestIds = new Set<string>();
   isEntryPanelOpen = false;
   entryMode: 'appointment' | 'block' = 'appointment';
 
@@ -369,19 +370,23 @@ export class CompanyDashboardComponent implements OnInit {
   }
 
   approveRequest(reservation: CompanyReservation): void {
-    if (!reservation.isRequest || this.approvingRequestIds.has(reservation.id)) {
+    if (
+      !reservation.isRequest ||
+      this.approvingRequestIds.has(reservation.id) ||
+      this.rejectingRequestIds.has(reservation.id)
+    ) {
       return;
     }
     this.listError = '';
     this.successMessage = '';
     this.approvingRequestIds.add(reservation.id);
     this.reservationsService.approveRequest(reservation.id).subscribe({
-      next: (result) => {
+      next: () => {
         this.approvingRequestIds.delete(reservation.id);
-        this.successMessage = result.confirmationEmailSent
-          ? 'Anfrage angenommen. Die Bestätigung wurde automatisch versendet.'
-          : result.warning ||
-            'Anfrage angenommen. Die Bestätigungs-E-Mail konnte nicht versendet werden.';
+        this.successMessage = reservation.guestEmail
+          ? 'Anfrage angenommen. Die Bestätigungsmail wurde vorbereitet.'
+          : 'Anfrage angenommen. Es ist keine Kunden-E-Mail hinterlegt.';
+        this.openApprovalMailTemplate(reservation);
         this.loadReservations();
       },
       error: (err) => {
@@ -394,6 +399,146 @@ export class CompanyDashboardComponent implements OnInit {
 
   isApprovingRequest(id: string): boolean {
     return this.approvingRequestIds.has(id);
+  }
+
+  rejectRequest(reservation: CompanyReservation): void {
+    if (
+      !reservation.isRequest ||
+      this.rejectingRequestIds.has(reservation.id) ||
+      this.approvingRequestIds.has(reservation.id)
+    ) {
+      return;
+    }
+    this.listError = '';
+    this.successMessage = '';
+    this.rejectingRequestIds.add(reservation.id);
+    this.reservationsService.rejectRequest(reservation.id).subscribe({
+      next: () => {
+        this.rejectingRequestIds.delete(reservation.id);
+        this.successMessage = reservation.guestEmail
+          ? 'Anfrage abgelehnt und Antwortmail vorbereitet.'
+          : 'Anfrage abgelehnt und aus Offen entfernt.';
+        this.openRejectionMailTemplate(reservation);
+        this.loadReservations();
+      },
+      error: (err) => {
+        this.rejectingRequestIds.delete(reservation.id);
+        this.listError =
+          err?.error?.error || err?.message || 'Die Anfrage konnte nicht abgelehnt werden.';
+      },
+    });
+  }
+
+  isRejectingRequest(id: string): boolean {
+    return this.rejectingRequestIds.has(id);
+  }
+
+  private openApprovalMailTemplate(reservation: CompanyReservation): void {
+    if (!reservation.guestEmail || typeof window === 'undefined') {
+      return;
+    }
+
+    const businessName = this.companyName;
+    const guestName = reservation.guestName || 'Gast';
+    const displayDate = new Intl.DateTimeFormat('de-DE', {
+      weekday: 'long',
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    }).format(this.parseDate(reservation.date));
+    const noun = this.isSalon ? 'Termin' : 'Reservierung';
+    const shortDate = reservation.date.split('-').reverse().join('.');
+    const subject = `${this.isSalon ? 'Ihr Termin ist bestätigt' : 'Ihre Reservierung ist bestätigt'} | ${shortDate} um ${reservation.time}`;
+    const body = [
+      `Guten Tag ${guestName},`,
+      '',
+      'vielen Dank für Ihre Anfrage – wir haben gute Nachrichten:',
+      `${this.isSalon ? 'Ihr Termin' : 'Ihre Reservierung'} bei ${businessName} ist bestätigt.`,
+      '',
+      `Ihre ${this.isSalon ? 'Termindetails' : 'Reservierungsdetails'}`,
+      '────────────────────────',
+      `Datum: ${displayDate}`,
+      `Uhrzeit: ${reservation.time} Uhr`,
+      this.isSalon && reservation.service ? `Service: ${reservation.service}` : null,
+      this.isSalon && reservation.stylist ? `Friseur: ${reservation.stylist}` : null,
+      !this.isSalon && reservation.people ? `Personen: ${reservation.people}` : null,
+      reservation.note ? `Notiz: ${reservation.note}` : null,
+      '────────────────────────',
+      '',
+      'Wir freuen uns auf Ihren Besuch!',
+      '',
+      'Falls Sie noch eine Frage haben oder etwas ändern möchten, antworten Sie einfach auf diese E-Mail.',
+      '',
+      'Herzliche Grüße',
+      `Ihr Team von ${businessName}`,
+      '',
+      '—',
+      `${noun} mit NexTime`,
+      'https://nextime-booking.de',
+    ]
+      .filter((line): line is string => line !== null)
+      .join('\r\n');
+
+    window.location.href = `mailto:${reservation.guestEmail}?subject=${encodeURIComponent(
+      subject,
+    )}&body=${encodeURIComponent(body)}`;
+  }
+
+  private openRejectionMailTemplate(reservation: CompanyReservation): void {
+    if (!reservation.guestEmail || typeof window === 'undefined') {
+      return;
+    }
+
+    const businessName = this.companyName;
+    const guestName = reservation.guestName || 'Gast';
+    const displayDate = new Intl.DateTimeFormat('de-DE', {
+      weekday: 'long',
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    }).format(this.parseDate(reservation.date));
+    const subject = `Alternativvorschlag von ${businessName}`;
+    const body = [
+      `Guten Tag ${guestName},`,
+      '',
+      `vielen Dank für Ihre Anfrage bei ${businessName}.`,
+      '',
+      this.isSalon
+        ? 'Leider können wir den gewünschten Termin so nicht bestätigen.'
+        : 'Leider können wir die gewünschte Reservierung so nicht bestätigen.',
+      '',
+      this.isSalon ? 'Ihr angefragter Termin' : 'Ihre angefragte Reservierung',
+      '────────────────────────',
+      `Datum: ${displayDate}`,
+      `Uhrzeit: ${reservation.time} Uhr`,
+      this.isSalon && reservation.service ? `Service: ${reservation.service}` : null,
+      this.isSalon && reservation.stylist ? `Friseur: ${reservation.stylist}` : null,
+      !this.isSalon && reservation.people ? `Personen: ${reservation.people}` : null,
+      '────────────────────────',
+      '',
+      'Unser Alternativvorschlag',
+      '────────────────────────',
+      'Datum: [DATUM EINFÜGEN]',
+      'Uhrzeit: [UHRZEIT EINFÜGEN]',
+      '────────────────────────',
+      '',
+      'Passt dieser Vorschlag für Sie? Antworten Sie uns einfach kurz auf diese E-Mail.',
+      '',
+      'Falls Sie noch eine Frage haben, können Sie ebenfalls direkt auf diese E-Mail antworten.',
+      '',
+      'Herzliche Grüße',
+      `Ihr Team von ${businessName}`,
+      '',
+      '—',
+      'Terminplanung mit NexTime',
+      'https://nextime-booking.de',
+    ]
+      .filter((line): line is string => line !== null)
+      .join('\r\n');
+
+    window.location.href = `mailto:${reservation.guestEmail}?subject=${encodeURIComponent(
+      subject,
+    )}&body=${encodeURIComponent(body)}`;
   }
 
   get isSalon(): boolean {

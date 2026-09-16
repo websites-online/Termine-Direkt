@@ -257,9 +257,21 @@
             <div class="request-actions" *ngIf="reservation.isRequest">
               <span class="request-status">Offen</span>
               <button
+                class="request-reject"
+                type="button"
+                [disabled]="
+                  isRejectingRequest(reservation.id) || isApprovingRequest(reservation.id)
+                "
+                (click)="rejectRequest(reservation)"
+              >
+                {{ isRejectingRequest(reservation.id) ? 'Wird entfernt…' : 'Ablehnen' }}
+              </button>
+              <button
                 class="request-approve"
                 type="button"
-                [disabled]="isApprovingRequest(reservation.id)"
+                [disabled]="
+                  isApprovingRequest(reservation.id) || isRejectingRequest(reservation.id)
+                "
                 (click)="approveRequest(reservation)"
               >
                 {{ isApprovingRequest(reservation.id) ? 'Wird gespeichert…' : 'Annehmen' }}

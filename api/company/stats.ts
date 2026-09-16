@@ -8,6 +8,7 @@ type ActivityRow = {
   phone?: string | null;
   note?: string | null;
   created_at?: string | null;
+  status?: string | null;
 };
 
 const getClient = () => {
@@ -98,14 +99,16 @@ const getChangePercent = (current: number, previous: number): number | null => {
 const getStrongest = <T extends { count: number }>(items: T[]): T =>
   items.reduce((best, item) => (item.count > best.count ? item : best), items[0]);
 
-const fetchAllRows = async (supabase: any, table: string, slug: string) => {
+const fetchAllRows = async (supabase: any, table: string, slug: string, includeStatus = false) => {
   const rows: ActivityRow[] = [];
   const pageSize = 1000;
   let from = 0;
   while (true) {
     const { data, error } = await supabase
       .from(table)
-      .select('date,time,guest_name,guest_email,phone,note,created_at')
+      .select(
+        `date,time,guest_name,guest_email,phone,note,created_at${includeStatus ? ',status' : ''}`,
+      )
       .eq('restaurant_slug', slug)
       .range(from, from + pageSize - 1);
     if (error) {
@@ -172,9 +175,10 @@ module.exports = async function handler(req: any, res: any) {
       supabase,
       requestMode ? 'booking_requests' : 'reservations',
       company.slug,
+      requestMode,
     );
     const eligibleRows = requestMode
-      ? allRows
+      ? allRows.filter((row) => row.status !== 'rejected')
       : allRows.filter((row) => !isInternalEntry(row.note));
 
     const within = (row: ActivityRow, rangeFrom: Date, rangeTo: Date): boolean => {

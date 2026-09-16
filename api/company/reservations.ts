@@ -9,9 +9,6 @@ const getClient = () => {
   return createClient(url, key);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { sendBookingConfirmation } = require('../_lib/booking-emails');
-
 const parseToken = (token: string) => {
   try {
     const decoded = Buffer.from(token, 'base64').toString('utf8');
@@ -230,7 +227,7 @@ module.exports = async function handler(req: any, res: any) {
         });
 
       const mappedRequests = requestRows
-        .filter((row: any) => row.status !== 'approved')
+        .filter((row: any) => !['approved', 'rejected'].includes(row.status))
         .map((row: any) => toReservationResponse(row, true));
 
       const mapped = [...mappedReservations, ...mappedRequests].sort((left, right) =>
@@ -244,7 +241,8 @@ module.exports = async function handler(req: any, res: any) {
     if (req.method === 'PATCH') {
       const body = req.body || {};
       const requestId = String(body.id || '').trim();
-      if (body.action !== 'approve' || !requestId) {
+      const action = String(body.action || '');
+      if (!['approve', 'reject'].includes(action) || !requestId) {
         res.status(400).json({ error: 'Ungültige Anfrage-Aktion.' });
         return;
       }
@@ -270,6 +268,29 @@ module.exports = async function handler(req: any, res: any) {
       }
       if (!requestRow) {
         res.status(404).json({ error: 'Anfrage nicht gefunden.' });
+        return;
+      }
+
+      if (action === 'reject') {
+        if (requestRow.status === 'approved') {
+          res.status(409).json({ error: 'Diese Anfrage wurde bereits angenommen.' });
+          return;
+        }
+        const { error: rejectionError } = await supabase
+          .from('booking_requests')
+          .update({ status: 'rejected' })
+          .eq('id', requestId)
+          .eq('restaurant_slug', company.slug);
+        if (rejectionError) {
+          res.status(500).json({ error: rejectionError.message });
+          return;
+        }
+        res.status(200).json(toReservationResponse({ ...requestRow, status: 'rejected' }, true));
+        return;
+      }
+
+      if (requestRow.status === 'rejected') {
+        res.status(409).json({ error: 'Diese Anfrage wurde bereits abgelehnt.' });
         return;
       }
 
@@ -308,20 +329,7 @@ module.exports = async function handler(req: any, res: any) {
           res.status(500).json({ error: updateResult.error.message });
           return;
         }
-        let confirmationEmailSent = false;
-        try {
-          await sendBookingConfirmation(requestRow, company);
-          confirmationEmailSent = true;
-        } catch (emailError) {
-          console.error('automatic confirmation email failed', emailError);
-        }
-        res.status(200).json({
-          ...toReservationResponse(existingResult.data),
-          confirmationEmailSent,
-          warning: confirmationEmailSent
-            ? undefined
-            : 'Der Termin wurde gespeichert, aber die Bestätigungs-E-Mail konnte nicht versendet werden.',
-        });
+        res.status(200).json(toReservationResponse(existingResult.data));
         return;
       }
 
@@ -393,20 +401,7 @@ module.exports = async function handler(req: any, res: any) {
         return;
       }
 
-      let confirmationEmailSent = false;
-      try {
-        await sendBookingConfirmation(requestRow, company);
-        confirmationEmailSent = true;
-      } catch (emailError) {
-        console.error('automatic confirmation email failed', emailError);
-      }
-      res.status(200).json({
-        ...toReservationResponse(insertedReservation),
-        confirmationEmailSent,
-        warning: confirmationEmailSent
-          ? undefined
-          : 'Der Termin wurde gespeichert, aber die Bestätigungs-E-Mail konnte nicht versendet werden.',
-      });
+      res.status(200).json(toReservationResponse(insertedReservation));
       return;
     }
 

@@ -245,7 +245,7 @@ module.exports = async function handler(req: any, res: any) {
     const requestCounts = new Map<string, number>();
     bookingRequests.forEach((row) => {
       const slug = row.restaurant_slug || '';
-      if (!slug || !isInRange(row.date) || row.status === 'approved') {
+      if (!slug || !isInRange(row.date) || ['approved', 'rejected'].includes(row.status || '')) {
         return;
       }
       requestCounts.set(slug, (requestCounts.get(slug) || 0) + 1);

@@ -45,7 +45,7 @@ const platformUrl =
 
 const normalizedPlatformUrl = platformUrl.replace(/\/+$/, '');
 
-const createApprovalLink = (requestId: string): string => {
+const createRequestActionLink = (requestId: string, action: 'approve' | 'reject'): string => {
   const secret = process.env.BOOKING_ACTION_SECRET?.trim();
   if (!secret || !requestId) {
     return '';
@@ -54,7 +54,7 @@ const createApprovalLink = (requestId: string): string => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const crypto = require('crypto');
   const payloadPart = Buffer.from(
-    JSON.stringify({ requestId, exp: Date.now() + 30 * 24 * 60 * 60 * 1000 }),
+    JSON.stringify({ requestId, action, exp: Date.now() + 30 * 24 * 60 * 60 * 1000 }),
     'utf8',
   )
     .toString('base64')
@@ -63,7 +63,7 @@ const createApprovalLink = (requestId: string): string => {
     .replace(/\//g, '_');
   const signature = crypto.createHmac('sha256', secret).update(payloadPart).digest('hex');
 
-  return `${normalizedPlatformUrl}/api/booking-requests/approve?token=${encodeURIComponent(
+  return `${normalizedPlatformUrl}/api/booking-requests/${action}?token=${encodeURIComponent(
     `${payloadPart}.${signature}`,
   )}`;
 };
@@ -459,6 +459,7 @@ module.exports = async function handler(req: any, res: any) {
     };
 
     let approvalLink = '';
+    let rejectionLink = '';
     if (requestMode) {
       const { data: insertedRequest, error: requestInsertError } = await supabase
         .from('booking_requests')
@@ -476,7 +477,9 @@ module.exports = async function handler(req: any, res: any) {
         res.status(500).json({ error: requestInsertError.message });
         return;
       }
-      approvalLink = createApprovalLink(String(insertedRequest?.id || ''));
+      const requestId = String(insertedRequest?.id || '');
+      approvalLink = createRequestActionLink(requestId, 'approve');
+      rejectionLink = createRequestActionLink(requestId, 'reject');
     } else {
       const { error: insertError } = await supabase.from('reservations').insert(bookingRecord);
       if (insertError) {
@@ -574,36 +577,60 @@ module.exports = async function handler(req: any, res: any) {
       body.guestEmail || '',
       `Alternativvorschlag von ${businessName}`,
       [
-        `Guten Tag ${guestName},`,
+        `${greeting} ${guestName},`,
         '',
         `vielen Dank für Ihre Anfrage bei ${businessName}.`,
         '',
         isSalon
-          ? `der gewünschte Termin am ${displayDate} um ${body.time || '-'} Uhr passt uns leider nicht.`
-          : `die gewünschte Reservierung am ${displayDate} um ${body.time || '-'} Uhr passt uns leider nicht.`,
+          ? 'Leider können wir den gewünschten Termin so nicht bestätigen.'
+          : 'Leider können wir die gewünschte Reservierung so nicht bestätigen.',
         '',
-        'Wir können Ihnen stattdessen folgenden Termin anbieten:',
+        isSalon ? 'Ihr angefragter Termin' : 'Ihre angefragte Reservierung',
+        '────────────────────────',
+        `Datum: ${longDisplayDate}`,
+        `Uhrzeit: ${body.time ? `${body.time} Uhr` : '-'}`,
+        isSalon
+          ? body.service
+            ? `Service: ${body.service}`
+            : null
+          : body.people
+            ? `Personen: ${body.people}`
+            : null,
+        isSalon && body.stylist ? `Friseur: ${body.stylist}` : null,
+        !isSalon && body.seating ? `Sitzplatz: ${body.seating}` : null,
+        '────────────────────────',
         '',
-        '[DATUM EINFÜGEN] um [UHRZEIT EINFÜGEN] Uhr',
+        'Unser Alternativvorschlag',
+        '────────────────────────',
+        'Datum: [DATUM EINFÜGEN]',
+        'Uhrzeit: [UHRZEIT EINFÜGEN]',
+        '────────────────────────',
         '',
-        'Passt dieser Termin für Sie? Antworten Sie uns einfach kurz auf diese E-Mail.',
+        'Passt dieser Vorschlag für Sie? Antworten Sie uns einfach kurz auf diese E-Mail.',
+        '',
+        'Falls Sie noch eine Frage haben, können Sie ebenfalls direkt auf diese E-Mail antworten.',
         '',
         'Herzliche Grüße',
         `Ihr Team von ${businessName}`,
+        '',
+        '—',
+        'Terminplanung mit NexTime',
+        normalizedPlatformUrl,
       ]
         .filter((line): line is string => line !== null && line !== undefined)
         .join('\r\n'),
     );
 
     const acceptActionLink = approvalLink || approveMailto;
+    const rejectActionLink = rejectionLink || declineMailto;
     const requestActionHint = approvalLink
-      ? 'Annehmen speichert den Termin und versendet die Bestätigung automatisch. Ablehnen öffnet nur eine Mailvorlage für Ihren eigenen Vorschlag.'
+      ? 'Annehmen speichert den Termin und öffnet die Bestätigung als Mailvorlage. Ablehnen öffnet eine Mailvorlage für Ihren eigenen Vorschlag.'
       : 'Beide Aktionen öffnen direkt eine Mailvorlage in Ihrem Mailprogramm.';
     const actionsHtml = requestMode
       ? `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%"><tr><td style="padding:0 0 10px;text-align:center"><a href="${escapeHtml(
           acceptActionLink,
         )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#4338ca;color:#ffffff;text-decoration:none;font-weight:700">Anfrage annehmen</a></td></tr><tr><td style="text-align:center"><a href="${escapeHtml(
-          declineMailto,
+          rejectActionLink,
         )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#ffffff;color:#4338ca;text-decoration:none;font-weight:700;border:1px solid #c7d2fe">Ablehnen / Alternative vorschlagen</a></td></tr><tr><td style="padding-top:10px;color:#64748b;font-size:12px;line-height:1.4;text-align:center">${escapeHtml(
           requestActionHint,
         )}</td></tr></table>`
@@ -672,7 +699,7 @@ module.exports = async function handler(req: any, res: any) {
         .filter(Boolean)
         .concat(
           requestMode
-            ? ['', `Anfrage annehmen: ${acceptActionLink}`, `Anfrage ablehnen: ${declineMailto}`]
+            ? ['', `Anfrage annehmen: ${acceptActionLink}`, `Anfrage ablehnen: ${rejectActionLink}`]
             : [],
         )
         .concat([

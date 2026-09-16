@@ -722,6 +722,28 @@
   opacity: 0.62;
 }
 
+.request-reject {
+  min-height: 29px;
+  padding: 5px 10px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff;
+  color: #b42318;
+  font: inherit;
+  font-size: 0.64rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.request-reject:hover:not(:disabled) {
+  background: #fff1f2;
+}
+
+.request-reject:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
 .panel-backdrop {
   position: fixed;
   inset: 0;

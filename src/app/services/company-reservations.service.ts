@@ -20,8 +20,6 @@ export interface CompanyReservation {
   isInternal?: boolean;
   isRequest?: boolean;
   requestStatus?: 'pending' | 'approved' | string;
-  confirmationEmailSent?: boolean;
-  warning?: string;
   blockId?: string;
   createdAt?: string;
 }
@@ -134,7 +132,6 @@ export class CompanyReservationsService {
         ...reservations[index],
         isRequest: false,
         requestStatus: 'approved',
-        confirmationEmailSent: true,
       };
       reservations[index] = approved;
       this.saveLocalReservations(slug, reservations);
@@ -144,6 +141,31 @@ export class CompanyReservationsService {
     return this.http.patch<CompanyReservation>(
       this.baseUrl,
       { id, action: 'approve' },
+      { headers: this.authHeaders() },
+    );
+  }
+
+  rejectRequest(id: string): Observable<CompanyReservation> {
+    if (this.isLocalMock()) {
+      const slug = this.authService.getSession()?.slug;
+      if (!slug) {
+        return throwError(() => new Error('Nicht eingeloggt.'));
+      }
+      const reservations = this.loadLocalReservations(slug);
+      const rejected = reservations.find((item) => item.id === id && item.isRequest);
+      if (!rejected) {
+        return throwError(() => new Error('Anfrage nicht gefunden.'));
+      }
+      this.saveLocalReservations(
+        slug,
+        reservations.filter((item) => item.id !== id),
+      );
+      return of({ ...rejected, requestStatus: 'rejected' }).pipe(delay(200));
+    }
+
+    return this.http.patch<CompanyReservation>(
+      this.baseUrl,
+      { id, action: 'reject' },
       { headers: this.authHeaders() },
     );
   }
