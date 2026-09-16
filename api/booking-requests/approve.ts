@@ -316,7 +316,7 @@ module.exports = async function handler(req: any, res: any) {
       return;
     }
 
-    const { data: company, error: companyError } = await supabase
+    let { data: company, error: companyError } = await supabase
       .from('companies')
       .select(
         'slug,name,email,service_type,slot_capacity,slot_interval_minutes,plan_tier,calendar_mode,employees,salon_services,hours,break_hours',
@@ -324,17 +324,43 @@ module.exports = async function handler(req: any, res: any) {
       .eq('slug', requestRow.restaurant_slug)
       .maybeSingle();
 
-    if (companyError || !company) {
-      sendHtmlResponse(
-        res,
-        500,
-        renderResultPage(
-          'Unternehmen nicht gefunden',
-          'Die zugehoerige Firma konnte nicht geladen werden.',
-          'error',
-        ),
-      );
-      return;
+    if (companyError) {
+      const basicCompanyResult = await supabase
+        .from('companies')
+        .select('slug,name,email,service_type,slot_capacity')
+        .eq('slug', requestRow.restaurant_slug)
+        .maybeSingle();
+      companyError = basicCompanyResult.error;
+      company = basicCompanyResult.data
+        ? {
+            ...basicCompanyResult.data,
+            slot_interval_minutes: 45,
+            plan_tier: 'basic',
+            calendar_mode: 'shared',
+            employees: [],
+            salon_services: [],
+            hours: '',
+            break_hours: '',
+          }
+        : null;
+    }
+
+    if (!company) {
+      const requestWasForSalon = Boolean(extractFromNote(requestRow.note || null, 'Service'));
+      company = {
+        slug: requestRow.restaurant_slug,
+        name: requestRow.restaurant_name || 'Ihr Betrieb',
+        email: requestRow.restaurant_email || '',
+        service_type: requestWasForSalon ? 'friseur' : 'restaurant',
+        slot_capacity: 3,
+        slot_interval_minutes: 45,
+        plan_tier: 'basic',
+        calendar_mode: 'shared',
+        employees: [],
+        salon_services: [],
+        hours: '',
+        break_hours: '',
+      };
     }
 
     const slotCapacity = typeof company.slot_capacity === 'number' ? company.slot_capacity : 3;

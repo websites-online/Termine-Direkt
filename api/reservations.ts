@@ -25,6 +25,8 @@ const {
   getServiceDuration,
   isEmployeeCalendar,
 } = require('./_lib/employee-calendar');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { createInboundBookingAddress } = require('./_lib/inbound-booking-action');
 
 const escapeHtml = (value: unknown): string =>
   String(value ?? '')
@@ -72,28 +74,28 @@ const createRequestActionLink = (requestId: string, action: 'approve' | 'reject'
   if (!secret || !requestId) {
     return '';
   }
-
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const crypto = require('crypto');
   const payloadPart = Buffer.from(
     JSON.stringify({ requestId, action, exp: Date.now() + 30 * 24 * 60 * 60 * 1000 }),
     'utf8',
-  )
-    .toString('base64')
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
+  ).toString('base64url');
   const signature = crypto.createHmac('sha256', secret).update(payloadPart).digest('hex');
-
   return `${requestActionBaseUrl}/api/booking-requests/${action}?token=${encodeURIComponent(
     `${payloadPart}.${signature}`,
   )}`;
 };
 
-const createMailtoLink = (email: string, subject: string, body: string): string =>
-  `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
-    body.replace(/\r?\n/g, '\r\n'),
-  )}`;
+const createMailtoLink = (email: string, subject: string, body: string, bcc = ''): string => {
+  const params = [
+    `subject=${encodeURIComponent(subject)}`,
+    `body=${encodeURIComponent(body.replace(/\r?\n/g, '\r\n'))}`,
+  ];
+  if (bcc) {
+    params.push(`bcc=${encodeURIComponent(bcc)}`);
+  }
+  return `mailto:${email}?${params.join('&')}`;
+};
 
 const getTimeBasedGreeting = (): string => {
   try {
@@ -537,9 +539,15 @@ module.exports = async function handler(req: any, res: any) {
       duration_minutes: durationMinutes,
     };
 
-    let approvalLink = '';
-    let rejectionLink = '';
+    let approvalBcc = '';
+    let rejectionBcc = '';
+    let approvalFallbackLink = '';
+    let rejectionFallbackLink = '';
     if (requestMode) {
+      if (!process.env.BOOKING_ACTION_SECRET?.trim()) {
+        res.status(500).json({ error: 'Missing BOOKING_ACTION_SECRET' });
+        return;
+      }
       const { data: insertedRequest, error: requestInsertError } = await supabase
         .from('booking_requests')
         .insert(bookingRecord)
@@ -557,8 +565,17 @@ module.exports = async function handler(req: any, res: any) {
         return;
       }
       const requestId = String(insertedRequest?.id || '');
-      approvalLink = createRequestActionLink(requestId, 'approve');
-      rejectionLink = createRequestActionLink(requestId, 'reject');
+      if (process.env.RESEND_WEBHOOK_SECRET?.trim()) {
+        approvalBcc = createInboundBookingAddress(requestId, 'approve');
+        rejectionBcc = createInboundBookingAddress(requestId, 'reject');
+        if (!approvalBcc || !rejectionBcc) {
+          res.status(500).json({ error: 'Inbound action address could not be created.' });
+          return;
+        }
+      } else {
+        approvalFallbackLink = createRequestActionLink(requestId, 'approve');
+        rejectionFallbackLink = createRequestActionLink(requestId, 'reject');
+      }
     } else {
       const { error: insertError } = await supabase.from('reservations').insert(bookingRecord);
       if (insertError) {
@@ -621,13 +638,11 @@ module.exports = async function handler(req: any, res: any) {
       [
         `${greeting} ${guestName},`,
         '',
-        'vielen Dank für Ihre Anfrage – wir haben gute Nachrichten:',
         isSalon
-          ? `Ihr Termin bei ${businessName} ist bestätigt. ✓`
-          : `Ihre Reservierung bei ${businessName} ist bestätigt. ✓`,
+          ? `gute Nachrichten: Ihr Termin bei ${businessName} ist bestätigt. ✓`
+          : `gute Nachrichten: Ihre Reservierung bei ${businessName} ist bestätigt. ✓`,
         '',
         isSalon ? 'Ihre Termindetails' : 'Ihre Reservierungsdetails',
-        '────────────────────────',
         `Datum: ${longDisplayDate}`,
         `Uhrzeit: ${body.time ? `${body.time} Uhr` : '-'}`,
         isSalon
@@ -640,21 +655,19 @@ module.exports = async function handler(req: any, res: any) {
         isSalon && body.stylist ? `Friseur: ${body.stylist}` : null,
         !isSalon && body.seating ? `Sitzplatz: ${body.seating}` : null,
         body.note ? `Notiz: ${body.note}` : null,
-        '────────────────────────',
         '',
         'Wir freuen uns auf Ihren Besuch!',
-        '',
-        'Falls Sie noch eine Frage haben oder etwas ändern möchten, antworten Sie einfach auf diese E-Mail.',
+        'Bei Fragen antworten Sie einfach auf diese E-Mail.',
         '',
         'Herzliche Grüße',
         `Ihr Team von ${businessName}`,
         '',
-        '—',
         'Terminbuchung mit NexTime',
         normalizedPlatformUrl,
       ]
         .filter((line): line is string => line !== null && line !== undefined)
         .join('\r\n'),
+      approvalBcc,
     );
     const declineMailto = createMailtoLink(
       body.guestEmail || '',
@@ -669,7 +682,6 @@ module.exports = async function handler(req: any, res: any) {
           : 'Leider können wir die gewünschte Reservierung so nicht bestätigen.',
         '',
         isSalon ? 'Ihr angefragter Termin' : 'Ihre angefragte Reservierung',
-        '────────────────────────',
         `Datum: ${longDisplayDate}`,
         `Uhrzeit: ${body.time ? `${body.time} Uhr` : '-'}`,
         isSalon
@@ -681,34 +693,29 @@ module.exports = async function handler(req: any, res: any) {
             : null,
         isSalon && body.stylist ? `Friseur: ${body.stylist}` : null,
         !isSalon && body.seating ? `Sitzplatz: ${body.seating}` : null,
-        '────────────────────────',
         '',
         'Unser Alternativvorschlag',
-        '────────────────────────',
         'Datum: [DATUM EINFÜGEN]',
         'Uhrzeit: [UHRZEIT EINFÜGEN]',
-        '────────────────────────',
         '',
         'Passt dieser Vorschlag für Sie? Antworten Sie uns einfach kurz auf diese E-Mail.',
-        '',
-        'Falls Sie noch eine Frage haben, können Sie ebenfalls direkt auf diese E-Mail antworten.',
         '',
         'Herzliche Grüße',
         `Ihr Team von ${businessName}`,
         '',
-        '—',
         'Terminplanung mit NexTime',
         normalizedPlatformUrl,
       ]
         .filter((line): line is string => line !== null && line !== undefined)
         .join('\r\n'),
+      rejectionBcc,
     );
 
-    const acceptActionLink = approvalLink || approveMailto;
-    const rejectActionLink = rejectionLink || declineMailto;
-    const requestActionHint = approvalLink
-      ? 'Der Klick aktualisiert die Anfrage und öffnet anschließend direkt die passende Mailvorlage.'
-      : 'Beide Aktionen öffnen direkt eine Mailvorlage in Ihrem Mailprogramm.';
+    const acceptActionLink = approvalBcc ? approveMailto : approvalFallbackLink;
+    const rejectActionLink = rejectionBcc ? declineMailto : rejectionFallbackLink;
+    const requestActionHint = approvalBcc
+      ? 'Der Entwurf öffnet sich direkt in Ihrer Mail-App. Sobald Sie ihn senden, wird der Kalender automatisch aktualisiert.'
+      : 'Der Klick aktualisiert die Anfrage und öffnet anschließend die passende Mailvorlage.';
     const actionsHtml = requestMode
       ? `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%"><tr><td style="padding:0 0 10px;text-align:center"><a href="${escapeHtml(
           acceptActionLink,
