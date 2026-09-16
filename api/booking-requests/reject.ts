@@ -205,7 +205,6 @@ module.exports = async function handler(req: any, res: any) {
           : 'Leider können wir die gewünschte Reservierung so nicht bestätigen.',
         '',
         isSalon ? 'Ihr angefragter Termin' : 'Ihre angefragte Reservierung',
-        '────────────────────────',
         `Datum: ${longDisplayDate}`,
         `Uhrzeit: ${requestRow.time ? `${requestRow.time} Uhr` : '-'}`,
         isSalon
@@ -217,24 +216,18 @@ module.exports = async function handler(req: any, res: any) {
             : null,
         isSalon && stylist ? `Friseur: ${stylist}` : null,
         !isSalon && seating ? `Sitzplatz: ${seating}` : null,
-        '────────────────────────',
         '',
         'Unser Alternativvorschlag',
-        '────────────────────────',
         'Datum: [DATUM EINFÜGEN]',
         'Uhrzeit: [UHRZEIT EINFÜGEN]',
-        '────────────────────────',
         '',
         'Passt dieser Vorschlag für Sie? Antworten Sie uns einfach kurz auf diese E-Mail.',
-        '',
-        'Falls Sie noch eine Frage haben, können Sie ebenfalls direkt auf diese E-Mail antworten.',
         '',
         'Herzliche Grüße',
         `Ihr Team von ${businessName}`,
         '',
-        '—',
         'Terminplanung mit NexTime',
-        'https://nextime-booking.de',
+        'https://www.nextime-booking.de',
       ]
         .filter((line): line is string => line !== null)
         .join('\r\n'),
@@ -243,6 +236,7 @@ module.exports = async function handler(req: any, res: any) {
     res.statusCode = 302;
     res.setHeader('Location', mailto);
     res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Content-Length', '0');
     res.end();
   } catch (error: any) {
     console.error('booking request rejection error', error);

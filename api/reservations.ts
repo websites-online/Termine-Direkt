@@ -55,6 +55,18 @@ const platformUrl =
 
 const normalizedPlatformUrl = platformUrl.replace(/\/+$/, '');
 
+const requestActionBaseUrl = (() => {
+  try {
+    const url = new URL(normalizedPlatformUrl);
+    if (url.hostname === 'nextime-booking.de') {
+      url.hostname = 'www.nextime-booking.de';
+    }
+    return url.toString().replace(/\/+$/, '');
+  } catch {
+    return normalizedPlatformUrl;
+  }
+})();
+
 const createRequestActionLink = (requestId: string, action: 'approve' | 'reject'): string => {
   const secret = process.env.BOOKING_ACTION_SECRET?.trim();
   if (!secret || !requestId) {
@@ -73,7 +85,7 @@ const createRequestActionLink = (requestId: string, action: 'approve' | 'reject'
     .replace(/\//g, '_');
   const signature = crypto.createHmac('sha256', secret).update(payloadPart).digest('hex');
 
-  return `${normalizedPlatformUrl}/api/booking-requests/${action}?token=${encodeURIComponent(
+  return `${requestActionBaseUrl}/api/booking-requests/${action}?token=${encodeURIComponent(
     `${payloadPart}.${signature}`,
   )}`;
 };
@@ -700,9 +712,9 @@ module.exports = async function handler(req: any, res: any) {
     const actionsHtml = requestMode
       ? `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%"><tr><td style="padding:0 0 10px;text-align:center"><a href="${escapeHtml(
           acceptActionLink,
-        )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#4338ca;color:#ffffff;text-decoration:none;font-weight:700">Anfrage annehmen</a></td></tr><tr><td style="text-align:center"><a href="${escapeHtml(
+        )}" style="display:block;box-sizing:border-box;width:100%;min-height:48px;padding:12px 14px;border:1px solid #4338ca;border-radius:10px;background:#4338ca;color:#ffffff;text-align:center;text-decoration:none;font-size:14px;line-height:22px;font-weight:700">Anfrage annehmen</a></td></tr><tr><td style="text-align:center"><a href="${escapeHtml(
           rejectActionLink,
-        )}" style="display:inline-block;padding:11px 16px;border-radius:10px;background:#ffffff;color:#4338ca;text-decoration:none;font-weight:700;border:1px solid #c7d2fe">Ablehnen / Alternative vorschlagen</a></td></tr><tr><td style="padding-top:10px;color:#64748b;font-size:12px;line-height:1.4;text-align:center">${escapeHtml(
+        )}" style="display:block;box-sizing:border-box;width:100%;min-height:48px;padding:12px 14px;border:1px solid #c7d2fe;border-radius:10px;background:#ffffff;color:#4338ca;text-align:center;text-decoration:none;font-size:14px;line-height:22px;font-weight:700">Ablehnen / Alternative vorschlagen</a></td></tr><tr><td style="padding-top:10px;color:#64748b;font-size:12px;line-height:1.4;text-align:center">${escapeHtml(
           requestActionHint,
         )}</td></tr></table>`
       : undefined;

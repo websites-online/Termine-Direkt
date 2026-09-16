@@ -229,6 +229,7 @@ const redirectToMailDraft = (res: any, mailtoLink: string) => {
   res.statusCode = 302;
   res.setHeader('Location', mailtoLink);
   res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Length', '0');
   res.end();
 };
 
@@ -352,6 +353,46 @@ module.exports = async function handler(req: any, res: any) {
     let approvedEmployeeId = requestRow.employee_id || '';
     let approvedDuration =
       Number(requestRow.duration_minutes) || Number(company.slot_interval_minutes) || 45;
+    const createConfirmationMailto = (): string => {
+      const greeting = getTimeBasedGreeting();
+      const confirmationSubject =
+        `${isSalon ? 'Ihr Termin ist bestätigt' : 'Ihre Reservierung ist bestätigt'} | ${displayDate} ${
+          requestRow.time ? `um ${requestRow.time}` : ''
+        }`.trim();
+      const confirmationBody = [
+        `${greeting} ${guestName},`,
+        '',
+        isSalon
+          ? `gute Nachrichten: Ihr Termin bei ${businessName} ist bestätigt. ✓`
+          : `gute Nachrichten: Ihre Reservierung bei ${businessName} ist bestätigt. ✓`,
+        '',
+        isSalon ? 'Ihre Termindetails' : 'Ihre Reservierungsdetails',
+        `Datum: ${longDisplayDate}`,
+        `Uhrzeit: ${requestRow.time ? `${requestRow.time} Uhr` : '-'}`,
+        isSalon
+          ? service
+            ? `Service: ${service}`
+            : null
+          : requestRow.people
+            ? `Personen: ${requestRow.people}`
+            : null,
+        isSalon && stylist ? `Friseur: ${stylist}` : null,
+        !isSalon && seating ? `Sitzplatz: ${seating}` : null,
+        customerNote ? `Notiz: ${customerNote}` : null,
+        '',
+        'Wir freuen uns auf Ihren Besuch!',
+        'Bei Fragen antworten Sie einfach auf diese E-Mail.',
+        '',
+        'Herzliche Grüße',
+        `Ihr Team von ${businessName}`,
+        '',
+        'Terminbuchung mit NexTime',
+        normalizedPlatformUrl,
+      ]
+        .filter(Boolean)
+        .join('\r\n');
+      return createMailtoLink(requestRow.guest_email || '', confirmationSubject, confirmationBody);
+    };
 
     if (requestRow.status === 'rejected') {
       sendHtmlResponse(
@@ -367,15 +408,7 @@ module.exports = async function handler(req: any, res: any) {
     }
 
     if (requestRow.status === 'approved') {
-      sendHtmlResponse(
-        res,
-        200,
-        renderResultPage(
-          'Bereits bestätigt',
-          `Diese Anfrage wurde bereits als ${isSalon ? 'Termin' : 'Reservierung'} übernommen.`,
-          'ok',
-        ),
-      );
+      redirectToMailDraft(res, createConfirmationMailto());
       return;
     }
 
@@ -411,15 +444,7 @@ module.exports = async function handler(req: any, res: any) {
         .from('booking_requests')
         .update({ status: 'approved', approved_at: new Date().toISOString() })
         .eq('id', requestRow.id);
-      sendHtmlResponse(
-        res,
-        200,
-        renderResultPage(
-          'Bereits bestätigt',
-          `Diese Anfrage wurde bereits als ${isSalon ? 'Termin' : 'Reservierung'} übernommen.`,
-          'ok',
-        ),
-      );
+      redirectToMailDraft(res, createConfirmationMailto());
       return;
     }
 
@@ -501,15 +526,7 @@ module.exports = async function handler(req: any, res: any) {
           .from('booking_requests')
           .update({ status: 'approved', approved_at: new Date().toISOString() })
           .eq('id', requestRow.id);
-        sendHtmlResponse(
-          res,
-          200,
-          renderResultPage(
-            'Bereits bestätigt',
-            `Diese Anfrage wurde bereits als ${isSalon ? 'Termin' : 'Reservierung'} übernommen.`,
-            'ok',
-          ),
-        );
+        redirectToMailDraft(res, createConfirmationMailto());
         return;
       }
       if (insertError.code === '23505') {
@@ -572,55 +589,7 @@ module.exports = async function handler(req: any, res: any) {
       return;
     }
 
-    const greeting = getTimeBasedGreeting();
-    const confirmationSubject =
-      `${isSalon ? 'Ihr Termin ist bestätigt' : 'Ihre Reservierung ist bestätigt'} | ${displayDate} ${
-        requestRow.time ? `um ${requestRow.time}` : ''
-      }`.trim();
-    const confirmationBody = [
-      `${greeting} ${guestName},`,
-      '',
-      'vielen Dank für Ihre Anfrage – wir haben gute Nachrichten:',
-      isSalon
-        ? `Ihr Termin bei ${businessName} ist bestätigt. ✓`
-        : `Ihre Reservierung bei ${businessName} ist bestätigt. ✓`,
-      '',
-      isSalon ? 'Ihre Termindetails' : 'Ihre Reservierungsdetails',
-      '────────────────────────',
-      `Datum: ${longDisplayDate}`,
-      `Uhrzeit: ${requestRow.time ? `${requestRow.time} Uhr` : '-'}`,
-      isSalon
-        ? service
-          ? `Service: ${service}`
-          : null
-        : requestRow.people
-          ? `Personen: ${requestRow.people}`
-          : null,
-      isSalon && stylist ? `Friseur: ${stylist}` : null,
-      !isSalon && seating ? `Sitzplatz: ${seating}` : null,
-      customerNote ? `Notiz: ${customerNote}` : null,
-      '────────────────────────',
-      '',
-      'Wir freuen uns auf Ihren Besuch!',
-      '',
-      'Falls Sie noch eine Frage haben oder etwas ändern möchten, antworten Sie einfach auf diese E-Mail.',
-      '',
-      'Herzliche Grüße',
-      `Ihr Team von ${businessName}`,
-      '',
-      '—',
-      'Terminbuchung mit NexTime',
-      normalizedPlatformUrl,
-    ]
-      .filter(Boolean)
-      .join('\n');
-    const confirmMailto = createMailtoLink(
-      requestRow.guest_email || '',
-      confirmationSubject,
-      confirmationBody,
-    );
-
-    redirectToMailDraft(res, confirmMailto);
+    redirectToMailDraft(res, createConfirmationMailto());
   } catch (error: any) {
     console.error('booking request approval error', error);
     sendHtmlResponse(
