@@ -233,10 +233,12 @@ const normalizeEmployees = (
 
 const isMissingColumnError = (error: any, columnName: string): boolean => {
   const message = String(error?.message || '').toLowerCase();
+  const normalizedColumnName = columnName.toLowerCase();
   return (
-    error?.code === 'PGRST204' ||
-    (message.includes(columnName.toLowerCase()) && message.includes('column')) ||
-    (message.includes('schema cache') && message.includes(columnName.toLowerCase()))
+    message.includes(normalizedColumnName) &&
+    (error?.code === 'PGRST204' ||
+      message.includes('column') ||
+      message.includes('schema cache'))
   );
 };
 

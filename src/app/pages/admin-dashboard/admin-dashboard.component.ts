@@ -192,6 +192,14 @@ export class AdminDashboardComponent implements OnInit {
     request$.subscribe({
       next: (company) => {
         this.isSaving = false;
+        if (
+          employeeCalendarEnabled &&
+          (company.calendarMode !== 'employee' || (company.employees?.length || 0) === 0)
+        ) {
+          this.formError =
+            'Der Mitarbeiterkalender konnte nicht gespeichert werden. Bitte die Supabase-Spalten prüfen.';
+          return;
+        }
         if (this.standaloneEditSlug) {
           this.editingSlug = company.slug;
           this.formSuccess = 'Alle Änderungen wurden gespeichert.';
