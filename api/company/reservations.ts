@@ -152,9 +152,7 @@ module.exports = async function handler(req: any, res: any) {
     const supabase = getClient();
     const { data: company, error: companyError } = await supabase
       .from('companies')
-      .select(
-        'slug,name,email,service_type,login_pin,slot_capacity,slot_interval_minutes,plan_tier,calendar_mode,employees,salon_services,hours,break_hours',
-      )
+      .select('*')
       .eq('slug', parsed.slug)
       .single();
 
