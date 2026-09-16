@@ -125,7 +125,7 @@
       </article>
     </div>
 
-    <div class="calendar-layout">
+    <div class="calendar-layout" [class.calendar-layout--employee]="employeeCalendarEnabled">
       <article class="workspace-card calendar-card">
         <div class="card-heading calendar-heading">
           <div>
@@ -211,7 +211,109 @@
           <p>Tragen Sie einen Termin ein oder blockieren Sie eine Zeit für Kunden.</p>
           <button type="button" (click)="openEntryPanel('appointment')">Termin eintragen</button>
         </div>
-        <div class="agenda-list" *ngIf="!isLoading && reservations.length > 0">
+        <label
+          class="employee-calendar-filter"
+          *ngIf="!isLoading && employeeCalendarEnabled && reservations.length > 0"
+        >
+          <span>Mitarbeiter anzeigen</span>
+          <select [(ngModel)]="selectedEmployeeFilter">
+            <option value="all">Alle Mitarbeiter</option>
+            <option *ngFor="let employee of employeeCalendarColumns" [value]="employee.id">
+              {{ employee.name }}
+            </option>
+          </select>
+        </label>
+        <div
+          class="employee-calendar-board"
+          *ngIf="!isLoading && employeeCalendarEnabled && reservations.length > 0"
+        >
+          <section
+            class="employee-calendar-column"
+            *ngFor="let employee of employeeCalendarColumns"
+            [hidden]="!employeeColumnVisible(employee.id)"
+          >
+            <header [style.--employee-color]="employee.color">
+              <span>{{ employee.name.slice(0, 1).toUpperCase() }}</span>
+              <div>
+                <strong>{{ employee.name }}</strong>
+                <small>{{ reservationsForEmployee(employee.id).length }} Einträge</small>
+              </div>
+            </header>
+            <div
+              class="employee-column-empty"
+              *ngIf="reservationsForEmployee(employee.id).length === 0"
+            >
+              Keine Termine
+            </div>
+            <article
+              class="employee-appointment"
+              *ngFor="
+                let reservation of reservationsForEmployee(employee.id);
+                trackBy: trackByReservation
+              "
+              [class.employee-appointment--request]="reservation.isRequest"
+              [class.employee-appointment--blocked]="reservation.isBlock"
+              [style.--employee-color]="employee.color"
+            >
+              <div class="employee-appointment-time">
+                <strong>{{ reservation.time }}</strong>
+                <small *ngIf="reservation.durationMinutes"
+                  >{{ reservation.durationMinutes }} Min.</small
+                >
+              </div>
+              <div class="employee-appointment-content">
+                <span>{{
+                  reservation.isRequest
+                    ? 'Offene Anfrage'
+                    : reservation.isBlock
+                      ? 'Sperrzeit'
+                      : 'Termin'
+                }}</span>
+                <strong>{{
+                  reservation.isBlock
+                    ? reservation.note || 'Blockiert'
+                    : reservation.guestName || 'Ohne Namen'
+                }}</strong>
+                <small *ngIf="reservation.service">{{ reservation.service }}</small>
+              </div>
+              <button
+                *ngIf="!reservation.isRequest"
+                class="item-menu"
+                type="button"
+                (click)="deleteReservation(reservation)"
+                aria-label="Eintrag löschen"
+              >
+                ×
+              </button>
+              <div class="request-actions" *ngIf="reservation.isRequest">
+                <button
+                  class="request-reject"
+                  type="button"
+                  [disabled]="
+                    isRejectingRequest(reservation.id) || isApprovingRequest(reservation.id)
+                  "
+                  (click)="rejectRequest(reservation)"
+                >
+                  Ablehnen
+                </button>
+                <button
+                  class="request-approve"
+                  type="button"
+                  [disabled]="
+                    isApprovingRequest(reservation.id) || isRejectingRequest(reservation.id)
+                  "
+                  (click)="approveRequest(reservation)"
+                >
+                  Annehmen
+                </button>
+              </div>
+            </article>
+          </section>
+        </div>
+        <div
+          class="agenda-list"
+          *ngIf="!isLoading && !employeeCalendarEnabled && reservations.length > 0"
+        >
           <article
             class="agenda-item"
             *ngFor="let reservation of reservations; trackBy: trackByReservation"
@@ -376,8 +478,12 @@
       <label *ngIf="hasStylistChoice"
         ><span>Friseur</span
         ><select formControlName="stylist">
-          <option value="">Keine Präferenz</option>
-          <option *ngFor="let stylist of stylistOptions" [value]="stylist">{{ stylist }}</option>
+          <option value="">
+            {{ employeeCalendarEnabled ? 'Automatisch zuweisen' : 'Keine Präferenz' }}
+          </option>
+          <option *ngFor="let employee of employeeChoices" [value]="employee.value">
+            {{ employee.label }}
+          </option>
         </select></label
       >
       <label
@@ -445,6 +551,15 @@
             (input)="onTimeInput($any($event.target).value, 'block')"
         /></label>
       </div>
+      <label *ngIf="employeeCalendarEnabled"
+        ><span>Mitarbeiter</span
+        ><select formControlName="employeeId">
+          <option value="">Gesamtes Team blockieren</option>
+          <option *ngFor="let employee of teamEmployees" [value]="employee.id">
+            Nur {{ employee.name }}
+          </option>
+        </select></label
+      >
       <label
         ><span>Grund / Bezeichnung</span
         ><input type="text" formControlName="note" placeholder="z. B. Pause oder privater Termin"

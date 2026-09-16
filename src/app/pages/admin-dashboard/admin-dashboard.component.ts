@@ -5,8 +5,17 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { AdminAuthService } from '../../services/admin-auth.service';
-import { Company, CompanyApiService, TimeSelectionMode } from '../../services/company-api.service';
-import { SalonServiceAudience, SalonServiceOption } from '../../shared/salon-services';
+import {
+  CalendarMode,
+  Company,
+  CompanyApiService,
+  TimeSelectionMode,
+} from '../../services/company-api.service';
+import {
+  CompanyEmployee,
+  SalonServiceAudience,
+  SalonServiceOption,
+} from '../../shared/salon-services';
 
 type SalonServiceSetting = SalonServiceOption;
 
@@ -28,6 +37,7 @@ export class AdminDashboardComponent implements OnInit {
   formSuccess = '';
   logoError = '';
   salonServiceSettings: SalonServiceSetting[] = this.createDefaultSalonServiceSettings();
+  employeeSettings: CompanyEmployee[] = [];
   readonly companyForm = this.formBuilder.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     address: ['Beispielstraße 12, 12345 Musterstadt', Validators.required],
@@ -39,6 +49,7 @@ export class AdminDashboardComponent implements OnInit {
     serviceType: ['restaurant', Validators.required],
     bookingMode: ['confirm', Validators.required],
     planTier: ['starter', Validators.required],
+    calendarMode: ['shared', Validators.required],
     seatingOptionsEnabled: [false],
     stylistSelectionEnabled: [false],
     stylistsText: [''],
@@ -64,6 +75,17 @@ export class AdminDashboardComponent implements OnInit {
   ngOnInit(): void {
     this.resetForm();
     this.companyForm.valueChanges.subscribe(() => this.updateWomenServicesEmailValidators());
+    this.companyForm.get('calendarMode')?.valueChanges.subscribe((mode) => {
+      if (mode !== 'employee' || this.employeeSettings.length > 0) {
+        return;
+      }
+      this.employeeSettings = this.parseStylistNames(this.companyForm.value.stylistsText).map(
+        (name, index) => this.createEmployee(name, index),
+      );
+      if (this.employeeSettings.length === 0) {
+        this.addEmployee();
+      }
+    });
     this.updateWomenServicesEmailValidators();
     this.loadCompanies();
   }
@@ -86,6 +108,18 @@ export class AdminDashboardComponent implements OnInit {
     const serviceType = (value.serviceType || 'restaurant') as 'restaurant' | 'friseur';
     const splitServiceEmails = serviceType === 'friseur' && value.splitServiceEmails === true;
     const stylists = this.parseStylistNames(value.stylistsText);
+    const employeeCalendarEnabled =
+      serviceType === 'friseur' && value.planTier === 'pro' && value.calendarMode === 'employee';
+    const employees = employeeCalendarEnabled
+      ? this.employeeSettings
+          .map((employee) => ({
+            ...employee,
+            name: employee.name.trim(),
+            hours: employee.hours.trim() || value.hours || 'Mo–Fr 09:00–18:00',
+            breakHours: employee.breakHours?.trim() || undefined,
+          }))
+          .filter((employee) => employee.name.length > 0)
+      : [];
     const salonServices =
       serviceType === 'friseur'
         ? this.salonServiceSettings.map((service) => ({
@@ -99,6 +133,10 @@ export class AdminDashboardComponent implements OnInit {
     }
     if (serviceType === 'friseur' && salonServices.some((service) => !service.label)) {
       this.formError = 'Bitte für jede ausgewählte Leistung einen Namen eintragen.';
+      return;
+    }
+    if (employeeCalendarEnabled && employees.length === 0) {
+      this.formError = 'Bitte mindestens einen Mitarbeiter für den Mitarbeiterkalender anlegen.';
       return;
     }
     const serviceNames = salonServices.map((service) => service.label.toLocaleLowerCase('de'));
@@ -127,10 +165,19 @@ export class AdminDashboardComponent implements OnInit {
       serviceType,
       bookingMode: (value.bookingMode || 'confirm') as 'confirm' | 'request',
       planTier: (value.planTier || 'starter') as 'starter' | 'pro',
+      calendarMode: (employeeCalendarEnabled ? 'employee' : 'shared') as CalendarMode,
+      employees,
       seatingOptionsEnabled: serviceType === 'restaurant' && value.seatingOptionsEnabled === true,
       stylistSelectionEnabled:
-        serviceType === 'friseur' && value.stylistSelectionEnabled === true && stylists.length > 0,
-      stylists: serviceType === 'friseur' ? stylists : [],
+        serviceType === 'friseur' &&
+        ((employeeCalendarEnabled && employees.length > 0) ||
+          (value.stylistSelectionEnabled === true && stylists.length > 0)),
+      stylists:
+        serviceType === 'friseur'
+          ? employeeCalendarEnabled
+            ? employees.map((employee) => employee.name)
+            : stylists
+          : [],
       salonServices,
       showServicePrices: serviceType === 'friseur' && value.showServicePrices === true,
       loginPin: value.loginPin?.trim() || undefined,
@@ -182,6 +229,7 @@ export class AdminDashboardComponent implements OnInit {
       serviceType: company.serviceType || 'restaurant',
       bookingMode: company.bookingMode || 'confirm',
       planTier: company.planTier || 'starter',
+      calendarMode: company.calendarMode || 'shared',
       seatingOptionsEnabled: company.seatingOptionsEnabled || false,
       stylistSelectionEnabled: company.stylistSelectionEnabled || false,
       stylistsText: (company.stylists || []).join('\n'),
@@ -195,6 +243,16 @@ export class AdminDashboardComponent implements OnInit {
       brandColor: company.brandColor || '#4f46e5',
     });
     this.configureSalonServiceSettings(company.salonServices);
+    this.employeeSettings = (company.employees || []).map((employee) => ({ ...employee }));
+    if (
+      this.employeeSettings.length === 0 &&
+      company.calendarMode === 'employee' &&
+      (company.stylists || []).length > 0
+    ) {
+      this.employeeSettings = (company.stylists || []).map((name, index) =>
+        this.createEmployee(name, index),
+      );
+    }
     this.updateWomenServicesEmailValidators();
   }
 
@@ -263,6 +321,7 @@ export class AdminDashboardComponent implements OnInit {
       serviceType: 'restaurant',
       bookingMode: 'confirm',
       planTier: 'starter',
+      calendarMode: 'shared',
       seatingOptionsEnabled: false,
       stylistSelectionEnabled: false,
       stylistsText: '',
@@ -276,6 +335,7 @@ export class AdminDashboardComponent implements OnInit {
       brandColor: '#4f46e5',
     });
     this.salonServiceSettings = this.createDefaultSalonServiceSettings();
+    this.employeeSettings = [];
     this.logoError = '';
     this.updateWomenServicesEmailValidators();
     this.companyForm.markAsPristine();
@@ -305,6 +365,7 @@ export class AdminDashboardComponent implements OnInit {
       value: `custom_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
       label: '',
       audience: 'general',
+      durationMinutes: 45,
     });
     this.companyForm.markAsDirty();
   }
@@ -324,6 +385,61 @@ export class AdminDashboardComponent implements OnInit {
     service.audience =
       audience === 'men' || audience === 'women' ? audience : ('general' as SalonServiceAudience);
     this.companyForm.markAsDirty();
+  }
+
+  updateSalonServiceDuration(service: SalonServiceSetting, event: Event): void {
+    const duration = Number((event.target as HTMLSelectElement).value);
+    service.durationMinutes = Number.isFinite(duration) ? duration : 45;
+    this.companyForm.markAsDirty();
+  }
+
+  addEmployee(): void {
+    if (this.employeeSettings.length >= 30) {
+      this.formError = 'Es können maximal 30 Mitarbeiter angelegt werden.';
+      return;
+    }
+    this.employeeSettings.push(this.createEmployee('', this.employeeSettings.length));
+    this.companyForm.markAsDirty();
+  }
+
+  removeEmployee(employee: CompanyEmployee): void {
+    this.employeeSettings = this.employeeSettings.filter((item) => item !== employee);
+    this.companyForm.markAsDirty();
+  }
+
+  updateEmployee(
+    employee: CompanyEmployee,
+    field: 'name' | 'hours' | 'breakHours' | 'color',
+    event: Event,
+  ): void {
+    employee[field] = (event.target as HTMLInputElement).value;
+    this.companyForm.markAsDirty();
+  }
+
+  toggleEmployeeService(employee: CompanyEmployee, serviceValue: string, event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    const currentValues =
+      employee.serviceValues.length === 0
+        ? this.salonServiceSettings.map((service) => service.value)
+        : employee.serviceValues;
+    employee.serviceValues = checked
+      ? Array.from(new Set([...currentValues, serviceValue]))
+      : currentValues.filter((value) => value !== serviceValue);
+    this.companyForm.markAsDirty();
+  }
+
+  employeeOffersService(employee: CompanyEmployee, serviceValue: string): boolean {
+    return employee.serviceValues.length === 0 || employee.serviceValues.includes(serviceValue);
+  }
+
+  get employeeCalendarAvailable(): boolean {
+    return (
+      this.companyForm.value.serviceType === 'friseur' && this.companyForm.value.planTier === 'pro'
+    );
+  }
+
+  get employeeCalendarEnabled(): boolean {
+    return this.employeeCalendarAvailable && this.companyForm.value.calendarMode === 'employee';
   }
 
   get logoPreview(): string {
@@ -451,6 +567,21 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   private configureSalonServiceSettings(services: SalonServiceOption[] | undefined): void {
-    this.salonServiceSettings = (services || []).map((service) => ({ ...service }));
+    this.salonServiceSettings = (services || []).map((service) => ({
+      ...service,
+      durationMinutes: service.durationMinutes || 45,
+    }));
+  }
+
+  private createEmployee(name: string, index: number): CompanyEmployee {
+    const colors = ['#4f46e5', '#0f8f82', '#d97706', '#db2777', '#2563eb'];
+    return {
+      id: `employee-${Date.now().toString(36)}-${index + 1}`,
+      name,
+      color: colors[index % colors.length],
+      hours: this.companyForm.value.hours || 'Mo–Fr 09:00–18:00',
+      breakHours: this.companyForm.value.breakHours || undefined,
+      serviceValues: [],
+    };
   }
 }

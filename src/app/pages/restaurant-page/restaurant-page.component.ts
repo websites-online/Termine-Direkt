@@ -95,6 +95,17 @@ export class RestaurantPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.bookingForm.get('service')?.valueChanges.subscribe(() => {
+      const selectedStylist = this.bookingForm.value.stylist || '';
+      if (
+        selectedStylist &&
+        !this.stylistChoices.some((choice) => choice.value === selectedStylist)
+      ) {
+        this.bookingForm.patchValue({ stylist: '' }, { emitEvent: false });
+      }
+      this.loadSlotAvailability();
+    });
+    this.bookingForm.get('stylist')?.valueChanges.subscribe(() => this.loadSlotAvailability());
     this.loadCompany();
   }
 
@@ -147,11 +158,15 @@ export class RestaurantPageComponent implements OnInit {
       guestName: this.bookingForm.value.name ?? '',
       seating: this.hasSeatingChoice ? seatingValue : undefined,
       service: this.isSalon ? serviceValue : undefined,
+      serviceValue: this.isSalon ? this.bookingForm.value.service || undefined : undefined,
       serviceAudience: this.isSalon
         ? this.getSalonServiceAudience(this.bookingForm.value.service ?? '')
         : undefined,
       stylist: this.hasStylistChoice
         ? this.getStylistLabel(this.bookingForm.value.stylist ?? '')
+        : undefined,
+      employeeId: this.employeeCalendarEnabled
+        ? this.bookingForm.value.stylist || undefined
         : undefined,
       date: this.selectedDate,
       time: this.bookingForm.value.time ?? '',
@@ -264,6 +279,30 @@ export class RestaurantPageComponent implements OnInit {
     return this.company?.stylists || [];
   }
 
+  get employeeCalendarEnabled(): boolean {
+    return (
+      this.isSalon &&
+      this.company?.planTier === 'pro' &&
+      this.company?.calendarMode === 'employee' &&
+      (this.company?.employees?.length || 0) > 0
+    );
+  }
+
+  get stylistChoices(): Array<{ value: string; label: string }> {
+    if (!this.employeeCalendarEnabled) {
+      return this.stylistOptions.map((name) => ({ value: name, label: name }));
+    }
+    const serviceValue = this.bookingForm.value.service || '';
+    return (this.company?.employees || [])
+      .filter(
+        (employee) =>
+          !serviceValue ||
+          employee.serviceValues.length === 0 ||
+          employee.serviceValues.includes(serviceValue),
+      )
+      .map((employee) => ({ value: employee.id, label: employee.name }));
+  }
+
   get useFreeTimeInput(): boolean {
     return this.company?.timeSelectionMode === 'free';
   }
@@ -359,7 +398,7 @@ export class RestaurantPageComponent implements OnInit {
       return '';
     }
     const trimmed = value.trim();
-    return this.stylistOptions.includes(trimmed) ? trimmed : '';
+    return this.stylistChoices.find((choice) => choice.value === trimmed)?.label || '';
   }
 
   private getSeatingLabel(value: string): string {
@@ -942,15 +981,28 @@ export class RestaurantPageComponent implements OnInit {
     if (!this.company || !this.selectedDate) {
       return;
     }
-    const query = `restaurantSlug=${encodeURIComponent(this.slug)}&date=${encodeURIComponent(
-      this.selectedDate,
-    )}`;
-    this.http.get<{ slots: Record<string, number> }>(`/api/reservations?${query}`).subscribe({
-      next: (response) => {
-        this.slotCounts = response.slots || {};
-        this.syncSelectedTimeWithMode();
-      },
+    const query = new URLSearchParams({
+      restaurantSlug: this.slug,
+      date: this.selectedDate,
     });
+    if (this.employeeCalendarEnabled) {
+      const serviceValue = this.bookingForm.value.service || '';
+      const employeeId = this.bookingForm.value.stylist || '';
+      if (serviceValue) {
+        query.set('serviceValue', serviceValue);
+      }
+      if (employeeId) {
+        query.set('employeeId', employeeId);
+      }
+    }
+    this.http
+      .get<{ slots: Record<string, number> }>(`/api/reservations?${query.toString()}`)
+      .subscribe({
+        next: (response) => {
+          this.slotCounts = response.slots || {};
+          this.syncSelectedTimeWithMode();
+        },
+      });
   }
 
   isSlotFull(slot: string): boolean {
@@ -1001,6 +1053,9 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   private getSlotCapacity(): number {
+    if (this.employeeCalendarEnabled) {
+      return 1;
+    }
     const capacity = this.company?.slotCapacity;
     if (typeof capacity !== 'number' || Number.isNaN(capacity)) {
       return 3;

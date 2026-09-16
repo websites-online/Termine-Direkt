@@ -16,6 +16,8 @@ export interface CompanyReservation {
   note?: string;
   service?: string;
   stylist?: string;
+  employeeId?: string;
+  durationMinutes?: number;
   isBlock?: boolean;
   isInternal?: boolean;
   isRequest?: boolean;
@@ -34,6 +36,9 @@ export interface CompanyReservationPayload {
   note?: string;
   service?: string;
   stylist?: string;
+  employeeId?: string;
+  serviceValue?: string;
+  durationMinutes?: number;
   isBlock?: boolean;
   blockCapacity?: number;
 }

@@ -4,8 +4,10 @@ type ReservationBody = {
   restaurantEmail?: string;
   serviceType?: 'restaurant' | 'friseur';
   service?: string;
+  serviceValue?: string;
   serviceAudience?: 'men' | 'women' | 'general';
   stylist?: string;
+  employeeId?: string;
   guestEmail?: string;
   guestName?: string;
   seating?: string;
@@ -15,6 +17,14 @@ type ReservationBody = {
   phone?: string;
   note?: string;
 };
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const {
+  getAvailableEmployees,
+  getAvailableEmployeesFromRows,
+  getServiceDuration,
+  isEmployeeCalendar,
+} = require('./_lib/employee-calendar');
 
 const escapeHtml = (value: unknown): string =>
   String(value ?? '')
@@ -330,9 +340,21 @@ module.exports = async function handler(req: any, res: any) {
         return;
       }
       const supabase = getClient();
+      const { data: company, error: companyError } = await supabase
+        .from('companies')
+        .select(
+          'slug,service_type,plan_tier,calendar_mode,employees,salon_services,hours,break_hours,slot_interval_minutes',
+        )
+        .eq('slug', restaurantSlug)
+        .maybeSingle();
+      if (companyError || !company) {
+        res.status(404).json({ error: 'Unternehmen nicht gefunden.' });
+        return;
+      }
+      const employeeMode = isEmployeeCalendar(company);
       const { data, error } = await supabase
         .from('reservations')
-        .select('time')
+        .select(employeeMode ? 'time,employee_id,duration_minutes' : 'time')
         .eq('restaurant_slug', restaurantSlug)
         .eq('date', date);
       if (error) {
@@ -340,10 +362,28 @@ module.exports = async function handler(req: any, res: any) {
         return;
       }
       const counts: Record<string, number> = {};
-      (data || []).forEach((row: { time: string }) => {
-        counts[row.time] = (counts[row.time] || 0) + 1;
-      });
-      res.status(200).json({ slots: counts });
+      if (employeeMode) {
+        const serviceValue =
+          typeof req.query?.serviceValue === 'string' ? req.query.serviceValue : '';
+        const employeeId = typeof req.query?.employeeId === 'string' ? req.query.employeeId : '';
+        const durationMinutes = getServiceDuration(company, serviceValue);
+        for (let minutes = 0; minutes < 24 * 60; minutes += 1) {
+          const time = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(
+            minutes % 60,
+          ).padStart(2, '0')}`;
+          const available = getAvailableEmployeesFromRows(
+            company,
+            { date, time, durationMinutes, serviceValue, employeeId },
+            data || [],
+          );
+          counts[time] = available.length > 0 ? 0 : 1;
+        }
+      } else {
+        (data || []).forEach((row: { time: string }) => {
+          counts[row.time] = (counts[row.time] || 0) + 1;
+        });
+      }
+      res.status(200).json({ slots: counts, employeeMode });
       return;
     } catch (error: any) {
       console.error('reservations api error', error);
@@ -384,6 +424,12 @@ module.exports = async function handler(req: any, res: any) {
     const requestMode = company?.booking_mode === 'request';
     const bookingBufferMinutes = normalizeBookingBufferMinutes(company?.booking_buffer_minutes);
     const isSalon = body.serviceType === 'friseur';
+    const employeeMode = isEmployeeCalendar(company);
+    const durationMinutes = employeeMode
+      ? getServiceDuration(company, body.serviceValue || '', body.service || '')
+      : Number(company?.slot_interval_minutes) || 45;
+    let employeeId = '';
+    let employeeName = body.stylist || '';
     const primaryBusinessEmail = normalizeEmail(company?.email || body.restaurantEmail);
     const splitServiceEmails = isSalon && company?.split_service_emails === true;
     const womenServicesEmail = normalizeEmail(company?.women_services_email);
@@ -403,19 +449,37 @@ module.exports = async function handler(req: any, res: any) {
       return;
     }
 
-    const { count, error: countError } = await supabase
-      .from('reservations')
-      .select('id', { count: 'exact', head: true })
-      .eq('restaurant_slug', body.restaurantSlug)
-      .eq('date', body.date)
-      .eq('time', body.time);
-    if (countError) {
-      res.status(500).json({ error: countError.message });
-      return;
-    }
-    if ((count || 0) >= slotCapacity) {
-      res.status(409).json({ error: 'Diese Uhrzeit ist bereits belegt.' });
-      return;
+    if (employeeMode) {
+      const availableEmployees = await getAvailableEmployees(supabase, company, {
+        date: body.date,
+        time: body.time,
+        durationMinutes,
+        serviceValue: body.serviceValue || '',
+        employeeId: body.employeeId || '',
+      });
+      const selectedEmployee = availableEmployees[0];
+      if (!selectedEmployee) {
+        res.status(409).json({ error: 'Für diese Uhrzeit ist kein Mitarbeiter verfügbar.' });
+        return;
+      }
+      employeeId = selectedEmployee.id;
+      employeeName = selectedEmployee.name;
+      body.stylist = employeeName;
+    } else {
+      const { count, error: countError } = await supabase
+        .from('reservations')
+        .select('id', { count: 'exact', head: true })
+        .eq('restaurant_slug', body.restaurantSlug)
+        .eq('date', body.date)
+        .eq('time', body.time);
+      if (countError) {
+        res.status(500).json({ error: countError.message });
+        return;
+      }
+      if ((count || 0) >= slotCapacity) {
+        res.status(409).json({ error: 'Diese Uhrzeit ist bereits belegt.' });
+        return;
+      }
     }
 
     console.log('reservation request', {
@@ -441,7 +505,8 @@ module.exports = async function handler(req: any, res: any) {
     const noteParts = [
       body.seating ? `Sitzplatz: ${body.seating}` : null,
       body.service ? `Service: ${body.service}` : null,
-      body.stylist ? `Friseur: ${body.stylist}` : null,
+      body.serviceValue ? `Service-ID: ${body.serviceValue}` : null,
+      employeeName ? `Friseur: ${employeeName}` : null,
       body.note ? `Notiz: ${body.note}` : null,
     ].filter(Boolean);
 
@@ -456,6 +521,8 @@ module.exports = async function handler(req: any, res: any) {
       note: noteParts.length > 0 ? noteParts.join(' | ') : null,
       date: body.date,
       time: body.time,
+      employee_id: employeeId || null,
+      duration_minutes: durationMinutes,
     };
 
     let approvalLink = '';
@@ -483,6 +550,10 @@ module.exports = async function handler(req: any, res: any) {
     } else {
       const { error: insertError } = await supabase.from('reservations').insert(bookingRecord);
       if (insertError) {
+        if (insertError.code === '23505') {
+          res.status(409).json({ error: 'Diese Uhrzeit wurde gerade bereits gebucht.' });
+          return;
+        }
         res.status(500).json({ error: insertError.message });
         return;
       }
@@ -624,7 +695,7 @@ module.exports = async function handler(req: any, res: any) {
     const acceptActionLink = approvalLink || approveMailto;
     const rejectActionLink = rejectionLink || declineMailto;
     const requestActionHint = approvalLink
-      ? 'Annehmen speichert den Termin und öffnet die Bestätigung als Mailvorlage. Ablehnen öffnet eine Mailvorlage für Ihren eigenen Vorschlag.'
+      ? 'Der Klick aktualisiert die Anfrage und öffnet anschließend direkt die passende Mailvorlage.'
       : 'Beide Aktionen öffnen direkt eine Mailvorlage in Ihrem Mailprogramm.';
     const actionsHtml = requestMode
       ? `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%"><tr><td style="padding:0 0 10px;text-align:center"><a href="${escapeHtml(

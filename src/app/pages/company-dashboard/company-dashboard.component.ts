@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 import { CompanyAuthService, CompanySession } from '../../services/company-auth.service';
@@ -12,6 +12,7 @@ import {
   CompanyReservationsService,
 } from '../../services/company-reservations.service';
 import { SALON_SERVICES } from '../../shared/salon-services';
+import { CompanyEmployee } from '../../shared/salon-services';
 
 interface CalendarDay {
   date: string;
@@ -27,7 +28,7 @@ interface CalendarDay {
 @Component({
   selector: 'app-company-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, HttpClientModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, HttpClientModule],
   templateUrl: './company-dashboard.component.html',
 })
 export class CompanyDashboardComponent implements OnInit {
@@ -56,13 +57,15 @@ export class CompanyDashboardComponent implements OnInit {
   rejectingRequestIds = new Set<string>();
   isEntryPanelOpen = false;
   entryMode: 'appointment' | 'block' = 'appointment';
+  selectedEmployeeFilter = 'all';
 
-  get serviceOptions(): Array<{ value: string; label: string }> {
+  get serviceOptions(): Array<{ value: string; label: string; name: string }> {
     const services = this.company?.salonServices?.length
       ? this.company.salonServices
       : SALON_SERVICES;
     return services.map((service) => ({
-      value: service.label,
+      value: service.value,
+      name: service.label,
       label:
         this.company?.showServicePrices === true && service.price !== undefined
           ? `${service.label} – ${new Intl.NumberFormat('de-DE', {
@@ -88,6 +91,7 @@ export class CompanyDashboardComponent implements OnInit {
   readonly blockForm = this.formBuilder.group({
     date: [this.getToday(), Validators.required],
     time: ['', Validators.required],
+    employeeId: [''],
     note: ['Privater Termin'],
   });
 
@@ -101,6 +105,12 @@ export class CompanyDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.session = this.authService.getSession();
+    this.bookingForm.get('service')?.valueChanges.subscribe(() => {
+      const employeeId = this.bookingForm.value.stylist || '';
+      if (employeeId && !this.employeeChoices.some((employee) => employee.value === employeeId)) {
+        this.bookingForm.patchValue({ stylist: '' }, { emitEvent: false });
+      }
+    });
     this.updateValidators();
     this.buildCalendarDays();
     this.loadCompanyDetails();
@@ -273,13 +283,14 @@ export class CompanyDashboardComponent implements OnInit {
         note: value.note?.trim() || 'Privater Termin',
         isBlock: true,
         blockCapacity: this.getSlotCapacity(),
+        employeeId: this.employeeCalendarEnabled ? value.employeeId || undefined : undefined,
       })
       .subscribe({
         next: () => {
           this.isSubmitting = false;
           this.isEntryPanelOpen = false;
           this.successMessage = 'Die Zeit wurde für Kunden blockiert.';
-          this.blockForm.patchValue({ time: '', note: 'Privater Termin' });
+          this.blockForm.patchValue({ time: '', employeeId: '', note: 'Privater Termin' });
           this.loadReservations();
         },
         error: (err) => {
@@ -314,6 +325,10 @@ export class CompanyDashboardComponent implements OnInit {
     this.isSubmitting = true;
 
     const value = this.bookingForm.value;
+    const selectedService = this.serviceOptions.find((service) => service.value === value.service);
+    const selectedEmployee = this.employeeChoices.find(
+      (employee) => employee.value === value.stylist,
+    );
     const payload: CompanyReservationPayload = {
       date: value.date ?? this.getToday(),
       time: selectedTime,
@@ -322,8 +337,10 @@ export class CompanyDashboardComponent implements OnInit {
       phone: value.phone || undefined,
       note: value.note || undefined,
       people: this.isSalon ? 1 : Number(value.people || 1),
-      service: this.isSalon ? value.service || undefined : undefined,
-      stylist: this.hasStylistChoice ? value.stylist || undefined : undefined,
+      service: this.isSalon ? selectedService?.name || undefined : undefined,
+      serviceValue: this.isSalon ? value.service || undefined : undefined,
+      stylist: this.hasStylistChoice ? selectedEmployee?.label || undefined : undefined,
+      employeeId: this.employeeCalendarEnabled ? value.stylist || undefined : undefined,
       blockCapacity: this.getSlotCapacity(),
     };
 
@@ -347,7 +364,7 @@ export class CompanyDashboardComponent implements OnInit {
       },
       error: (err) => {
         this.isSubmitting = false;
-        this.errorMessage = err?.message || 'Speichern fehlgeschlagen.';
+        this.errorMessage = err?.error?.error || err?.message || 'Speichern fehlgeschlagen.';
       },
     });
   }
@@ -650,6 +667,9 @@ export class CompanyDashboardComponent implements OnInit {
   }
 
   get hasStylistChoice(): boolean {
+    if (this.employeeCalendarEnabled) {
+      return this.teamEmployees.length > 0;
+    }
     return (
       this.isSalon &&
       this.company?.stylistSelectionEnabled === true &&
@@ -659,6 +679,59 @@ export class CompanyDashboardComponent implements OnInit {
 
   get stylistOptions(): string[] {
     return this.company?.stylists || [];
+  }
+
+  get employeeCalendarEnabled(): boolean {
+    return (
+      this.isSalon &&
+      this.company?.planTier === 'pro' &&
+      this.company?.calendarMode === 'employee' &&
+      this.teamEmployees.length > 0
+    );
+  }
+
+  get teamEmployees(): CompanyEmployee[] {
+    return this.company?.employees || [];
+  }
+
+  get employeeChoices(): Array<{ value: string; label: string }> {
+    if (this.employeeCalendarEnabled) {
+      const serviceValue = this.bookingForm.value.service || '';
+      return this.teamEmployees
+        .filter(
+          (employee) =>
+            !serviceValue ||
+            employee.serviceValues.length === 0 ||
+            employee.serviceValues.includes(serviceValue),
+        )
+        .map((employee) => ({ value: employee.id, label: employee.name }));
+    }
+    return this.stylistOptions.map((name) => ({ value: name, label: name }));
+  }
+
+  get employeeCalendarColumns(): Array<CompanyEmployee & { isUnassigned?: boolean }> {
+    const columns: Array<CompanyEmployee & { isUnassigned?: boolean }> = [...this.teamEmployees];
+    if (this.reservations.some((reservation) => !reservation.employeeId)) {
+      columns.push({
+        id: 'unassigned',
+        name: 'Ohne Zuordnung',
+        color: '#94a3b8',
+        hours: '',
+        serviceValues: [],
+        isUnassigned: true,
+      });
+    }
+    return columns;
+  }
+
+  reservationsForEmployee(employeeId: string): CompanyReservation[] {
+    return this.reservations.filter((reservation) =>
+      employeeId === 'unassigned' ? !reservation.employeeId : reservation.employeeId === employeeId,
+    );
+  }
+
+  employeeColumnVisible(employeeId: string): boolean {
+    return this.selectedEmployeeFilter === 'all' || this.selectedEmployeeFilter === employeeId;
   }
 
   get freeTimeOptions(): string[] {
@@ -722,6 +795,9 @@ export class CompanyDashboardComponent implements OnInit {
   }
 
   isSlotFull(slot: string): boolean {
+    if (this.employeeCalendarEnabled) {
+      return false;
+    }
     return (this.slotCounts[slot] || 0) >= this.getSlotCapacity();
   }
 
@@ -757,6 +833,9 @@ export class CompanyDashboardComponent implements OnInit {
   }
 
   private getSlotCapacity(): number {
+    if (this.employeeCalendarEnabled) {
+      return 1;
+    }
     const capacity = this.company?.slotCapacity;
     if (typeof capacity !== 'number' || Number.isNaN(capacity)) {
       return 3;

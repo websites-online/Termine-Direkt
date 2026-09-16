@@ -197,6 +197,22 @@
                 </select>
                 <span class="helptext">Anfragen werden zuerst nur an den Betrieb gesendet.</span>
               </label>
+              <label *ngIf="companyForm.value.serviceType === 'friseur'">
+                <span class="label">Kalenderorganisation*</span>
+                <select class="input" formControlName="calendarMode">
+                  <option value="shared">Gemeinsamer Kalender</option>
+                  <option value="employee" [disabled]="!employeeCalendarAvailable">
+                    Mitarbeiterkalender · PRO
+                  </option>
+                </select>
+                <span class="helptext" *ngIf="employeeCalendarAvailable">
+                  Im Mitarbeiterkalender erhält jedes Teammitglied eine eigene Spalte und
+                  Verfügbarkeit.
+                </span>
+                <span class="helptext pro-feature-hint" *ngIf="!employeeCalendarAvailable">
+                  Der Mitarbeiterkalender ist ausschließlich in der PRO-Version verfügbar.
+                </span>
+              </label>
               <label>
                 <span class="label">Zeitauswahl für Kunden*</span>
                 <select class="input" formControlName="timeSelectionMode">
@@ -277,7 +293,10 @@
                 >
                 <input type="checkbox" formControlName="seatingOptionsEnabled" />
               </label>
-              <label *ngIf="companyForm.value.serviceType === 'friseur'" class="switch-row">
+              <label
+                *ngIf="companyForm.value.serviceType === 'friseur' && !employeeCalendarEnabled"
+                class="switch-row"
+              >
                 <span
                   ><strong>Friseur-Auswahl</strong
                   ><small>Kunden können optional eine Person auswählen.</small></span
@@ -287,6 +306,7 @@
               <label
                 *ngIf="
                   companyForm.value.serviceType === 'friseur' &&
+                  !employeeCalendarEnabled &&
                   companyForm.value.stylistSelectionEnabled
                 "
               >
@@ -297,6 +317,87 @@
                   placeholder="Ali&#10;Merve&#10;Sarah"
                 ></textarea>
               </label>
+              <div *ngIf="employeeCalendarEnabled" class="employee-settings-panel">
+                <div class="salon-services-heading">
+                  <div>
+                    <strong>Mitarbeiterkalender</strong>
+                    <small>Arbeitszeiten, Pausen, Farbe und angebotene Services je Person.</small>
+                  </div>
+                  <span>{{ employeeSettings.length }} Mitarbeiter</span>
+                </div>
+
+                <p class="salon-service-empty" *ngIf="employeeSettings.length === 0">
+                  Noch keine Mitarbeiter eingetragen. Lege mindestens eine Person an.
+                </p>
+
+                <article class="employee-setting-card" *ngFor="let employee of employeeSettings">
+                  <div class="employee-setting-heading">
+                    <label class="employee-name-field">
+                      <span>Name*</span>
+                      <input
+                        type="text"
+                        maxlength="80"
+                        placeholder="z. B. Marco"
+                        [value]="employee.name"
+                        (input)="updateEmployee(employee, 'name', $event)"
+                      />
+                    </label>
+                    <label class="employee-color-field">
+                      <span>Farbe</span>
+                      <input
+                        type="color"
+                        [value]="employee.color"
+                        (input)="updateEmployee(employee, 'color', $event)"
+                      />
+                    </label>
+                    <button
+                      class="salon-service-remove"
+                      type="button"
+                      (click)="removeEmployee(employee)"
+                    >
+                      Entfernen
+                    </button>
+                  </div>
+                  <div class="employee-time-grid">
+                    <label>
+                      <span>Arbeitszeiten</span>
+                      <input
+                        type="text"
+                        placeholder="Mo–Fr 09:00–18:00; Sa 09:00–14:00"
+                        [value]="employee.hours"
+                        (input)="updateEmployee(employee, 'hours', $event)"
+                      />
+                    </label>
+                    <label>
+                      <span>Pause</span>
+                      <input
+                        type="text"
+                        placeholder="12:30–13:30"
+                        [value]="employee.breakHours || ''"
+                        (input)="updateEmployee(employee, 'breakHours', $event)"
+                      />
+                    </label>
+                  </div>
+                  <div class="employee-services">
+                    <span>Services</span>
+                    <small>Ohne Auswahl werden alle Services angeboten.</small>
+                    <div>
+                      <label *ngFor="let service of salonServiceSettings">
+                        <input
+                          type="checkbox"
+                          [checked]="employeeOffersService(employee, service.value)"
+                          (change)="toggleEmployeeService(employee, service.value, $event)"
+                        />
+                        {{ service.label || 'Unbenannter Service' }}
+                      </label>
+                    </div>
+                  </div>
+                </article>
+
+                <button class="salon-service-add" type="button" (click)="addEmployee()">
+                  <span>+</span> Mitarbeiter hinzufügen
+                </button>
+              </div>
               <div *ngIf="companyForm.value.serviceType === 'friseur'" class="salon-services-panel">
                 <div class="salon-services-heading">
                   <div>
@@ -370,6 +471,22 @@
                           />
                           <span>€</span>
                         </div>
+                      </label>
+                      <label class="salon-service-duration">
+                        <span>Dauer</span>
+                        <select
+                          [value]="service.durationMinutes || 45"
+                          (change)="updateSalonServiceDuration(service, $event)"
+                        >
+                          <option [value]="15">15 Min.</option>
+                          <option [value]="30">30 Min.</option>
+                          <option [value]="45">45 Min.</option>
+                          <option [value]="60">60 Min.</option>
+                          <option [value]="90">90 Min.</option>
+                          <option [value]="120">120 Min.</option>
+                          <option [value]="180">180 Min.</option>
+                          <option [value]="240">240 Min.</option>
+                        </select>
                       </label>
                     </div>
                   </div>

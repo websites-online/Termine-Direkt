@@ -77,7 +77,8 @@
 }
 
 .admin-workspace .salon-service-name-input,
-.admin-workspace .salon-service-audience select {
+.admin-workspace .salon-service-audience select,
+.admin-workspace .salon-service-duration select {
   width: 100%;
   border: 1px solid #dfe4eb;
   border-radius: 8px;
@@ -95,6 +96,7 @@
 
 .admin-workspace .salon-service-name-input:focus,
 .admin-workspace .salon-service-audience select:focus,
+.admin-workspace .salon-service-duration select:focus,
 .admin-workspace .salon-service-price > div:focus-within {
   border-color: #7770df;
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.09);
@@ -116,27 +118,128 @@
 .admin-workspace .salon-service-fields {
   min-width: 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: end;
   gap: 9px;
 }
 
-.admin-workspace .salon-service-audience {
+.admin-workspace .salon-service-audience,
+.admin-workspace .salon-service-duration {
   min-width: 0;
   display: grid !important;
   gap: 4px !important;
 }
 
 .admin-workspace .salon-service-name > span,
-.admin-workspace .salon-service-audience > span {
+.admin-workspace .salon-service-audience > span,
+.admin-workspace .salon-service-duration > span {
   color: #98a2b3;
   font-size: 0.56rem;
   font-weight: 700;
 }
 
-.admin-workspace .salon-service-audience select {
+.admin-workspace .salon-service-audience select,
+.admin-workspace .salon-service-duration select {
   min-height: 34px;
   padding: 6px 8px;
+}
+
+.admin-workspace .employee-settings-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #d9dcff;
+  border-radius: 12px;
+  background: #f8f8ff;
+}
+
+.admin-workspace .employee-setting-card {
+  display: grid;
+  gap: 13px;
+  padding: 14px;
+  border: 1px solid #e1e4ec;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.admin-workspace .employee-setting-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 70px auto;
+  align-items: end;
+  gap: 10px;
+}
+
+.admin-workspace .employee-setting-card label {
+  display: grid;
+  gap: 4px;
+  color: #667085;
+  font-size: 0.58rem;
+  font-weight: 700;
+}
+
+.admin-workspace .employee-setting-card input[type='text'],
+.admin-workspace .employee-setting-card input[type='color'] {
+  min-height: 36px;
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid #dfe4eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #344054;
+  font: inherit;
+  font-size: 0.7rem;
+}
+
+.admin-workspace .employee-setting-card input[type='color'] {
+  padding: 4px;
+}
+
+.admin-workspace .employee-time-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.6fr;
+  gap: 10px;
+}
+
+.admin-workspace .employee-services {
+  display: grid;
+  gap: 5px;
+}
+
+.admin-workspace .employee-services > span {
+  color: #667085;
+  font-size: 0.62rem;
+  font-weight: 750;
+}
+
+.admin-workspace .employee-services > small {
+  color: #98a2b3;
+  font-size: 0.58rem;
+}
+
+.admin-workspace .employee-services > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.admin-workspace .employee-services label {
+  display: inline-flex;
+  align-items: center;
+  grid-template-columns: auto 1fr;
+  gap: 5px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  background: #f5f6fa;
+  color: #596579;
+  font-size: 0.61rem;
+}
+
+.admin-workspace .employee-services input {
+  accent-color: #4f46e5;
+}
+
+.admin-workspace .pro-feature-hint {
+  color: #a15c05 !important;
 }
 
 .admin-workspace .salon-service-price {
@@ -217,6 +320,11 @@
 
 @media (max-width: 720px) {
   .admin-workspace .salon-service-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-workspace .employee-setting-heading,
+  .admin-workspace .employee-time-grid {
     grid-template-columns: 1fr;
   }
 }

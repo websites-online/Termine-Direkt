@@ -3,12 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of, delay } from 'rxjs';
 
 import { environment } from '../../environments/environment';
-import { SALON_SERVICES, SalonServiceOption } from '../shared/salon-services';
+import { CompanyEmployee, SALON_SERVICES, SalonServiceOption } from '../shared/salon-services';
 
 export type ServiceType = 'restaurant' | 'friseur';
 export type BookingMode = 'confirm' | 'request';
 export type TimeSelectionMode = 'slots' | 'free';
 export type PlanTier = 'starter' | 'pro';
+export type CalendarMode = 'shared' | 'employee';
 
 export interface Company {
   id?: string;
@@ -35,6 +36,8 @@ export interface Company {
   logoUrl?: string;
   brandColor?: string;
   planTier?: PlanTier;
+  calendarMode?: CalendarMode;
+  employees?: CompanyEmployee[];
   createdAt?: string;
 }
 
@@ -61,6 +64,8 @@ export interface CompanyPayload {
   logoUrl?: string;
   brandColor?: string;
   planTier?: PlanTier;
+  calendarMode?: CalendarMode;
+  employees?: CompanyEmployee[];
 }
 
 @Injectable({
@@ -115,6 +120,14 @@ export class CompanyApiService {
         logoUrl: this.normalizeLogoUrl(payload.logoUrl),
         brandColor: this.normalizeBrandColor(payload.brandColor),
         planTier: payload.planTier === 'pro' ? 'pro' : 'starter',
+        calendarMode:
+          payload.serviceType === 'friseur' &&
+          payload.planTier === 'pro' &&
+          payload.calendarMode === 'employee'
+            ? 'employee'
+            : 'shared',
+        employees:
+          payload.serviceType === 'friseur' ? this.normalizeEmployees(payload.employees) : [],
         splitServiceEmails:
           payload.serviceType === 'friseur' && payload.splitServiceEmails === true,
         womenServicesEmail:
@@ -183,6 +196,14 @@ export class CompanyApiService {
       updated.logoUrl = this.normalizeLogoUrl(payload.logoUrl);
       updated.brandColor = this.normalizeBrandColor(payload.brandColor);
       updated.planTier = payload.planTier === 'pro' ? 'pro' : 'starter';
+      updated.calendarMode =
+        updated.serviceType === 'friseur' &&
+        updated.planTier === 'pro' &&
+        payload.calendarMode === 'employee'
+          ? 'employee'
+          : 'shared';
+      updated.employees =
+        updated.serviceType === 'friseur' ? this.normalizeEmployees(payload.employees) : [];
       updated.splitServiceEmails =
         updated.serviceType === 'friseur' && payload.splitServiceEmails === true;
       updated.womenServicesEmail =
@@ -256,6 +277,14 @@ export class CompanyApiService {
           logoUrl: this.normalizeLogoUrl(company.logoUrl),
           brandColor: this.normalizeBrandColor(company.brandColor),
           planTier: company.planTier === 'pro' ? 'pro' : 'starter',
+          calendarMode:
+            company.serviceType === 'friseur' &&
+            company.planTier === 'pro' &&
+            company.calendarMode === 'employee'
+              ? 'employee'
+              : 'shared',
+          employees:
+            company.serviceType === 'friseur' ? this.normalizeEmployees(company.employees) : [],
           splitServiceEmails:
             company.serviceType === 'friseur' && company.splitServiceEmails === true,
           womenServicesEmail:
@@ -297,6 +326,8 @@ export class CompanyApiService {
       showServicePrices: true,
       brandColor: '#111827',
       planTier: 'pro',
+      calendarMode: 'shared',
+      employees: [],
       createdAt: new Date().toISOString(),
     };
   }
@@ -358,6 +389,7 @@ export class CompanyApiService {
       const audience: SalonServiceOption['audience'] =
         record.audience === 'men' || record.audience === 'women' ? record.audience : 'general';
       const price = Number(record.price);
+      const durationMinutes = Number(record.durationMinutes);
       selected.set(serviceValue, {
         value: serviceValue,
         label,
@@ -369,9 +401,57 @@ export class CompanyApiService {
         price <= 10000
           ? { price: Math.round(price * 100) / 100 }
           : {}),
+        ...(Number.isFinite(durationMinutes) && durationMinutes >= 15 && durationMinutes <= 480
+          ? { durationMinutes: Math.round(durationMinutes / 5) * 5 }
+          : { durationMinutes: 45 }),
       });
     });
     return Array.from(selected.values()).slice(0, 100);
+  }
+
+  private normalizeEmployees(value: unknown): CompanyEmployee[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+    const employees = new Map<string, CompanyEmployee>();
+    value.forEach((item, index) => {
+      if (!item || typeof item !== 'object') {
+        return;
+      }
+      const record = item as Partial<CompanyEmployee>;
+      const name = String(record.name || '')
+        .trim()
+        .slice(0, 80);
+      if (!name) {
+        return;
+      }
+      const idCandidate = String(record.id || `employee-${index + 1}`)
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, '-');
+      const id = idCandidate || `employee-${index + 1}`;
+      if (employees.has(id)) {
+        return;
+      }
+      const color = /^#[0-9a-f]{6}$/i.test(String(record.color || ''))
+        ? String(record.color).toLowerCase()
+        : ['#4f46e5', '#0f8f82', '#d97706', '#db2777', '#2563eb'][index % 5];
+      employees.set(id, {
+        id,
+        name,
+        color,
+        hours: String(record.hours || '').trim() || 'Mo–Fr 09:00–18:00',
+        breakHours: String(record.breakHours || '').trim() || undefined,
+        serviceValues: Array.isArray(record.serviceValues)
+          ? Array.from(
+              new Set(
+                record.serviceValues.map((service) => String(service || '').trim()).filter(Boolean),
+              ),
+            )
+          : [],
+      });
+    });
+    return Array.from(employees.values()).slice(0, 30);
   }
 
   private createLocalDemoSalonServices(): SalonServiceOption[] {

@@ -102,13 +102,22 @@ const extractFromNote = (note: string | null, key: string): string => {
 const sendHtmlResponse = (res: any, statusCode: number, title: string, message: string) => {
   res.statusCode = statusCode;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
+  );
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.end(
     `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title></head><body style="font-family:Arial,sans-serif;background:#f8fafc;padding:24px;color:#0f172a"><main style="max-width:600px;margin:40px auto;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:28px"><h1 style="font-size:24px;margin:0 0 12px">${title}</h1><p style="line-height:1.6;margin:0">${message}</p></main></body></html>`,
   );
 };
 
 module.exports = async function handler(req: any, res: any) {
-  if (req.method !== 'GET') {
+  if (!['GET', 'POST'].includes(req.method)) {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
@@ -233,6 +242,7 @@ module.exports = async function handler(req: any, res: any) {
 
     res.statusCode = 302;
     res.setHeader('Location', mailto);
+    res.setHeader('Cache-Control', 'no-store');
     res.end();
   } catch (error: any) {
     console.error('booking request rejection error', error);

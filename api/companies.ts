@@ -23,6 +23,8 @@ type CompanyRow = {
   logo_url?: string | null;
   brand_color?: string | null;
   plan_tier?: string | null;
+  calendar_mode?: string | null;
+  employees?: unknown;
   created_at: string;
 };
 
@@ -64,6 +66,11 @@ const toCompanyResponse = (row: CompanyRow) => ({
   logoUrl: normalizeLogoUrl(row.logo_url) || undefined,
   brandColor: normalizeBrandColor(row.brand_color),
   planTier: row.plan_tier === 'pro' ? 'pro' : 'starter',
+  calendarMode:
+    row.service_type === 'friseur' && row.plan_tier === 'pro' && row.calendar_mode === 'employee'
+      ? 'employee'
+      : 'shared',
+  employees: row.service_type === 'friseur' ? normalizeEmployees(row.employees) : [],
   createdAt: row.created_at,
 });
 
@@ -121,6 +128,7 @@ const normalizeSalonServices = (
   label: string;
   audience: 'men' | 'women' | 'general';
   price?: number;
+  durationMinutes?: number;
 }> => {
   if (!Array.isArray(value)) {
     return [];
@@ -132,6 +140,7 @@ const normalizeSalonServices = (
       label: string;
       audience: 'men' | 'women' | 'general';
       price?: number;
+      durationMinutes?: number;
     }
   >();
   value.forEach((item) => {
@@ -147,6 +156,7 @@ const normalizeSalonServices = (
     const audience =
       record.audience === 'men' || record.audience === 'women' ? record.audience : 'general';
     const price = Number(record.price);
+    const durationMinutes = Number(record.durationMinutes);
     services.set(serviceValue, {
       value: serviceValue,
       label,
@@ -158,9 +168,67 @@ const normalizeSalonServices = (
       price <= 10000
         ? { price: Math.round(price * 100) / 100 }
         : {}),
+      ...(Number.isFinite(durationMinutes) && durationMinutes >= 15 && durationMinutes <= 480
+        ? { durationMinutes: Math.round(durationMinutes / 5) * 5 }
+        : { durationMinutes: 45 }),
     });
   });
   return Array.from(services.values()).slice(0, 100);
+};
+
+const normalizeEmployees = (
+  value: unknown,
+): Array<{
+  id: string;
+  name: string;
+  color: string;
+  hours: string;
+  breakHours?: string;
+  serviceValues: string[];
+}> => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const colors = ['#4f46e5', '#0f8f82', '#d97706', '#db2777', '#2563eb'];
+  const employees = new Map<string, any>();
+  value.forEach((item, index) => {
+    if (!item || typeof item !== 'object') {
+      return;
+    }
+    const record = item as Record<string, unknown>;
+    const name = String(record.name || '')
+      .trim()
+      .slice(0, 80);
+    if (!name) {
+      return;
+    }
+    const id =
+      String(record.id || `employee-${index + 1}`)
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, '-') || `employee-${index + 1}`;
+    if (employees.has(id)) {
+      return;
+    }
+    const colorValue = String(record.color || '');
+    employees.set(id, {
+      id,
+      name,
+      color: /^#[0-9a-f]{6}$/i.test(colorValue) ? colorValue.toLowerCase() : colors[index % 5],
+      hours: String(record.hours || '').trim() || 'Mo–Fr 09:00–18:00',
+      ...(String(record.breakHours || '').trim()
+        ? { breakHours: String(record.breakHours).trim() }
+        : {}),
+      serviceValues: Array.isArray(record.serviceValues)
+        ? Array.from(
+            new Set(
+              record.serviceValues.map((service) => String(service || '').trim()).filter(Boolean),
+            ),
+          )
+        : [],
+    });
+  });
+  return Array.from(employees.values()).slice(0, 30);
 };
 
 const isMissingColumnError = (error: any, columnName: string): boolean => {
@@ -183,6 +251,8 @@ const optionalCompanyColumns = [
   'logo_url',
   'brand_color',
   'plan_tier',
+  'calendar_mode',
+  'employees',
 ] as const;
 
 const removeMissingOptionalColumns = <T extends Record<string, any>>(record: T, error: any): T => {
@@ -262,6 +332,15 @@ module.exports = async function handler(req: any, res: any) {
       const stylists = serviceType === 'friseur' ? normalizeStylists(body.stylists) : [];
       const salonServices =
         serviceType === 'friseur' ? normalizeSalonServices(body.salonServices) : [];
+      const employees = serviceType === 'friseur' ? normalizeEmployees(body.employees) : [];
+      const planTier = body.planTier === 'pro' ? 'pro' : 'starter';
+      const calendarMode =
+        serviceType === 'friseur' &&
+        planTier === 'pro' &&
+        body.calendarMode === 'employee' &&
+        employees.length > 0
+          ? 'employee'
+          : 'shared';
       const splitServiceEmails = serviceType === 'friseur' && body.splitServiceEmails === true;
       const womenServicesEmail = splitServiceEmails
         ? normalizeOptionalEmail(body.womenServicesEmail)
@@ -312,7 +391,9 @@ module.exports = async function handler(req: any, res: any) {
         show_service_prices: serviceType === 'friseur' && body.showServicePrices === true,
         logo_url: normalizeLogoUrl(body.logoUrl),
         brand_color: normalizeBrandColor(body.brandColor),
-        plan_tier: body.planTier === 'pro' ? 'pro' : 'starter',
+        plan_tier: planTier,
+        calendar_mode: calendarMode,
+        employees,
       };
       let { data, error } = await supabase.from('companies').insert(insert).select('*').single();
       if (error && splitServiceEmails && isMissingMailSplitColumn(error)) {
@@ -350,6 +431,15 @@ module.exports = async function handler(req: any, res: any) {
       const stylists = serviceType === 'friseur' ? normalizeStylists(body.stylists) : [];
       const salonServices =
         serviceType === 'friseur' ? normalizeSalonServices(body.salonServices) : [];
+      const employees = serviceType === 'friseur' ? normalizeEmployees(body.employees) : [];
+      const planTier = body.planTier === 'pro' ? 'pro' : 'starter';
+      const calendarMode =
+        serviceType === 'friseur' &&
+        planTier === 'pro' &&
+        body.calendarMode === 'employee' &&
+        employees.length > 0
+          ? 'employee'
+          : 'shared';
       const splitServiceEmails = serviceType === 'friseur' && body.splitServiceEmails === true;
       const womenServicesEmail = splitServiceEmails
         ? normalizeOptionalEmail(body.womenServicesEmail)
@@ -398,7 +488,9 @@ module.exports = async function handler(req: any, res: any) {
         show_service_prices: serviceType === 'friseur' && body.showServicePrices === true,
         logo_url: normalizeLogoUrl(body.logoUrl),
         brand_color: normalizeBrandColor(body.brandColor),
-        plan_tier: body.planTier === 'pro' ? 'pro' : 'starter',
+        plan_tier: planTier,
+        calendar_mode: calendarMode,
+        employees,
       };
       if (body.loginPin) {
         updates.login_pin = String(body.loginPin).trim();

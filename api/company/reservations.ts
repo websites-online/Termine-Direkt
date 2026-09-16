@@ -9,6 +9,15 @@ const getClient = () => {
   return createClient(url, key);
 };
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const {
+  extractFromNote: extractCalendarNote,
+  getAvailableEmployees,
+  getServiceDuration,
+  isEmployeeCalendar,
+  normalizeEmployees,
+} = require('../_lib/employee-calendar');
+
 const parseToken = (token: string) => {
   try {
     const decoded = Buffer.from(token, 'base64').toString('utf8');
@@ -57,6 +66,7 @@ const extractNote = (note: string | null) => {
         !/^__BLOCK__:/i.test(part) &&
         !/^__INTERNAL__:/i.test(part) &&
         !/^Service:/i.test(part) &&
+        !/^Service-ID:/i.test(part) &&
         !/^Wunsch-Friseur:/i.test(part) &&
         !/^Friseur:/i.test(part),
     );
@@ -93,6 +103,8 @@ const toReservationResponse = (row: any, isRequest = false) => ({
   note: extractNote(row.note || null),
   service: extractService(row.note || null),
   stylist: extractStylist(row.note || null),
+  employeeId: row.employee_id || undefined,
+  durationMinutes: Number(row.duration_minutes) || undefined,
   isBlock: Boolean(extractBlockId(row.note || null)),
   isInternal: Boolean(extractBlockId(row.note || null) || extractInternalId(row.note || null)),
   blockId: extractBlockId(row.note || null),
@@ -140,7 +152,9 @@ module.exports = async function handler(req: any, res: any) {
     const supabase = getClient();
     const { data: company, error: companyError } = await supabase
       .from('companies')
-      .select('slug,name,email,service_type,login_pin,slot_capacity')
+      .select(
+        'slug,name,email,service_type,login_pin,slot_capacity,slot_interval_minutes,plan_tier,calendar_mode,employees,salon_services,hours,break_hours',
+      )
       .eq('slug', parsed.slug)
       .single();
 
@@ -168,13 +182,17 @@ module.exports = async function handler(req: any, res: any) {
 
       let reservationsQuery = supabase
         .from('reservations')
-        .select('id,date,time,guest_name,guest_email,phone,people,note,created_at')
+        .select(
+          'id,date,time,guest_name,guest_email,phone,people,note,employee_id,duration_minutes,created_at',
+        )
         .eq('restaurant_slug', company.slug);
       reservationsQuery = applyDateFilter(reservationsQuery);
 
       let requestsQuery = supabase
         .from('booking_requests')
-        .select('id,date,time,guest_name,guest_email,phone,people,note,status,created_at')
+        .select(
+          'id,date,time,guest_name,guest_email,phone,people,note,status,employee_id,duration_minutes,created_at',
+        )
         .eq('restaurant_slug', company.slug);
       requestsQuery = applyDateFilter(requestsQuery);
 
@@ -213,10 +231,14 @@ module.exports = async function handler(req: any, res: any) {
       }
 
       const seenBlocks = new Set<string>();
+      const employeeMode = isEmployeeCalendar(company);
       const mappedReservations = (reservationsResult.data || [])
         .map((row: any) => toReservationResponse(row))
         .filter((item: any) => {
           if (!item.blockId) {
+            return true;
+          }
+          if (employeeMode) {
             return true;
           }
           if (seenBlocks.has(item.blockId)) {
@@ -250,7 +272,7 @@ module.exports = async function handler(req: any, res: any) {
       const { data: requestRow, error: requestError } = await supabase
         .from('booking_requests')
         .select(
-          'id,date,time,guest_name,guest_email,phone,people,note,status,created_at,restaurant_name,restaurant_email',
+          'id,date,time,guest_name,guest_email,phone,people,note,status,employee_id,duration_minutes,created_at,restaurant_name,restaurant_email',
         )
         .eq('id', requestId)
         .eq('restaurant_slug', company.slug)
@@ -294,7 +316,33 @@ module.exports = async function handler(req: any, res: any) {
         return;
       }
 
-      const reservationFields = 'id,date,time,guest_name,guest_email,phone,people,note,created_at';
+      const employeeMode = isEmployeeCalendar(company);
+      let approvedEmployeeId = requestRow.employee_id || '';
+      let approvedDuration =
+        Number(requestRow.duration_minutes) || Number(company.slot_interval_minutes) || 45;
+      if (employeeMode && requestRow.status !== 'approved') {
+        const serviceValue = extractCalendarNote(requestRow.note, 'Service-ID');
+        const serviceLabel = extractCalendarNote(requestRow.note, 'Service');
+        approvedDuration = getServiceDuration(company, serviceValue, serviceLabel);
+        const availableEmployees = await getAvailableEmployees(supabase, company, {
+          date: requestRow.date,
+          time: requestRow.time,
+          durationMinutes: approvedDuration,
+          serviceValue,
+          employeeId: approvedEmployeeId,
+        });
+        if (availableEmployees.length === 0) {
+          res.status(409).json({
+            error:
+              'Der Mitarbeiter ist zu dieser Uhrzeit nicht mehr verfügbar. Die Anfrage bleibt offen.',
+          });
+          return;
+        }
+        approvedEmployeeId = availableEmployees[0].id;
+      }
+
+      const reservationFields =
+        'id,date,time,guest_name,guest_email,phone,people,note,employee_id,duration_minutes,created_at';
       const existingResult = await supabase
         .from('reservations')
         .select(reservationFields)
@@ -333,23 +381,25 @@ module.exports = async function handler(req: any, res: any) {
         return;
       }
 
-      const { count, error: countError } = await supabase
-        .from('reservations')
-        .select('id', { count: 'exact', head: true })
-        .eq('restaurant_slug', company.slug)
-        .eq('date', requestRow.date)
-        .eq('time', requestRow.time);
-      if (countError) {
-        res.status(500).json({ error: countError.message });
-        return;
-      }
+      if (!employeeMode) {
+        const { count, error: countError } = await supabase
+          .from('reservations')
+          .select('id', { count: 'exact', head: true })
+          .eq('restaurant_slug', company.slug)
+          .eq('date', requestRow.date)
+          .eq('time', requestRow.time);
+        if (countError) {
+          res.status(500).json({ error: countError.message });
+          return;
+        }
 
-      const slotCapacity = typeof company.slot_capacity === 'number' ? company.slot_capacity : 3;
-      if ((count || 0) >= slotCapacity) {
-        res.status(409).json({
-          error: 'Diese Uhrzeit ist inzwischen belegt. Die Anfrage bleibt offen.',
-        });
-        return;
+        const slotCapacity = typeof company.slot_capacity === 'number' ? company.slot_capacity : 3;
+        if ((count || 0) >= slotCapacity) {
+          res.status(409).json({
+            error: 'Diese Uhrzeit ist inzwischen belegt. Die Anfrage bleibt offen.',
+          });
+          return;
+        }
       }
 
       const { data: insertedReservation, error: insertError } = await supabase
@@ -366,11 +416,19 @@ module.exports = async function handler(req: any, res: any) {
           date: requestRow.date,
           time: requestRow.time,
           booking_request_id: requestId,
+          employee_id: approvedEmployeeId || null,
+          duration_minutes: approvedDuration,
         })
         .select(reservationFields)
         .single();
 
       if (insertError || !insertedReservation) {
+        if (insertError?.code === '23505') {
+          res.status(409).json({
+            error: 'Der Mitarbeiter wurde für diese Uhrzeit gerade bereits gebucht.',
+          });
+          return;
+        }
         if (isMissingColumnError(insertError, 'booking_request_id')) {
           res.status(500).json({
             error: 'Die Supabase-Migration für bestätigte Anfragen fehlt noch.',
@@ -412,30 +470,56 @@ module.exports = async function handler(req: any, res: any) {
         return;
       }
 
-      const { count, error: countError } = await supabase
-        .from('reservations')
-        .select('id', { count: 'exact', head: true })
-        .eq('restaurant_slug', company.slug)
-        .eq('date', body.date)
-        .eq('time', body.time);
-
-      if (countError) {
-        res.status(500).json({ error: countError.message });
-        return;
-      }
       const slotCapacity = typeof company.slot_capacity === 'number' ? company.slot_capacity : 3;
-      if ((count || 0) >= slotCapacity) {
-        res.status(409).json({ error: 'Slot voll' });
-        return;
+      const isBlock = body.isBlock === true;
+      const employeeMode = isEmployeeCalendar(company);
+      const serviceValue = String(body.serviceValue || '');
+      const durationMinutes = employeeMode
+        ? getServiceDuration(company, serviceValue, body.service || '')
+        : Number(company.slot_interval_minutes) || 45;
+      let employeeId = String(body.employeeId || '');
+      let employeeName = '';
+      let count = 0;
+
+      if (employeeMode && !isBlock) {
+        const availableEmployees = await getAvailableEmployees(supabase, company, {
+          date: body.date,
+          time: body.time,
+          durationMinutes,
+          serviceValue,
+          employeeId,
+        });
+        if (availableEmployees.length === 0) {
+          res.status(409).json({ error: 'Für diese Uhrzeit ist kein Mitarbeiter verfügbar.' });
+          return;
+        }
+        employeeId = availableEmployees[0].id;
+        employeeName = availableEmployees[0].name;
+      } else if (!employeeMode) {
+        const countResult = await supabase
+          .from('reservations')
+          .select('id', { count: 'exact', head: true })
+          .eq('restaurant_slug', company.slug)
+          .eq('date', body.date)
+          .eq('time', body.time);
+        if (countResult.error) {
+          res.status(500).json({ error: countResult.error.message });
+          return;
+        }
+        count = countResult.count || 0;
+        if (count >= slotCapacity) {
+          res.status(409).json({ error: 'Slot voll' });
+          return;
+        }
       }
 
-      const isBlock = body.isBlock === true;
       const blockId = isBlock ? `${Date.now()}-${Math.random().toString(36).slice(2, 9)}` : '';
       const internalId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
       const noteParts = [
         isBlock ? `__BLOCK__:${blockId}` : `__INTERNAL__:${internalId}`,
         body.service ? `Service: ${body.service}` : null,
-        body.stylist ? `Friseur: ${body.stylist}` : null,
+        serviceValue ? `Service-ID: ${serviceValue}` : null,
+        employeeName || body.stylist ? `Friseur: ${employeeName || body.stylist}` : null,
         body.note ? `Notiz: ${body.note}` : null,
       ].filter(Boolean);
 
@@ -450,17 +534,33 @@ module.exports = async function handler(req: any, res: any) {
         note: noteParts.length > 0 ? noteParts.join(' | ') : null,
         date: body.date,
         time: body.time,
+        employee_id: employeeId || null,
+        duration_minutes: durationMinutes,
       };
-      const recordsToInsert = isBlock
-        ? Array.from({ length: Math.max(slotCapacity - (count || 0), 1) }, () => ({ ...record }))
-        : [record];
+      const recordsToInsert =
+        isBlock && employeeMode
+          ? employeeId
+            ? [{ ...record }]
+            : normalizeEmployees(company.employees).map((employee: any) => ({
+                ...record,
+                employee_id: employee.id,
+              }))
+          : isBlock
+            ? Array.from({ length: Math.max(slotCapacity - count, 1) }, () => ({ ...record }))
+            : [record];
 
       const { data, error } = await supabase
         .from('reservations')
         .insert(recordsToInsert)
-        .select('id,date,time,guest_name,guest_email,phone,people,note,created_at');
+        .select(
+          'id,date,time,guest_name,guest_email,phone,people,note,employee_id,duration_minutes,created_at',
+        );
 
       if (error) {
+        if (error.code === '23505') {
+          res.status(409).json({ error: 'Diese Uhrzeit wurde gerade bereits gebucht.' });
+          return;
+        }
         res.status(500).json({ error: error.message });
         return;
       }

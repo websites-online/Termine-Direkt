@@ -216,8 +216,8 @@
             <span class="label">Friseur (optional)</span>
             <select class="input" formControlName="stylist">
               <option value="">Egal / keine Präferenz</option>
-              <option *ngFor="let stylist of stylistOptions" [value]="stylist">
-                {{ stylist }}
+              <option *ngFor="let stylist of stylistChoices" [value]="stylist.value">
+                {{ stylist.label }}
               </option>
             </select>
           </label>

@@ -5,6 +5,16 @@ export type SalonServiceOption = {
   label: string;
   audience: SalonServiceAudience;
   price?: number;
+  durationMinutes?: number;
+};
+
+export type CompanyEmployee = {
+  id: string;
+  name: string;
+  color: string;
+  hours: string;
+  breakHours?: string;
+  serviceValues: string[];
 };
 
 export const SALON_SERVICES: SalonServiceOption[] = [

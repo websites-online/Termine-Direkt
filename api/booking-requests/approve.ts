@@ -5,6 +5,14 @@ const platformUrl =
 
 const normalizedPlatformUrl = platformUrl.replace(/\/+$/, '');
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const {
+  extractFromNote: extractCalendarNote,
+  getAvailableEmployees,
+  getServiceDuration,
+  isEmployeeCalendar,
+} = require('../_lib/employee-calendar');
+
 const getActionSecret = (): string => {
   const secret = process.env.BOOKING_ACTION_SECRET?.trim();
   if (!secret) {
@@ -205,12 +213,22 @@ const renderResultPage = (
 const sendHtmlResponse = (res: any, statusCode: number, html: string) => {
   res.statusCode = statusCode;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
+  );
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.end(html);
 };
 
 const redirectToMailDraft = (res: any, mailtoLink: string) => {
   res.statusCode = 302;
   res.setHeader('Location', mailtoLink);
+  res.setHeader('Cache-Control', 'no-store');
   res.end();
 };
 
@@ -220,7 +238,7 @@ const isMissingColumnError = (error: any, columnName: string): boolean => {
 };
 
 module.exports = async function handler(req: any, res: any) {
-  if (req.method !== 'GET') {
+  if (!['GET', 'POST'].includes(req.method)) {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
@@ -258,7 +276,7 @@ module.exports = async function handler(req: any, res: any) {
     const { data: requestRow, error: requestError } = await supabase
       .from('booking_requests')
       .select(
-        'id,restaurant_slug,restaurant_name,restaurant_email,guest_name,guest_email,phone,people,note,date,time,status',
+        'id,restaurant_slug,restaurant_name,restaurant_email,guest_name,guest_email,phone,people,note,date,time,status,employee_id,duration_minutes',
       )
       .eq('id', parsedToken.requestId)
       .maybeSingle();
@@ -299,7 +317,9 @@ module.exports = async function handler(req: any, res: any) {
 
     const { data: company, error: companyError } = await supabase
       .from('companies')
-      .select('slug,name,email,service_type,slot_capacity')
+      .select(
+        'slug,name,email,service_type,slot_capacity,slot_interval_minutes,plan_tier,calendar_mode,employees,salon_services,hours,break_hours',
+      )
       .eq('slug', requestRow.restaurant_slug)
       .maybeSingle();
 
@@ -328,6 +348,10 @@ module.exports = async function handler(req: any, res: any) {
       extractFromNote(requestRow.note || null, 'Friseur') ||
       extractFromNote(requestRow.note || null, 'Wunsch-Friseur');
     const customerNote = extractFromNote(requestRow.note || null, 'Notiz');
+    const employeeMode = isEmployeeCalendar(company);
+    let approvedEmployeeId = requestRow.employee_id || '';
+    let approvedDuration =
+      Number(requestRow.duration_minutes) || Number(company.slot_interval_minutes) || 45;
 
     if (requestRow.status === 'rejected') {
       sendHtmlResponse(
@@ -399,23 +423,41 @@ module.exports = async function handler(req: any, res: any) {
       return;
     }
 
-    const { count, error: countError } = await supabase
-      .from('reservations')
-      .select('id', { count: 'exact', head: true })
-      .eq('restaurant_slug', requestRow.restaurant_slug)
-      .eq('date', requestRow.date)
-      .eq('time', requestRow.time);
-
-    if (countError) {
-      sendHtmlResponse(
-        res,
-        500,
-        renderResultPage('Fehler beim Prüfen', countError.message, 'error'),
-      );
-      return;
+    let slotUnavailable = false;
+    if (employeeMode) {
+      const serviceValue = extractCalendarNote(requestRow.note, 'Service-ID');
+      approvedDuration = getServiceDuration(company, serviceValue, service);
+      const availableEmployees = await getAvailableEmployees(supabase, company, {
+        date: requestRow.date,
+        time: requestRow.time,
+        durationMinutes: approvedDuration,
+        serviceValue,
+        employeeId: approvedEmployeeId,
+      });
+      if (availableEmployees.length > 0) {
+        approvedEmployeeId = availableEmployees[0].id;
+      } else {
+        slotUnavailable = true;
+      }
+    } else {
+      const { count, error: countError } = await supabase
+        .from('reservations')
+        .select('id', { count: 'exact', head: true })
+        .eq('restaurant_slug', requestRow.restaurant_slug)
+        .eq('date', requestRow.date)
+        .eq('time', requestRow.time);
+      if (countError) {
+        sendHtmlResponse(
+          res,
+          500,
+          renderResultPage('Fehler beim Prüfen', countError.message, 'error'),
+        );
+        return;
+      }
+      slotUnavailable = (count || 0) >= slotCapacity;
     }
 
-    if ((count || 0) >= slotCapacity) {
+    if (slotUnavailable) {
       const declineMailto = createMailtoLink(
         requestRow.guest_email || '',
         `${isSalon ? 'Terminanfrage' : 'Reservierungsanfrage'} zu ${displayDate} ${requestRow.time ? `(${requestRow.time})` : ''}`.trim(),
@@ -446,10 +488,15 @@ module.exports = async function handler(req: any, res: any) {
       date: requestRow.date,
       time: requestRow.time,
       booking_request_id: requestRow.id,
+      employee_id: approvedEmployeeId || null,
+      duration_minutes: approvedDuration,
     });
 
     if (insertError) {
-      if (insertError.code === '23505') {
+      if (
+        insertError.code === '23505' &&
+        String(insertError.message || '').includes('reservations_booking_request_id_unique')
+      ) {
         await supabase
           .from('booking_requests')
           .update({ status: 'approved', approved_at: new Date().toISOString() })
@@ -461,6 +508,18 @@ module.exports = async function handler(req: any, res: any) {
             'Bereits bestätigt',
             `Diese Anfrage wurde bereits als ${isSalon ? 'Termin' : 'Reservierung'} übernommen.`,
             'ok',
+          ),
+        );
+        return;
+      }
+      if (insertError.code === '23505') {
+        sendHtmlResponse(
+          res,
+          409,
+          renderResultPage(
+            'Termin gerade vergeben',
+            'Der Mitarbeiter wurde für diese Uhrzeit soeben anderweitig gebucht. Die Anfrage bleibt offen.',
+            'error',
           ),
         );
         return;
