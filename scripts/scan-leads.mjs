@@ -29,7 +29,8 @@ const overpassEndpoints = [
 ];
 
 // Nach Entfernung zu Nürnberg priorisiert. Überlappende OSM-Treffer werden dedupliziert.
-const regions = [
+// Ohne SCAN_REGION nutzt der wöchentliche Lauf weiterhin ausschließlich diese Liste.
+const nurembergRegions = [
   { name: 'Nürnberg', lat: 49.4521, lon: 11.0767, radius: 7000 },
   { name: 'Fürth', lat: 49.4771, lon: 10.9887, radius: 5000 },
   { name: 'Stein', lat: 49.4156, lon: 11.015, radius: 4000 },
@@ -45,9 +46,26 @@ const regions = [
   { name: 'Bamberg', lat: 49.8988, lon: 10.9028, radius: 6500 },
 ];
 
-const selectedRegions = forcedRegion
-  ? regions.filter((region) => region.name.toLocaleLowerCase('de').includes(forcedRegion))
-  : regions;
+// Manueller Gebietslauf rund um Stuttgart, nach Nähe zur Innenstadt priorisiert.
+const stuttgartRegions = [
+  { name: 'Stuttgart', lat: 48.7758, lon: 9.1829, radius: 7500 },
+  { name: 'Fellbach', lat: 48.8086, lon: 9.2761, radius: 4500 },
+  { name: 'Esslingen am Neckar', lat: 48.7409, lon: 9.3106, radius: 5000 },
+  { name: 'Ludwigsburg', lat: 48.8973, lon: 9.1916, radius: 5500 },
+  { name: 'Waiblingen', lat: 48.8303, lon: 9.3169, radius: 4500 },
+  { name: 'Leonberg', lat: 48.8004, lon: 9.015, radius: 4500 },
+  { name: 'Sindelfingen', lat: 48.7132, lon: 9.0029, radius: 5000 },
+  { name: 'Böblingen', lat: 48.685, lon: 9.0113, radius: 4500 },
+];
+
+const allRegions = [...nurembergRegions, ...stuttgartRegions];
+const selectedRegions = !forcedRegion
+  ? nurembergRegions
+  : forcedRegion === 'stuttgart'
+    ? stuttgartRegions
+    : allRegions.filter((region) =>
+        region.name.toLocaleLowerCase('de').includes(forcedRegion),
+      );
 if (selectedRegions.length === 0) {
   throw new Error(`Unbekannte Region: ${process.env.SCAN_REGION}`);
 }

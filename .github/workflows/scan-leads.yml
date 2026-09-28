@@ -1,4 +1,4 @@
-name: Neue Leads rund um Nürnberg finden
+name: Neue regionale Leads finden
 
 on:
   schedule:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       region:
-        description: 'Optional: nur eine Region scannen, z. B. Nürnberg oder Fürth'
+        description: 'Optional: Gebiet oder Ort scannen, z. B. Stuttgart, Nürnberg oder Fürth'
         required: false
         type: string
       max_new_leads:
