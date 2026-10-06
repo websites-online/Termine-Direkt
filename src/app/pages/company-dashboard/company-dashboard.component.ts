@@ -6,6 +6,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 import { CompanyAuthService, CompanySession } from '../../services/company-auth.service';
 import { Company, CompanyApiService } from '../../services/company-api.service';
+import { CompanyPushService, CompanyPushState } from '../../services/company-push.service';
 import {
   CompanyReservation,
   CompanyReservationPayload,
@@ -58,6 +59,9 @@ export class CompanyDashboardComponent implements OnInit {
   isEntryPanelOpen = false;
   entryMode: 'appointment' | 'block' = 'appointment';
   selectedEmployeeFilter = 'all';
+  pushState: CompanyPushState = 'loading';
+  pushBusy = false;
+  private pushInitialized = false;
 
   get serviceOptions(): Array<{ value: string; label: string; name: string }> {
     const services = this.company?.salonServices?.length
@@ -99,12 +103,24 @@ export class CompanyDashboardComponent implements OnInit {
     private readonly authService: CompanyAuthService,
     private readonly reservationsService: CompanyReservationsService,
     private readonly companyService: CompanyApiService,
+    private readonly pushService: CompanyPushService,
     private readonly router: Router,
     private readonly route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
     this.session = this.authService.getSession();
+    const requestedDate = this.route.snapshot.queryParamMap.get('date');
+    if (requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate)) {
+      const parsedDate = this.parseDate(requestedDate);
+      if (!Number.isNaN(parsedDate.getTime())) {
+        this.selectedDate = requestedDate;
+        this.selectedDateObj = parsedDate;
+        this.monthCursor = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1);
+        this.bookingForm.patchValue({ date: requestedDate }, { emitEvent: false });
+        this.blockForm.patchValue({ date: requestedDate }, { emitEvent: false });
+      }
+    }
     this.bookingForm.get('service')?.valueChanges.subscribe(() => {
       const employeeId = this.bookingForm.value.stylist || '';
       if (employeeId && !this.employeeChoices.some((employee) => employee.value === employeeId)) {
@@ -115,6 +131,7 @@ export class CompanyDashboardComponent implements OnInit {
     this.buildCalendarDays();
     this.loadCompanyDetails();
     this.loadReservations();
+    this.maybeInitializePush(this.session?.planTier);
     if (this.route.snapshot.queryParamMap.get('action') === 'termin') {
       this.openEntryPanel('appointment');
       this.router.navigate([], {
@@ -124,6 +141,62 @@ export class CompanyDashboardComponent implements OnInit {
         replaceUrl: true,
       });
     }
+  }
+
+  async enablePush(): Promise<void> {
+    if (this.pushBusy) {
+      return;
+    }
+    this.pushBusy = true;
+    this.pushState = await this.pushService.enable();
+    this.pushBusy = false;
+  }
+
+  async disablePush(): Promise<void> {
+    if (this.pushBusy) {
+      return;
+    }
+    this.pushBusy = true;
+    this.pushState = await this.pushService.disable();
+    this.pushBusy = false;
+  }
+
+  get pushTitle(): string {
+    return this.pushState === 'enabled'
+      ? 'Benachrichtigungen sind aktiv'
+      : 'Keine neue Anfrage verpassen';
+  }
+
+  get pushDescription(): string {
+    switch (this.pushState) {
+      case 'enabled':
+        return 'Neue Anfragen und Direktbuchungen erscheinen sofort auf diesem Gerät.';
+      case 'install-required':
+        return 'Öffnen Sie NexTime über das Home-Bildschirm-Icon und aktivieren Sie Push dort.';
+      case 'denied':
+        return 'Benachrichtigungen wurden blockiert. Sie können sie in den iPhone-Einstellungen wieder erlauben.';
+      case 'unsupported':
+        return 'Dieser Browser unterstützt Web-Push leider nicht.';
+      case 'not-configured':
+        return 'Push wird nach der einmaligen Server-Einrichtung verfügbar.';
+      case 'error':
+        return 'Push konnte gerade nicht geladen werden. Bitte versuchen Sie es später erneut.';
+      default:
+        return 'Erhalten Sie neue Buchungen und Anfragen direkt auf Ihrem Smartphone.';
+    }
+  }
+
+  private async initializePush(): Promise<void> {
+    await this.pushService.clearBadge();
+    this.pushState = await this.pushService.initialize();
+  }
+
+  private maybeInitializePush(planTier?: string): void {
+    if (planTier !== 'pro' || this.pushInitialized) {
+      return;
+    }
+    this.pushInitialized = true;
+    void this.initializePush();
   }
 
   logout(): void {
@@ -763,6 +836,7 @@ export class CompanyDashboardComponent implements OnInit {
     this.companyService.getCompany(slug).subscribe({
       next: (company) => {
         this.company = company;
+        this.maybeInitializePush(company?.planTier);
         this.refreshSelectedDate();
         this.buildCalendarDays();
       },

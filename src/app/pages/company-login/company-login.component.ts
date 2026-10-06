@@ -56,6 +56,11 @@ export class CompanyLoginComponent implements OnInit {
     this.authService.login(slug.trim(), pin.trim()).subscribe({
       next: () => {
         this.isSubmitting = false;
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '';
+        if (returnUrl.startsWith('/unternehmen') && !returnUrl.startsWith('/unternehmen/login')) {
+          this.router.navigateByUrl(returnUrl);
+          return;
+        }
         this.router.navigate(['/unternehmen']);
       },
       error: (err) => {

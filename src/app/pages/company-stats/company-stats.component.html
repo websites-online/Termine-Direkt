@@ -137,6 +137,62 @@
         </article>
       </section>
 
+      <section class="stats-panel conversion-panel">
+        <div class="stats-panel-heading">
+          <div>
+            <p class="eyebrow">Conversion</p>
+            <h2>Vom Besuch bis zum bestätigten Termin</h2>
+          </div>
+          <span>Nach Eingangsdatum ausgewertet</span>
+        </div>
+        <div class="conversion-funnel" *ngIf="stats.conversion.trackingAvailable">
+          <article class="conversion-step">
+            <span>01</span>
+            <strong>{{ stats.conversion.pageViews }}</strong>
+            <small>Buchungsseite besucht</small>
+          </article>
+          <div class="conversion-rate">
+            <b>{{ formatRate(stats.conversion.viewToStartRate) }}</b>
+            <span>gehen weiter</span>
+          </div>
+          <article class="conversion-step">
+            <span>02</span>
+            <strong>{{ stats.conversion.bookingStarts }}</strong>
+            <small>Buchung begonnen</small>
+          </article>
+          <div class="conversion-rate">
+            <b>{{ formatRate(stats.conversion.startToSubmissionRate) }}</b>
+            <span>senden ab</span>
+          </div>
+          <article class="conversion-step">
+            <span>03</span>
+            <strong>{{ stats.conversion.submissions }}</strong>
+            <small>{{
+              stats.eventKind === 'request' ? 'Anfrage gesendet' : 'Buchung gesendet'
+            }}</small>
+          </article>
+          <div class="conversion-rate">
+            <b>{{ formatRate(stats.conversion.completionRate) }}</b>
+            <span>{{ stats.eventKind === 'request' ? 'angenommen' : 'bestätigt' }}</span>
+          </div>
+          <article class="conversion-step conversion-step--success">
+            <span>04</span>
+            <strong>{{ stats.conversion.completions }}</strong>
+            <small>{{
+              stats.eventKind === 'request' ? 'Anfragen angenommen' : 'Buchungen bestätigt'
+            }}</small>
+          </article>
+        </div>
+        <p class="conversion-note" *ngIf="stats.conversion.trackingAvailable">
+          Seitenbesuche und begonnene Buchungen werden anonym und ohne Kundendaten erfasst.
+          Eigenaufrufe im eingeloggten Unternehmens- oder Adminbereich werden nicht gezählt.
+        </p>
+        <p class="stats-empty" *ngIf="!stats.conversion.trackingAvailable">
+          Das Conversion-Tracking wird gerade eingerichtet. Buchungen und Anfragen bleiben davon
+          unberührt.
+        </p>
+      </section>
+
       <section class="stats-grid stats-grid--hero">
         <article class="stats-panel trend-panel">
           <div class="stats-panel-heading">

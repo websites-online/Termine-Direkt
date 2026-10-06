@@ -270,6 +270,108 @@
   color: #b91c1c;
 }
 
+.push-card {
+  width: 100%;
+  max-width: 1370px;
+  min-height: 88px;
+  margin: 0 auto 20px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 15px;
+  padding: 16px 18px;
+  border: 1px solid #dce4f5;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(20, 184, 166, 0.1), transparent 34%),
+    linear-gradient(145deg, #ffffff, #f7f8ff);
+}
+
+.push-card__icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.push-card__icon svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.push-card__copy,
+.push-card__copy > div {
+  min-width: 0;
+}
+
+.push-card__copy > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.push-card__copy h2 {
+  margin: 0;
+  color: #273248;
+  font-size: 0.9rem;
+}
+
+.push-card__copy p {
+  margin: 5px 0 0;
+  color: #7b879a;
+  font-size: 0.73rem;
+  line-height: 1.45;
+}
+
+.push-status {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #e8faf4;
+  color: #0f8f72;
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.push-card__button {
+  min-width: 108px;
+  min-height: 40px;
+  padding: 0 15px;
+  border: 1px solid #4f46e5;
+  border-radius: 9px;
+  background: #4f46e5;
+  color: #fff;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.push-card__button--secondary {
+  border-color: #dfe4ed;
+  background: #fff;
+  color: #64748b;
+}
+
+.push-card__button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.push-card__loading {
+  color: #8b96a9;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
 .summary-grid {
   max-width: 1370px;
   margin: 0 auto 20px;
@@ -1194,6 +1296,17 @@
 
   .summary-grid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .push-card {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 14px;
+  }
+
+  .push-card__button,
+  .push-card__loading {
+    grid-column: 1 / -1;
+    width: 100%;
   }
 
   .summary-card {

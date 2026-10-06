@@ -142,4 +142,8 @@ export class CompanyStatsComponent implements OnInit {
       new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])),
     );
   }
+
+  formatRate(value: number | null): string {
+    return value === null ? '–' : `${value} %`;
+  }
 }

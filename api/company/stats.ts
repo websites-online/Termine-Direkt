@@ -11,6 +11,12 @@ type ActivityRow = {
   status?: string | null;
 };
 
+type BookingEventRow = {
+  event_type?: string | null;
+  session_id?: string | null;
+  created_at?: string | null;
+};
+
 const getClient = () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { createClient } = require('@supabase/supabase-js');
@@ -60,6 +66,26 @@ const parseDate = (value?: string | null): Date | null => {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
+const parseCreatedAtDate = (value?: string | null): Date | null => {
+  if (!value) {
+    return null;
+  }
+  const timestamp = new Date(value);
+  if (Number.isNaN(timestamp.getTime())) {
+    return null;
+  }
+  const parts = new Intl.DateTimeFormat('de-DE', {
+    timeZone: 'Europe/Berlin',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(timestamp);
+  const year = Number(parts.find((part) => part.type === 'year')?.value);
+  const month = Number(parts.find((part) => part.type === 'month')?.value);
+  const day = Number(parts.find((part) => part.type === 'day')?.value);
+  return year && month && day ? new Date(year, month - 1, day) : null;
+};
+
 const isInternalEntry = (note?: string | null): boolean =>
   /^__(?:BLOCK|INTERNAL)__:/i.test(String(note || '').trim());
 
@@ -96,6 +122,9 @@ const getChangePercent = (current: number, previous: number): number | null => {
   return Math.round(((current - previous) / previous) * 100);
 };
 
+const getRate = (current: number, previous: number): number | null =>
+  previous > 0 ? Math.min(100, Math.round((current / previous) * 100)) : null;
+
 const getStrongest = <T extends { count: number }>(items: T[]): T =>
   items.reduce((best, item) => (item.count > best.count ? item : best), items[0]);
 
@@ -122,6 +151,39 @@ const fetchAllRows = async (supabase: any, table: string, slug: string, includeS
     from += pageSize;
   }
   return rows;
+};
+
+const fetchBookingEvents = async (
+  supabase: any,
+  slug: string,
+): Promise<{ rows: BookingEventRow[]; available: boolean }> => {
+  const rows: BookingEventRow[] = [];
+  const pageSize = 1000;
+  let from = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from('booking_events')
+      .select('event_type,session_id,created_at')
+      .eq('company_slug', slug)
+      .range(from, from + pageSize - 1);
+    if (error) {
+      const message = String(error?.message || '').toLowerCase();
+      if (
+        error?.code === '42P01' ||
+        (message.includes('does not exist') && message.includes('booking_events'))
+      ) {
+        return { rows: [], available: false };
+      }
+      throw error;
+    }
+    const page = (data || []) as BookingEventRow[];
+    rows.push(...page);
+    if (page.length < pageSize) {
+      break;
+    }
+    from += pageSize;
+  }
+  return { rows, available: true };
 };
 
 module.exports = async function handler(req: any, res: any) {
@@ -187,6 +249,37 @@ module.exports = async function handler(req: any, res: any) {
     };
     const currentRows = eligibleRows.filter((row) => within(row, from, to));
     const previousRows = eligibleRows.filter((row) => within(row, previousFrom, previousTo));
+    const createdWithin = (createdAt: string | null | undefined): boolean => {
+      const date = parseCreatedAtDate(createdAt);
+      return Boolean(date && date >= from && date <= to);
+    };
+    const bookingEvents = await fetchBookingEvents(supabase, company.slug);
+    const trackingStartedAt = bookingEvents.rows.reduce<number | null>((earliest, row) => {
+      const timestamp = row.created_at ? new Date(row.created_at).getTime() : Number.NaN;
+      if (!Number.isFinite(timestamp)) {
+        return earliest;
+      }
+      return earliest === null || timestamp < earliest ? timestamp : earliest;
+    }, null);
+    const conversionActivityRows = (requestMode ? allRows : eligibleRows).filter((row) => {
+      const timestamp = row.created_at ? new Date(row.created_at).getTime() : Number.NaN;
+      return (
+        bookingEvents.available &&
+        trackingStartedAt !== null &&
+        Number.isFinite(timestamp) &&
+        timestamp >= trackingStartedAt &&
+        createdWithin(row.created_at)
+      );
+    });
+    const submissions = conversionActivityRows.length;
+    const completions = requestMode
+      ? conversionActivityRows.filter((row) => row.status === 'approved').length
+      : submissions;
+    const currentBookingEvents = bookingEvents.rows.filter((row) => createdWithin(row.created_at));
+    const pageViews = currentBookingEvents.filter((row) => row.event_type === 'page_view').length;
+    const bookingStarts = currentBookingEvents.filter(
+      (row) => row.event_type === 'booking_started',
+    ).length;
 
     const weekdayLabels = [
       'Sonntag',
@@ -311,6 +404,16 @@ module.exports = async function handler(req: any, res: any) {
       timeRanges,
       monthPhases,
       topCustomers: customers.slice(0, 5),
+      conversion: {
+        trackingAvailable: bookingEvents.available,
+        pageViews,
+        bookingStarts,
+        submissions,
+        completions,
+        viewToStartRate: getRate(bookingStarts, pageViews),
+        startToSubmissionRate: getRate(submissions, bookingStarts),
+        completionRate: getRate(completions, submissions),
+      },
     });
   } catch (error: any) {
     console.error('company stats error', error);

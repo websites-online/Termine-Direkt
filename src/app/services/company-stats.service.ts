@@ -27,6 +27,17 @@ export interface CompanyStatsCustomer {
   lastDate: string;
 }
 
+export interface CompanyStatsConversion {
+  trackingAvailable: boolean;
+  pageViews: number;
+  bookingStarts: number;
+  submissions: number;
+  completions: number;
+  viewToStartRate: number | null;
+  startToSubmissionRate: number | null;
+  completionRate: number | null;
+}
+
 export interface CompanyStatsResponse {
   period: CompanyStatsPeriod;
   from: string;
@@ -49,6 +60,7 @@ export interface CompanyStatsResponse {
   timeRanges: CompanyStatsCount[];
   monthPhases: CompanyStatsCount[];
   topCustomers: CompanyStatsCustomer[];
+  conversion: CompanyStatsConversion;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -197,6 +209,18 @@ export class CompanyStatsService {
         { name: 'David S.', count: 3, lastDate: this.formatDate(this.addDays(to, -8)) },
         { name: 'Tobias R.', count: 2, lastDate: this.formatDate(this.addDays(to, -9)) },
       ],
+      conversion: {
+        trackingAvailable: true,
+        pageViews: period === 30 ? 132 : period === 90 ? 361 : 1486,
+        bookingStarts: period === 30 ? 71 : period === 90 ? 205 : 822,
+        submissions: config.total,
+        completions: eventKind === 'request' ? Math.round(config.total * 0.76) : config.total,
+        viewToStartRate: period === 30 ? 54 : period === 90 ? 57 : 55,
+        startToSubmissionRate: Math.round(
+          (config.total / (period === 30 ? 71 : period === 90 ? 205 : 822)) * 100,
+        ),
+        completionRate: eventKind === 'request' ? 76 : 100,
+      },
     };
   }
 

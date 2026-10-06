@@ -3,7 +3,7 @@ import { CanActivateFn, Router } from '@angular/router';
 
 import { CompanyAuthService } from '../services/company-auth.service';
 
-export const companyGuard: CanActivateFn = () => {
+export const companyGuard: CanActivateFn = (_route, state) => {
   const authService = inject(CompanyAuthService);
   const router = inject(Router);
 
@@ -11,5 +11,7 @@ export const companyGuard: CanActivateFn = () => {
     return true;
   }
 
-  return router.createUrlTree(['/unternehmen/login']);
+  return router.createUrlTree(['/unternehmen/login'], {
+    queryParams: { returnUrl: state.url },
+  });
 };

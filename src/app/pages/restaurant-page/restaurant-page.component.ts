@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { Company, CompanyApiService } from '../../services/company-api.service';
+import { BookingAnalyticsService } from '../../services/booking-analytics.service';
 import {
   SALON_SERVICES,
   SalonServiceAudience,
@@ -29,6 +30,7 @@ export class RestaurantPageComponent implements OnInit {
   private readonly companyService = inject(CompanyApiService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly http = inject(HttpClient);
+  private readonly analytics = inject(BookingAnalyticsService);
   @ViewChild('calendarCard') private calendarCard?: ElementRef<HTMLElement>;
   @ViewChild('detailsCard') private detailsCard?: ElementRef<HTMLElement>;
 
@@ -444,6 +446,7 @@ export class RestaurantPageComponent implements OnInit {
       return;
     }
     this.selectedDateObj = day.date;
+    this.trackBookingStarted();
     this.selectedDate = this.formatDateISO(day.date);
     this.selectedDateLabel = this.formatDate(day.date);
     this.hasSelectedDate = true;
@@ -466,6 +469,7 @@ export class RestaurantPageComponent implements OnInit {
     if (!this.hasSelectedDate) {
       return;
     }
+    this.trackBookingStarted();
     this.activeFlowStep = 'details';
     this.scrollDetailsIntoViewOnMobile();
   }
@@ -499,8 +503,15 @@ export class RestaurantPageComponent implements OnInit {
       this.errorMessage = `Bitte beachten Sie: Buchungen sind frühestens ${this.getBookingBufferLabel()} im Voraus möglich.`;
       return;
     }
+    this.trackBookingStarted();
     this.errorMessage = '';
     this.bookingForm.patchValue({ time: slot });
+  }
+
+  trackBookingStarted(): void {
+    if (this.company) {
+      this.analytics.trackBookingStarted(this.slug);
+    }
   }
 
   onTimeInput(value: string): void {
@@ -965,6 +976,7 @@ export class RestaurantPageComponent implements OnInit {
     this.companyService.getCompany(this.slug).subscribe({
       next: (company) => {
         this.company = company;
+        this.analytics.trackPageView(this.slug);
         this.logoLoadFailed = false;
         this.updateServiceValidators();
         this.updateSeatingValidators();

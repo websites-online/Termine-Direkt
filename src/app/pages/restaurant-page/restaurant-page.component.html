@@ -161,7 +161,12 @@
         </label>
         <p class="helptext">Datum: {{ selectedDateLabel }} · Zeit: {{ bookingForm.value.time }}</p>
         <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
-        <form class="demo-form" [formGroup]="bookingForm" (ngSubmit)="submit()">
+        <form
+          class="demo-form"
+          [formGroup]="bookingForm"
+          (focusin)="trackBookingStarted()"
+          (ngSubmit)="submit()"
+        >
           <label>
             <span class="label">Name*</span>
             <input

@@ -81,6 +81,41 @@
     </div>
     <div class="notice notice--error" *ngIf="listError">{{ listError }}</div>
 
+    <article class="push-card" *ngIf="session?.planTier === 'pro' || company?.planTier === 'pro'">
+      <span class="push-card__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+          <path d="M10 21h4"></path>
+        </svg>
+      </span>
+      <div class="push-card__copy">
+        <div>
+          <h2>{{ pushTitle }}</h2>
+          <span class="push-status" *ngIf="pushState === 'enabled'">Aktiv</span>
+        </div>
+        <p>{{ pushDescription }}</p>
+      </div>
+      <button
+        class="push-card__button"
+        type="button"
+        *ngIf="pushState === 'ready'"
+        [disabled]="pushBusy"
+        (click)="enablePush()"
+      >
+        {{ pushBusy ? 'Wird aktiviert…' : 'Aktivieren' }}
+      </button>
+      <button
+        class="push-card__button push-card__button--secondary"
+        type="button"
+        *ngIf="pushState === 'enabled'"
+        [disabled]="pushBusy"
+        (click)="disablePush()"
+      >
+        {{ pushBusy ? 'Bitte warten…' : 'Deaktivieren' }}
+      </button>
+      <span class="push-card__loading" *ngIf="pushState === 'loading'">Wird geprüft…</span>
+    </article>
+
     <div class="summary-grid">
       <article class="summary-card">
         <span class="summary-icon summary-icon--blue"

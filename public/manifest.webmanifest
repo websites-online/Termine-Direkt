@@ -2,6 +2,7 @@
   "name": "NexTime",
   "short_name": "NexTime",
   "description": "Online-Terminbuchung und Reservierungen für lokale Unternehmen.",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

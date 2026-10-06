@@ -27,6 +27,8 @@ const {
 } = require('./_lib/employee-calendar');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { createInboundBookingAddress } = require('./_lib/inbound-booking-action');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { sendCompanyPush } = require('./_lib/web-push');
 
 const escapeHtml = (value: unknown): string =>
   String(value ?? '')
@@ -586,6 +588,37 @@ module.exports = async function handler(req: any, res: any) {
         res.status(500).json({ error: insertError.message });
         return;
       }
+    }
+
+    try {
+      let badgeCount = 1;
+      if (requestMode) {
+        const { count } = await supabase
+          .from('booking_requests')
+          .select('id', { count: 'exact', head: true })
+          .eq('restaurant_slug', body.restaurantSlug)
+          .or('status.is.null,status.eq.pending');
+        badgeCount = Math.max(Number(count) || 1, 1);
+      }
+      const notificationDetails = [
+        `${formatDisplayDate(body.date)} · ${body.time || '-'} Uhr`,
+        body.service ? String(body.service).trim() : '',
+      ].filter(Boolean);
+      await sendCompanyPush(supabase, body.restaurantSlug, {
+        title: requestMode
+          ? isSalon
+            ? 'Neue Terminanfrage'
+            : 'Neue Reservierungsanfrage'
+          : isSalon
+            ? 'Neuer Termin'
+            : 'Neue Reservierung',
+        body: notificationDetails.join(' · '),
+        url: `/unternehmen?date=${encodeURIComponent(body.date)}`,
+        tag: `nextime-${body.restaurantSlug}-${Date.now()}`,
+        badgeCount,
+      });
+    } catch (pushError) {
+      console.error('booking push could not be sent', pushError);
     }
 
     const businessLabel = isSalon ? 'Salon' : 'Restaurant';
