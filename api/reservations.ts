@@ -345,7 +345,71 @@ const isMissingTableError = (error: any, tableName: string): boolean => {
   );
 };
 
+const handleBookingEvent = async (req: any, res: any) => {
+  const body = req.body || {};
+  const companySlug = String(body.companySlug || '')
+    .trim()
+    .toLowerCase();
+  const eventType = String(body.eventType || '').trim();
+  const sessionId = String(body.sessionId || '').trim();
+  if (!/^[a-z0-9-]{2,120}$/.test(companySlug)) {
+    res.status(400).json({ error: 'Ungültiges Unternehmen.' });
+    return;
+  }
+  if (!['page_view', 'booking_started'].includes(eventType)) {
+    res.status(400).json({ error: 'Ungültiges Ereignis.' });
+    return;
+  }
+  if (!/^[a-zA-Z0-9_-]{16,100}$/.test(sessionId)) {
+    res.status(400).json({ error: 'Ungültige Sitzung.' });
+    return;
+  }
+  const userAgent = String(req.headers?.['user-agent'] || '');
+  if (/bot|crawler|spider|headless|preview/i.test(userAgent)) {
+    res.status(204).end();
+    return;
+  }
+
+  const supabase = getClient();
+  const { data: company, error: companyError } = await supabase
+    .from('companies')
+    .select('slug')
+    .eq('slug', companySlug)
+    .maybeSingle();
+  if (companyError || !company) {
+    res.status(404).json({ error: 'Unternehmen nicht gefunden.' });
+    return;
+  }
+
+  const { error } = await supabase.from('booking_events').upsert(
+    {
+      company_slug: companySlug,
+      event_type: eventType,
+      session_id: sessionId,
+    },
+    { onConflict: 'company_slug,event_type,session_id', ignoreDuplicates: true },
+  );
+  if (error) {
+    if (isMissingTableError(error, 'booking_events')) {
+      res.status(202).json({ tracked: false });
+      return;
+    }
+    throw error;
+  }
+  res.status(204).end();
+};
+
 module.exports = async function handler(req: any, res: any) {
+  if (req.method === 'POST' && req.query?.resource === 'analytics') {
+    try {
+      await handleBookingEvent(req, res);
+    } catch (error: any) {
+      console.error('booking event api error', error);
+      res.status(500).json({ error: error.message || 'Server error' });
+    }
+    return;
+  }
+
   if (req.method === 'GET') {
     try {
       const restaurantSlug =

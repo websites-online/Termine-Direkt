@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class BookingAnalyticsService {
-  private readonly endpoint = '/api/booking-events';
+  private readonly endpoint = '/api/reservations?resource=analytics';
   private readonly sentEvents = new Set<string>();
 
   constructor(private readonly http: HttpClient) {}

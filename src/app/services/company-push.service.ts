@@ -22,7 +22,7 @@ type PushConfiguration = {
 
 @Injectable({ providedIn: 'root' })
 export class CompanyPushService {
-  private readonly endpoint = '/api/company/push-subscriptions';
+  private readonly endpoint = '/api/company/login?resource=push';
   private registration: ServiceWorkerRegistration | null = null;
   private publicKey = '';
 
@@ -128,7 +128,7 @@ export class CompanyPushService {
 
   private async saveSubscription(subscription: PushSubscription): Promise<void> {
     await firstValueFrom(
-      this.http.post(
+      this.http.put(
         this.endpoint,
         { subscription: subscription.toJSON() },
         { headers: this.authHeaders() },
