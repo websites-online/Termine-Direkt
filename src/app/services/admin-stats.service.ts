@@ -35,6 +35,7 @@ interface LocalCompany {
 
 interface LocalReservation {
   date?: string;
+  createdAt?: string;
   isBlock?: boolean;
   isInternal?: boolean;
   note?: string;
@@ -101,7 +102,7 @@ export class AdminStatsService {
       }
       const bookings = reservations.filter(
         (item) =>
-          inRange(item.date) &&
+          inRange(item.createdAt || item.date) &&
           item.isBlock !== true &&
           item.isInternal !== true &&
           !/^__(?:BLOCK|INTERNAL)__:/i.test(String(item.note || '').trim()),

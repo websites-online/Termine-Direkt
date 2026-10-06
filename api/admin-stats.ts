@@ -6,15 +6,17 @@ type CompanyRow = {
 
 type ReservationRow = {
   restaurant_slug?: string | null;
-  date?: string | null;
   guest_email?: string | null;
   note?: string | null;
+  booking_request_id?: string | null;
+  created_at?: string | null;
 };
 
 type BookingRequestRow = {
+  id?: string | null;
   restaurant_slug?: string | null;
-  date?: string | null;
   status?: string | null;
+  created_at?: string | null;
 };
 
 const getClient = () => {
@@ -28,54 +30,27 @@ const getClient = () => {
   return createClient(url, key);
 };
 
-const parseReservationDate = (value?: string | null): Date | null => {
+const parseCreatedAtDate = (value?: string | null): Date | null => {
   if (!value) {
     return null;
   }
-  const text = value.trim();
-  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
-  if (iso) {
-    const year = Number(iso[1]);
-    const month = Number(iso[2]) - 1;
-    const day = Number(iso[3]);
-    return new Date(year, month, day);
+  const timestamp = new Date(value);
+  if (Number.isNaN(timestamp.getTime())) {
+    return null;
   }
-
-  const dmy = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(text);
-  if (dmy) {
-    const day = Number(dmy[1]);
-    const month = Number(dmy[2]) - 1;
-    const year = Number(dmy[3]);
-    return new Date(year, month, day);
+  const parts = new Intl.DateTimeFormat('de-DE', {
+    timeZone: 'Europe/Berlin',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(timestamp);
+  const year = Number(parts.find((part) => part.type === 'year')?.value);
+  const month = Number(parts.find((part) => part.type === 'month')?.value);
+  const day = Number(parts.find((part) => part.type === 'day')?.value);
+  if (!year || !month || !day) {
+    return null;
   }
-
-  const named = /^(\d{1,2})\.\s*([A-Za-zÄÖÜäöü]+)\s+(\d{4})$/.exec(text);
-  if (named) {
-    const monthMap: Record<string, number> = {
-      januar: 0,
-      februar: 1,
-      maerz: 2,
-      märz: 2,
-      april: 3,
-      mai: 4,
-      juni: 5,
-      juli: 6,
-      august: 7,
-      september: 8,
-      oktober: 9,
-      november: 10,
-      dezember: 11,
-    };
-    const day = Number(named[1]);
-    const monthName = named[2].toLowerCase();
-    const year = Number(named[3]);
-    const month = monthMap[monthName];
-    if (month !== undefined) {
-      return new Date(year, month, day);
-    }
-  }
-
-  return null;
+  return new Date(year, month - 1, day);
 };
 
 const startOfDay = (date: Date): Date =>
@@ -168,7 +143,7 @@ module.exports = async function handler(req: any, res: any) {
     while (true) {
       const { data, error } = await supabase
         .from('reservations')
-        .select('restaurant_slug,date,guest_email,note')
+        .select('restaurant_slug,guest_email,note,booking_request_id,created_at')
         .range(fromIndex, fromIndex + pageSize - 1);
       if (error) {
         res.status(500).json({ error: error.message });
@@ -188,12 +163,12 @@ module.exports = async function handler(req: any, res: any) {
     while (true) {
       let requestResult = await supabase
         .from('booking_requests')
-        .select('restaurant_slug,date,status')
+        .select('id,restaurant_slug,status,created_at')
         .range(fromIndex, fromIndex + pageSize - 1);
       if (requestResult.error && isMissingStatusColumnError(requestResult.error)) {
         requestResult = await supabase
           .from('booking_requests')
-          .select('restaurant_slug,date')
+          .select('id,restaurant_slug,created_at')
           .range(fromIndex, fromIndex + pageSize - 1);
       }
       const { data, error } = requestResult;
@@ -213,8 +188,8 @@ module.exports = async function handler(req: any, res: any) {
       fromIndex += pageSize;
     }
 
-    const isInRange = (dateValue?: string | null): boolean => {
-      const parsed = parseReservationDate(dateValue);
+    const isInRange = (createdAt?: string | null): boolean => {
+      const parsed = parseCreatedAtDate(createdAt);
       if (!parsed) {
         return false;
       }
@@ -233,10 +208,26 @@ module.exports = async function handler(req: any, res: any) {
       companyMap.set(company.slug, company),
     );
 
+    const bookingRequestById = new Map<string, BookingRequestRow>();
+    bookingRequests.forEach((row) => {
+      if (row.id) {
+        bookingRequestById.set(row.id, row);
+      }
+    });
+
     const bookingCounts = new Map<string, number>();
     reservations.forEach((row) => {
       const slug = row.restaurant_slug || '';
-      if (!slug || !isInRange(row.date) || !row.guest_email || isInternalCalendarEntry(row.note)) {
+      const originalRequest = row.booking_request_id
+        ? bookingRequestById.get(row.booking_request_id)
+        : undefined;
+      const receivedAt = originalRequest?.created_at || row.created_at;
+      if (
+        !slug ||
+        !isInRange(receivedAt) ||
+        !row.guest_email ||
+        isInternalCalendarEntry(row.note)
+      ) {
         return;
       }
       bookingCounts.set(slug, (bookingCounts.get(slug) || 0) + 1);
@@ -245,7 +236,11 @@ module.exports = async function handler(req: any, res: any) {
     const requestCounts = new Map<string, number>();
     bookingRequests.forEach((row) => {
       const slug = row.restaurant_slug || '';
-      if (!slug || !isInRange(row.date) || ['approved', 'rejected'].includes(row.status || '')) {
+      if (
+        !slug ||
+        !isInRange(row.created_at) ||
+        ['approved', 'rejected'].includes(row.status || '')
+      ) {
         return;
       }
       requestCounts.set(slug, (requestCounts.get(slug) || 0) + 1);
