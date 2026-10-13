@@ -319,6 +319,79 @@
   font-size: 0.74rem;
 }
 
+.industry-marquee {
+  position: relative;
+  z-index: 3;
+  overflow: hidden;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  background:
+    radial-gradient(circle at 50% 140%, rgba(59, 130, 246, 0.38), transparent 48%),
+    linear-gradient(105deg, #17233a, #1c3150 52%, #14273d);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.13);
+}
+
+.industry-marquee__track {
+  display: flex;
+  width: max-content;
+  padding-block: 19px;
+  animation: industryMarquee 30s linear infinite;
+  will-change: transform;
+}
+
+.industry-marquee__group {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: clamp(1.8rem, 4vw, 4rem);
+  padding-right: clamp(1.8rem, 4vw, 4rem);
+}
+
+.industry-marquee__group span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: clamp(0.78rem, 1.25vw, 0.95rem);
+  font-weight: 750;
+  letter-spacing: 0.085em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.industry-marquee__group span::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #60a5fa, #2dd4bf);
+  box-shadow: 0 0 14px rgba(45, 212, 191, 0.72);
+  content: '';
+}
+
+.industry-marquee__fade {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  width: clamp(28px, 7vw, 110px);
+  pointer-events: none;
+}
+
+.industry-marquee__fade--left {
+  left: 0;
+  background: linear-gradient(90deg, #17233a, transparent);
+}
+
+.industry-marquee__fade--right {
+  right: 0;
+  background: linear-gradient(-90deg, #14273d, transparent);
+}
+
+.industry-marquee:hover .industry-marquee__track {
+  animation-play-state: paused;
+}
+
 .section-band {
   position: relative;
   overflow: hidden;
@@ -524,6 +597,12 @@
     opacity: 0;
     transform: translateY(18px);
     filter: blur(6px);
+  }
+}
+
+@keyframes industryMarquee {
+  to {
+    transform: translateX(-50%);
   }
 }
 
@@ -749,6 +828,21 @@
   .hero-stage {
     min-height: 300px;
   }
+
+  .industry-marquee__track {
+    padding-block: 16px;
+    animation-duration: 25s;
+  }
+
+  .industry-marquee__group {
+    gap: 1.55rem;
+    padding-right: 1.55rem;
+  }
+
+  .industry-marquee__group span {
+    gap: 0.65rem;
+    font-size: 0.72rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -782,6 +876,7 @@
   .hero-light-plane,
   .hero-copy > *,
   .hero-monitor,
+  .industry-marquee__track,
   .depth-wrap,
   .section-band,
   .landing-page .benefit,
@@ -793,5 +888,19 @@
     transform: none !important;
     transition: none !important;
     animation: none !important;
+  }
+
+  .industry-marquee__track {
+    width: auto;
+  }
+
+  .industry-marquee__group {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 16px 24px;
+  }
+
+  .industry-marquee__group[aria-hidden='true'] {
+    display: none;
   }
 }
