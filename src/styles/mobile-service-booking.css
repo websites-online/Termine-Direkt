@@ -175,143 +175,134 @@
   border-color: #dc2626;
 }
 
-.mobile-service-page .company-hero {
-  width: 100%;
-  margin-bottom: 16px;
-}
+@media (min-width: 901px) and (min-height: 501px),
+  (min-width: 901px) and (pointer: fine),
+  (min-width: 901px) and (pointer: none) {
+  .mobile-service-page .company-hero {
+    width: 100%;
+    margin-bottom: 16px;
+  }
 
-.mobile-service-page.demo-page.booking-flow-page .grid-2.demo-grid.flow-ready {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: stretch;
-  gap: 20px;
-}
+  .mobile-service-page.demo-page.booking-flow-page .grid-2.demo-grid.flow-ready {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 20px;
+  }
 
-.mobile-service-page.demo-page .demo-grid.flow-ready > .card {
-  height: 680px;
-  min-width: 0;
-  min-height: 0;
-  padding: 20px;
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  animation: none;
-  transform: none;
-  filter: none;
-  opacity: 1;
-}
+  .mobile-service-page.demo-page .demo-grid.flow-ready > .card {
+    height: 680px;
+    min-width: 0;
+    min-height: 0;
+    padding: 20px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    animation: none;
+    transform: none;
+    filter: none;
+    opacity: 1;
+  }
 
-.mobile-service-page.demo-page .demo-grid.flow-ready > .details-card--locked {
-  opacity: 0.6;
-}
+  .mobile-service-page.demo-page .demo-grid.flow-ready > .details-card--locked {
+    opacity: 0.6;
+  }
 
-.mobile-service-page.demo-page .demo-grid.flow-ready > .card > h2 {
-  flex: 0 0 auto;
-  margin-bottom: 12px;
-}
+  .mobile-service-page.demo-page .demo-grid.flow-ready > .card > h2 {
+    flex: 0 0 auto;
+    margin-bottom: 12px;
+  }
 
-.mobile-service-page.demo-page .details-card > .muted {
-  margin: 0 0 8px;
-  font-size: 0.8rem;
-}
+  .mobile-service-page.demo-page .details-card > .muted {
+    margin: 0 0 8px;
+    font-size: 0.8rem;
+  }
 
-.mobile-service-page.demo-page .calendar-card {
-  gap: 14px;
-}
+  .mobile-service-page.demo-page .calendar-card {
+    gap: 14px;
+  }
 
-.mobile-service-page .calendar-card .calendar-header {
-  min-height: 40px;
-  padding: 4px;
-  flex: 0 0 auto;
-}
+  .mobile-service-page .calendar-card .calendar-header {
+    min-height: 40px;
+    padding: 4px;
+    flex: 0 0 auto;
+  }
 
-.mobile-service-page .calendar-card .month-nav {
-  width: 30px;
-  height: 30px;
-}
+  .mobile-service-page .calendar-card .month-nav {
+    width: 30px;
+    height: 30px;
+  }
 
-.mobile-service-page .calendar-card .calendar-weekdays {
-  flex: 0 0 auto;
-  padding: 0 3px;
-  font-size: 0.7rem;
-  text-align: center;
-}
+  .mobile-service-page .calendar-card .calendar-weekdays {
+    flex: 0 0 auto;
+    padding: 0 3px;
+    font-size: 0.7rem;
+    text-align: center;
+  }
 
-.mobile-service-page .calendar-card .calendar-grid {
-  flex: 1 1 0;
-  min-height: 0;
-  grid-template-rows: repeat(6, minmax(0, 1fr));
-  gap: 4px;
-}
+  .mobile-service-page .calendar-card .calendar-grid {
+    flex: 1 1 0;
+    min-height: 0;
+    grid-template-rows: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+  }
 
-.mobile-service-page .calendar-card .day {
-  aspect-ratio: auto;
-  min-width: 0;
-  min-height: 0;
-  font-size: 0.8rem;
-}
+  .mobile-service-page .calendar-card .day {
+    aspect-ratio: auto;
+    min-width: 0;
+    min-height: 0;
+    font-size: 0.8rem;
+  }
 
-.mobile-service-page .calendar-card > .helptext {
-  flex: 0 0 auto;
-  margin: 0;
-}
+  .mobile-service-page .calendar-card > .helptext {
+    flex: 0 0 auto;
+    margin: 0;
+  }
 
-.mobile-service-page .details-card .demo-form {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 0;
-  min-height: 0;
-  gap: 12px;
-}
+  .mobile-service-page .details-card .demo-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    gap: 12px;
+  }
 
-.mobile-service-page .details-card .booking-form-fields {
-  display: grid;
-  align-content: start;
-  flex: 1 1 0;
-  min-height: 0;
-  gap: 8px;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(var(--brand-rgb), 0.3) transparent;
-  padding: 3px 8px 3px 3px;
-}
+  .mobile-service-page .details-card .booking-form-fields {
+    display: grid;
+    align-content: start;
+    flex: 1 1 0;
+    min-height: 0;
+    gap: 8px;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--brand-rgb), 0.3) transparent;
+    padding: 3px 8px 3px 3px;
+  }
 
-.mobile-service-page .booking-form-fields > label {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
+  .mobile-service-page .booking-form-fields > label {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
 
-.mobile-service-page.demo-page .details-card .demo-form .btn {
-  flex: 0 0 auto;
-  min-height: 40px;
-  margin: 0;
-  width: 100%;
-}
+  .mobile-service-page.demo-page .details-card .demo-form .btn {
+    flex: 0 0 auto;
+    min-height: 40px;
+    margin: 0;
+    width: 100%;
+  }
 
-.mobile-service-page.demo-page .demo-form .textarea {
-  min-height: 72px;
-  height: 72px;
-  max-height: 160px;
+  .mobile-service-page.demo-page .demo-form .textarea {
+    min-height: 72px;
+    height: 72px;
+    max-height: 160px;
+  }
 }
 
 @media (max-width: 900px), (max-height: 500px) and (pointer: coarse) {
-  .mobile-service-page.demo-page.booking-flow-page.section {
-    padding-top: 12px;
-    padding-bottom: max(20px, env(safe-area-inset-bottom));
-  }
-
   .mobile-service-page > .container {
-    padding-left: max(16px, env(safe-area-inset-left));
-    padding-right: max(16px, env(safe-area-inset-right));
-  }
-
-  .mobile-service-page .company-hero {
-    padding-right: 16px;
-  }
-
-  .mobile-service-page .company-hero .company-meta {
-    line-height: 1.5;
+    padding-left: max(var(--page-gutter), env(safe-area-inset-left));
+    padding-right: max(var(--page-gutter), env(safe-area-inset-right));
   }
 
   .mobile-service-page .company-meta span {
@@ -319,27 +310,45 @@
   }
 
   .mobile-service-page .booking-location {
-    padding: 16px;
-    margin-bottom: 16px;
+    padding: 7px;
+    margin-bottom: 10px;
+    border-radius: var(--radius);
   }
 
   .mobile-service-page .booking-location h2 {
     font-size: 0.98rem;
   }
 
+  .mobile-service-page .booking-location p {
+    margin-bottom: 10px;
+  }
+
   .mobile-service-page .booking-location .booking-location__hint {
+    margin: 10px 0 0;
+    min-height: 0;
     font-size: 0.85rem;
   }
 
-  .mobile-service-page.booking-flow-page .booking-flow {
-    width: 100%;
-    margin-bottom: 12px;
+  .mobile-service-page .booking-location__options {
+    gap: 8px;
   }
 
-  .mobile-service-page.booking-flow-page .flow-step {
-    min-height: 44px;
-    padding-inline: 14px;
-    touch-action: manipulation;
+  .mobile-service-page .location-option {
+    gap: 8px;
+    min-height: 54px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+  }
+
+  .mobile-service-page .location-option svg {
+    flex-basis: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .mobile-service-page .location-option__check {
+    flex-basis: 16px;
+    height: 16px;
   }
 
   .mobile-service-page.demo-page.booking-flow-page .grid-2.demo-grid.flow-ready {
@@ -351,71 +360,12 @@
     display: none;
   }
 
-  .mobile-service-page.demo-page .demo-grid.flow-ready > .card {
-    height: clamp(620px, calc(100svh - 24px), 760px);
-    padding: 16px;
+  .mobile-service-page .demo-grid.flow-ready > .card {
     scroll-margin-top: max(12px, env(safe-area-inset-top));
   }
 
-  .mobile-service-page.demo-page .demo-grid.flow-ready > .card > h2 {
-    line-height: 1.35;
-  }
-
-  .mobile-service-page.demo-page .details-card > .muted {
-    font-size: 1rem;
-    line-height: 1.5;
-  }
-
-  .mobile-service-page .calendar-card .month-nav {
-    width: 44px;
-    height: 44px;
-  }
-
-  .mobile-service-page .calendar-card .calendar-weekdays {
-    min-height: 24px;
-    margin: 0;
-    padding: 0 3px;
-    align-items: center;
-    font-size: 0.52rem;
-  }
-
-  .mobile-service-page .calendar-card .day {
-    font-size: 0.56rem;
-    touch-action: manipulation;
-  }
-
-  .mobile-service-page.demo-page.booking-flow-page .details-card .label {
-    line-height: 1.4;
-    overflow-wrap: anywhere;
-  }
-
-  .mobile-service-page.demo-page.booking-flow-page .details-card :is(.input, .textarea) {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    min-height: 44px;
-    padding: 10px;
-    line-height: 1.4;
-    border-radius: 9px;
-  }
-
-  .mobile-service-page.demo-page .details-card .free-time-row input[type='time'] {
-    min-height: 44px;
-    padding-right: 36px;
-  }
-
-  .mobile-service-page .details-card .booking-form-fields {
-    gap: 14px;
-    padding: 3px 6px 12px 3px;
-    scroll-padding-block: 12px;
-    overscroll-behavior-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .mobile-service-page .details-card .booking-form-fields > label,
-  .mobile-service-page .home-visit-fields label {
-    gap: 6px;
-    align-content: start;
+  .mobile-service-page .booking-form-fields {
+    display: contents;
   }
 
   .mobile-service-page .home-visit-fields p,
@@ -424,16 +374,9 @@
   }
 
   .mobile-service-page .home-visit-fields p,
-  .mobile-service-page .details-card .helptext,
   .mobile-service-page .request-notice,
   .mobile-service-page .details-card .error {
-    line-height: 1.5;
     overflow-wrap: anywhere;
-  }
-
-  .mobile-service-page .address-row {
-    gap: 12px;
-    margin-bottom: 12px;
   }
 
   .mobile-service-page .address-row--street {
@@ -442,17 +385,6 @@
 
   .mobile-service-page .address-row--city {
     grid-template-columns: minmax(108px, 0.4fr) minmax(0, 1fr);
-  }
-
-  .mobile-service-page.demo-page .details-card .demo-form .textarea {
-    min-height: 96px;
-    height: 96px;
-  }
-
-  .mobile-service-page.demo-page .details-card .demo-form .btn {
-    min-height: 48px;
-    padding: 12px;
-    touch-action: manipulation;
   }
 
   .mobile-service-modal .reservation-modal__panel {
@@ -473,17 +405,11 @@
     min-width: 0;
     overflow-wrap: anywhere;
   }
-
-  .mobile-service-modal .reservation-modal__panel .btn {
-    min-height: 48px;
-    width: 100%;
-  }
 }
 
 @media (max-width: 480px) {
   .mobile-service-page .booking-location p,
   .mobile-service-page .booking-location .booking-location__hint,
-  .mobile-service-page.demo-page .details-card > .muted,
   .mobile-service-page .home-visit-fields p,
   .mobile-service-page .request-notice {
     font-size: 0.82rem;
@@ -497,21 +423,8 @@
     font-size: 0.68rem;
   }
 
-  .mobile-service-page .calendar-card .calendar-weekdays {
-    font-size: 0.5rem;
-  }
-
-  .mobile-service-page .calendar-card .day {
-    font-size: 0.52rem;
-  }
-
   .mobile-service-page .booking-location__options {
     grid-template-columns: 1fr;
-    gap: 9px;
-  }
-
-  .mobile-service-page .location-option {
-    padding: 12px;
   }
 }
 
