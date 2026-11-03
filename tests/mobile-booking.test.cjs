@@ -6,6 +6,12 @@ const { createRequire } = require('node:module');
 const { test } = require('node:test');
 const ts = require('typescript');
 
+const configPath = ts.findConfigFile(path.resolve(__dirname, '../api'), ts.sys.fileExists);
+const config = ts.readConfigFile(configPath, ts.sys.readFile);
+const { options: apiCompilerOptions } = ts.parseJsonConfigFileContent(
+  config.config, ts.sys, path.dirname(configPath),
+);
+
 // Exercise the actual API handlers with isolated database and email adapters.
 function setup(overrides = {}) {
   const company = {
@@ -51,7 +57,7 @@ function setup(overrides = {}) {
     const localRequire = createRequire(filename);
     const module = { exports: {} };
     const code = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
-      compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
+      compilerOptions: apiCompilerOptions,
     }).outputText;
     vm.runInNewContext(code, {
       module, exports: module.exports,

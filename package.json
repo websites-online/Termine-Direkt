@@ -10,7 +10,7 @@
     "vapid:generate": "web-push generate-vapid-keys",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "test:mobile": "node --test tests/mobile-booking.test.cjs"
+    "test:mobile": "node --test tests/mobile-booking.test.cjs tests/api-runtime.test.cjs"
   },
   "prettier": {
     "printWidth": 100,
