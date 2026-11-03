@@ -1,3 +1,5 @@
+import { extractBookingLocation, hasMobileService } from '../../src/app/shared/booking-location';
+
 const getClient = () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { createClient } = require('@supabase/supabase-js');
@@ -53,7 +55,7 @@ const extractStylist = (note: string | null) => {
   return match[1].trim();
 };
 
-const extractNote = (note: string | null) => {
+const extractNote = (note: string | null, mobileEnabled = false) => {
   if (!note) {
     return undefined;
   }
@@ -68,7 +70,8 @@ const extractNote = (note: string | null) => {
         !/^Service:/i.test(part) &&
         !/^Service-ID:/i.test(part) &&
         !/^Wunsch-Friseur:/i.test(part) &&
-        !/^Friseur:/i.test(part),
+        !/^Friseur:/i.test(part) &&
+        (!mobileEnabled || !/^(Buchungsort|Adresse|Hinweise zum Hausbesuch):/i.test(part)),
     );
   if (parts.length === 0) {
     return undefined;
@@ -92,7 +95,7 @@ const extractInternalId = (note: string | null): string | undefined => {
   return match?.[1]?.trim() || undefined;
 };
 
-const toReservationResponse = (row: any, isRequest = false) => ({
+const toReservationResponse = (row: any, isRequest = false, mobileEnabled = false) => ({
   id: row.id,
   date: row.date,
   time: row.time,
@@ -100,7 +103,8 @@ const toReservationResponse = (row: any, isRequest = false) => ({
   guestEmail: row.guest_email || undefined,
   phone: row.phone || undefined,
   people: row.people || undefined,
-  note: extractNote(row.note || null),
+  note: extractNote(row.note || null, mobileEnabled),
+  ...(mobileEnabled ? extractBookingLocation(row.note) : {}),
   service: extractService(row.note || null),
   stylist: extractStylist(row.note || null),
   employeeId: row.employee_id || undefined,
@@ -165,6 +169,7 @@ module.exports = async function handler(req: any, res: any) {
       res.status(401).json({ error: 'Nicht autorisiert.' });
       return;
     }
+    const mobileEnabled = hasMobileService(company.slug, company.service_type);
 
     if (req.method === 'GET') {
       const date = typeof req.query?.date === 'string' ? req.query.date : '';
@@ -231,7 +236,7 @@ module.exports = async function handler(req: any, res: any) {
       const seenBlocks = new Set<string>();
       const employeeMode = isEmployeeCalendar(company);
       const mappedReservations = (reservationsResult.data || [])
-        .map((row: any) => toReservationResponse(row))
+        .map((row: any) => toReservationResponse(row, false, mobileEnabled))
         .filter((item: any) => {
           if (!item.blockId) {
             return true;
@@ -248,7 +253,7 @@ module.exports = async function handler(req: any, res: any) {
 
       const mappedRequests = requestRows
         .filter((row: any) => !['approved', 'rejected'].includes(row.status))
-        .map((row: any) => toReservationResponse(row, true));
+        .map((row: any) => toReservationResponse(row, true, mobileEnabled));
 
       const mapped = [...mappedReservations, ...mappedRequests].sort((left, right) =>
         `${left.date}-${left.time}`.localeCompare(`${right.date}-${right.time}`),
@@ -305,7 +310,7 @@ module.exports = async function handler(req: any, res: any) {
           res.status(500).json({ error: rejectionError.message });
           return;
         }
-        res.status(200).json(toReservationResponse({ ...requestRow, status: 'rejected' }, true));
+        res.status(200).json(toReservationResponse({ ...requestRow, status: 'rejected' }, true, mobileEnabled));
         return;
       }
 
@@ -375,7 +380,7 @@ module.exports = async function handler(req: any, res: any) {
           res.status(500).json({ error: updateResult.error.message });
           return;
         }
-        res.status(200).json(toReservationResponse(existingResult.data));
+        res.status(200).json(toReservationResponse(existingResult.data, false, mobileEnabled));
         return;
       }
 
@@ -457,7 +462,7 @@ module.exports = async function handler(req: any, res: any) {
         return;
       }
 
-      res.status(200).json(toReservationResponse(insertedReservation));
+      res.status(200).json(toReservationResponse(insertedReservation, false, mobileEnabled));
       return;
     }
 
@@ -567,7 +572,7 @@ module.exports = async function handler(req: any, res: any) {
         return;
       }
 
-      res.status(200).json(toReservationResponse(data[0]));
+      res.status(200).json(toReservationResponse(data[0], false, mobileEnabled));
       return;
     }
 

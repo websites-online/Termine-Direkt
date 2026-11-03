@@ -1,3 +1,5 @@
+import { hasMobileService } from '../src/app/shared/booking-location';
+
 type CompanyRow = {
   id: string;
   name: string;
@@ -57,12 +59,14 @@ const toCompanyResponse = (row: CompanyRow) => ({
       : 45,
   bookingBufferMinutes: normalizeBookingBufferMinutes(row.booking_buffer_minutes),
   timeSelectionMode: row.time_selection_mode === 'free' ? 'free' : 'slots',
-  bookingMode: row.booking_mode || 'confirm',
+  bookingMode: hasMobileService(row.slug, row.service_type) ? 'request' : row.booking_mode || 'confirm',
   seatingOptionsEnabled: row.seating_options_enabled ?? false,
   stylistSelectionEnabled: row.service_type === 'friseur' && row.stylist_selection_enabled === true,
   stylists: row.service_type === 'friseur' ? normalizeStylists(row.stylists) : [],
   salonServices: row.service_type === 'friseur' ? normalizeSalonServices(row.salon_services) : [],
-  showServicePrices: row.service_type === 'friseur' && row.show_service_prices === true,
+  showServicePrices:
+    !hasMobileService(row.slug, row.service_type) &&
+    row.service_type === 'friseur' && row.show_service_prices === true,
   logoUrl: normalizeLogoUrl(row.logo_url) || undefined,
   brandColor: normalizeBrandColor(row.brand_color),
   planTier: row.plan_tier === 'pro' ? 'pro' : 'starter',

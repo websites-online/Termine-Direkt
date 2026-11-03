@@ -4,6 +4,7 @@ import { Observable, of, delay } from 'rxjs';
 
 import { environment } from '../../environments/environment';
 import { CompanyEmployee, SALON_SERVICES, SalonServiceOption } from '../shared/salon-services';
+import { hasMobileService } from '../shared/booking-location';
 
 export type ServiceType = 'restaurant' | 'friseur';
 export type BookingMode = 'confirm' | 'request';
@@ -86,7 +87,7 @@ export class CompanyApiService {
 
   getCompany(slug: string): Observable<Company | null> {
     if (this.isLocalMock()) {
-      const company = this.loadLocalCompanies().find((item) => item.slug === slug) || null;
+      const company = this.loadLocalCompanies(slug === 'atelier7').find((item) => item.slug === slug) || null;
       return of(company).pipe(delay(200));
     }
     return this.http.get<Company>(`${this.baseUrl}?slug=${encodeURIComponent(slug)}`);
@@ -236,7 +237,7 @@ export class CompanyApiService {
     );
   }
 
-  private loadLocalCompanies(): Company[] {
+  private loadLocalCompanies(includeAtelier7Preview = false): Company[] {
     if (typeof window === 'undefined') {
       return [];
     }
@@ -247,11 +248,18 @@ export class CompanyApiService {
         parsed.push(this.createLocalProDemoCompany());
         this.saveLocalCompanies(parsed);
       }
+      if (includeAtelier7Preview && !parsed.some((company) => company.slug === 'atelier7')) {
+        parsed.push(this.createLocalAtelier7Company());
+        this.saveLocalCompanies(parsed);
+      }
       return parsed.map((company) => {
         const isDemo = company.slug === 'new-city-barber-demo';
         const configuredSalonServices = this.normalizeSalonServices(company.salonServices);
         return {
           ...company,
+          bookingMode: hasMobileService(company.slug, company.serviceType)
+            ? 'request' as const
+            : company.bookingMode,
           slotIntervalMinutes:
             company.slotIntervalMinutes === 30 || company.slotIntervalMinutes === 60
               ? company.slotIntervalMinutes
@@ -271,6 +279,7 @@ export class CompanyApiService {
                   : []
               : [],
           showServicePrices:
+            !hasMobileService(company.slug, company.serviceType) &&
             company.serviceType === 'friseur' &&
             (company.showServicePrices === true ||
               (isDemo && company.showServicePrices === undefined)),
@@ -328,6 +337,31 @@ export class CompanyApiService {
       planTier: 'pro',
       calendarMode: 'shared',
       employees: [],
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  private createLocalAtelier7Company(): Company {
+    return {
+      id: 'local-atelier7-preview',
+      name: 'Atelier7',
+      slug: 'atelier7',
+      address: 'Waltherstraße 1, 90429 Nürnberg',
+      hours: 'Di–Fr 10:00–18:00; Sa 10:00–16:00',
+      email: 'atelier7-preview@example.test',
+      serviceType: 'friseur',
+      loginPin: '123456',
+      slotCapacity: 1,
+      slotIntervalMinutes: 30,
+      bookingBufferMinutes: 120,
+      timeSelectionMode: 'free',
+      bookingMode: 'request',
+      salonServices: SALON_SERVICES.map((service) => ({ ...service })),
+      showServicePrices: false,
+      logoUrl: '/media/examples/atelier7.jpg',
+      brandColor: '#4f46e5',
+      planTier: 'starter',
+      calendarMode: 'shared',
       createdAt: new Date().toISOString(),
     };
   }

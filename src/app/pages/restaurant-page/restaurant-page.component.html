@@ -1,5 +1,6 @@
 <section
   class="section page demo-page booking-flow-page"
+  [class.mobile-service-page]="hasMobileService"
   [style.--brand-color]="brandColor"
   [style.--brand-dark]="brandColorDark"
   [style.--brand-rgb]="brandColorRgb"
@@ -48,6 +49,34 @@
       <p class="section-lead">Reservierungsseite folgt.</p>
     </div>
 
+    <section class="booking-location" *ngIf="hasMobileService" aria-labelledby="booking-location-title">
+      <h2 id="booking-location-title">Wo darf dein Termin stattfinden?</h2>
+      <p>Besuche uns im Salon oder frage unseren mobilen Friseurservice an.</p>
+      <div class="booking-location__options" role="radiogroup" aria-labelledby="booking-location-title">
+        <label class="location-option" [class.location-option--selected]="!isHomeVisit">
+          <input type="radio" name="bookingLocation" value="salon"
+            [formControl]="bookingForm.controls.bookingLocation" />
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 10h18M5 10v10h14V10M3 10l2-6h14l2 6M9 20v-6h6v6" />
+          </svg>
+          <span><strong>Im Salon</strong><small>Deine Auszeit bei Atelier7</small></span>
+          <span class="location-option__check" aria-hidden="true">✓</span>
+        </label>
+        <label class="location-option" [class.location-option--selected]="isHomeVisit">
+          <input type="radio" name="bookingLocation" value="home"
+            [formControl]="bookingForm.controls.bookingLocation" />
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m3 10 9-7 9 7M5 9v11h14V9M9 20v-7h6v7" />
+          </svg>
+          <span><strong>Bei dir zu Hause</strong><small>Mobiler Friseurservice</small></span>
+          <span class="location-option__check" aria-hidden="true">✓</span>
+        </label>
+      </div>
+      <p class="booking-location__hint">{{ isHomeVisit
+        ? 'Wir kommen zu dir. Wähle deinen Wunschtermin und gib anschließend deine Besuchsadresse an.'
+        : 'Wähle deinen Wunschtermin. Wir melden uns persönlich mit einer Bestätigung bei dir.' }}</p>
+    </section>
+
     <div class="booking-flow" aria-label="Reservierungsfortschritt" *ngIf="company">
       <button
         class="flow-step"
@@ -86,6 +115,7 @@
           <button
             class="month-nav"
             type="button"
+            [attr.aria-label]="hasMobileService ? 'Vorheriger Monat' : null"
             (click)="prevMonth(); $event.stopPropagation()"
             [disabled]="!canGoPrev"
           >
@@ -95,6 +125,7 @@
           <button
             class="month-nav"
             type="button"
+            [attr.aria-label]="hasMobileService ? 'Nächster Monat' : null"
             (click)="nextMonth(); $event.stopPropagation()"
             [disabled]="!canGoNext"
           >
@@ -129,7 +160,7 @@
         (click)="showDetailsStep()"
       >
         <h2>{{ bookingTitle }}</h2>
-        <p class="muted">{{ company.address || 'Adresse folgt' }}</p>
+        <p class="muted">{{ isHomeVisit ? 'Mobiler Friseurservice · Wir kommen zu dir.' : company.address || 'Adresse folgt' }}</p>
         <p class="muted">
           {{ company.hours || 'Öffnungszeiten folgen' }}
           <span *ngIf="company.breakHours"> · Pause: {{ company.breakHours }}</span>
@@ -167,18 +198,20 @@
           (focusin)="trackBookingStarted()"
           (ngSubmit)="submit()"
         >
+          <ng-template #bookingFields>
           <label>
             <span class="label">Name*</span>
             <input
               class="input"
               type="text"
               formControlName="name"
+              [attr.autocomplete]="hasMobileService ? 'name' : null"
               placeholder="Vor- und Nachname"
             />
           </label>
           <label>
             <span class="label">E-Mail*</span>
-            <input class="input" type="email" formControlName="email" placeholder="gast@mail.de" />
+            <input class="input" type="email" formControlName="email" [attr.autocomplete]="hasMobileService ? 'email' : null" placeholder="gast@mail.de" />
             <span
               class="error"
               *ngIf="bookingForm.get('email')?.touched && bookingForm.get('email')?.invalid"
@@ -188,7 +221,7 @@
           </label>
           <label>
             <span class="label">Telefon*</span>
-            <input class="input" type="tel" formControlName="phone" placeholder="Telefonnummer" />
+            <input class="input" type="tel" formControlName="phone" [attr.autocomplete]="hasMobileService ? 'tel' : null" placeholder="Telefonnummer" />
           </label>
           <label *ngIf="!isSalon">
             <span class="label">{{ guestCountLabel }}</span>
@@ -226,6 +259,47 @@
               </option>
             </select>
           </label>
+          <section class="home-visit-fields" *ngIf="isHomeVisit" aria-labelledby="home-visit-title">
+            <h3 id="home-visit-title">Deine Besuchsadresse</h3>
+            <p>Hier soll dein Hausbesuch stattfinden.</p>
+            <div class="address-row address-row--street">
+              <label>
+                <span class="label">Straße*</span>
+                <input class="input" type="text" formControlName="street"
+                  autocomplete="address-line1" placeholder="Straße" maxlength="120"
+                  [attr.aria-invalid]="bookingForm.controls.street.touched && bookingForm.controls.street.invalid" />
+                <span class="error" *ngIf="bookingForm.controls.street.touched && bookingForm.controls.street.invalid">Bitte Straße eingeben.</span>
+              </label>
+              <label>
+                <span class="label">Hausnummer*</span>
+                <input class="input" type="text" formControlName="houseNumber"
+                  placeholder="Nr." maxlength="20"
+                  [attr.aria-invalid]="bookingForm.controls.houseNumber.touched && bookingForm.controls.houseNumber.invalid" />
+                <span class="error" *ngIf="bookingForm.controls.houseNumber.touched && bookingForm.controls.houseNumber.invalid">Hausnummer fehlt.</span>
+              </label>
+            </div>
+            <div class="address-row address-row--city">
+              <label>
+                <span class="label">Postleitzahl*</span>
+                <input class="input" type="text" formControlName="postalCode"
+                  autocomplete="postal-code" inputmode="numeric" placeholder="90429" maxlength="5"
+                  [attr.aria-invalid]="bookingForm.controls.postalCode.touched && bookingForm.controls.postalCode.invalid" />
+                <span class="error" *ngIf="bookingForm.controls.postalCode.touched && bookingForm.controls.postalCode.invalid">Bitte fünfstellige PLZ eingeben.</span>
+              </label>
+              <label>
+                <span class="label">Ort*</span>
+                <input class="input" type="text" formControlName="city"
+                  autocomplete="address-level2" placeholder="Nürnberg" maxlength="100"
+                  [attr.aria-invalid]="bookingForm.controls.city.touched && bookingForm.controls.city.invalid" />
+                <span class="error" *ngIf="bookingForm.controls.city.touched && bookingForm.controls.city.invalid">Bitte Ort eingeben.</span>
+              </label>
+            </div>
+            <label>
+              <span class="label">Klingelname, Etage oder Anfahrtshinweise (optional)</span>
+              <input class="input" type="text" formControlName="visitDetails"
+                placeholder="z. B. Klingel Müller, 2. Stock" maxlength="300" />
+            </label>
+          </section>
           <label>
             <span class="label">Notiz (optional)</span>
             <textarea
@@ -234,6 +308,19 @@
               placeholder="Zusätzliche Hinweise"
             ></textarea>
           </label>
+          <p class="request-notice" *ngIf="hasMobileService">
+            Du sendest eine unverbindliche Anfrage. Atelier7 bestätigt deinen Termin persönlich.
+          </p>
+          <p class="helptext" *ngIf="hasMobileService && publicBooking.isLocalPreview">
+            Lokale Vorschau: Testanfragen werden nur auf diesem Gerät gespeichert. Es werden keine E-Mails versendet.
+          </p>
+          </ng-template>
+          <div class="booking-form-fields" *ngIf="hasMobileService">
+            <ng-container *ngTemplateOutlet="bookingFields"></ng-container>
+          </div>
+          <ng-container *ngIf="!hasMobileService">
+            <ng-container *ngTemplateOutlet="bookingFields"></ng-container>
+          </ng-container>
           <button class="btn btn-primary" type="submit" [disabled]="isSubmitting">
             {{ isSubmitting ? 'Senden...' : bookingButtonLabel }}
           </button>
@@ -243,7 +330,7 @@
     </div>
   </div>
 </section>
-<div class="reservation-modal" *ngIf="showThanksModal">
+<div class="reservation-modal" [class.mobile-service-modal]="hasMobileService" *ngIf="showThanksModal">
   <div class="reservation-modal__backdrop" (click)="closeThanksModal()"></div>
   <div
     class="reservation-modal__panel"
@@ -255,6 +342,14 @@
     <h3 id="reservation-modal-title">{{ bookingSuccessHeadline }}</h3>
     <p>{{ bookingConfirmText }}</p>
     <div class="reservation-modal__details">
+      <div *ngIf="hasMobileService">
+        <span>Ort</span>
+        <strong>{{ lastBookingLocation === 'home' ? 'Bei dir zu Hause' : 'Im Salon' }}</strong>
+      </div>
+      <div *ngIf="hasMobileService && lastVisitAddress">
+        <span>Besuchsadresse</span>
+        <strong>{{ lastVisitAddress }}</strong>
+      </div>
       <div>
         <span>Datum</span>
         <strong>{{ lastReservationDate }}</strong>

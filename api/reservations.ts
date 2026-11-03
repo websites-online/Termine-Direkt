@@ -1,3 +1,8 @@
+import {
+  BookingLocation, HomeVisitAddress, bookingLocationNoteParts,
+  formatHomeVisitAddress, hasMobileService, normalizeHomeVisitAddress,
+} from '../src/app/shared/booking-location';
+
 type ReservationBody = {
   restaurantName?: string;
   restaurantSlug?: string;
@@ -16,6 +21,8 @@ type ReservationBody = {
   people?: number;
   phone?: string;
   note?: string;
+  bookingLocation?: BookingLocation;
+  homeVisitAddress?: HomeVisitAddress;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -501,9 +508,26 @@ module.exports = async function handler(req: any, res: any) {
       .eq('slug', body.restaurantSlug)
       .maybeSingle();
     const slotCapacity = typeof company?.slot_capacity === 'number' ? company.slot_capacity : 3;
-    const requestMode = company?.booking_mode === 'request';
+    const mobileEnabled = hasMobileService(company?.slug, company?.service_type);
+    const requestMode = mobileEnabled || company?.booking_mode === 'request';
     const bookingBufferMinutes = normalizeBookingBufferMinutes(company?.booking_buffer_minutes);
-    const isSalon = body.serviceType === 'friseur';
+    const isSalon = mobileEnabled || body.serviceType === 'friseur';
+    if (mobileEnabled && body.bookingLocation !== undefined && !['salon', 'home'].includes(body.bookingLocation)) {
+      res.status(400).json({ error: 'Bitte wählen Sie einen gültigen Buchungsort.' });
+      return;
+    }
+    const isHomeVisit = body.bookingLocation === 'home';
+    if (isHomeVisit && !mobileEnabled) {
+      res.status(400).json({ error: 'Dieser Betrieb bietet keine Hausbesuche an.' });
+      return;
+    }
+    const visitAddress = isHomeVisit ? normalizeHomeVisitAddress(body.homeVisitAddress) : null;
+    if (isHomeVisit && !visitAddress) {
+      res.status(400).json({ error: 'Bitte geben Sie eine vollständige Besuchsadresse mit gültiger PLZ an.' });
+      return;
+    }
+    const locationNotes = mobileEnabled
+      ? bookingLocationNoteParts(isHomeVisit ? 'home' : 'salon', visitAddress) : [];
     const employeeMode = isEmployeeCalendar(company);
     const durationMinutes = employeeMode
       ? getServiceDuration(company, body.serviceValue || '', body.service || '')
@@ -587,6 +611,7 @@ module.exports = async function handler(req: any, res: any) {
       body.service ? `Service: ${body.service}` : null,
       body.serviceValue ? `Service-ID: ${body.serviceValue}` : null,
       employeeName ? `Friseur: ${employeeName}` : null,
+      ...locationNotes,
       body.note ? `Notiz: ${body.note}` : null,
     ].filter(Boolean);
 
@@ -667,6 +692,7 @@ module.exports = async function handler(req: any, res: any) {
       const notificationDetails = [
         `${formatDisplayDate(body.date)} · ${body.time || '-'} Uhr`,
         body.service ? String(body.service).trim() : '',
+        isHomeVisit ? 'Hausbesuch' : '',
       ].filter(Boolean);
       await sendCompanyPush(supabase, body.restaurantSlug, {
         title: requestMode
@@ -726,6 +752,13 @@ module.exports = async function handler(req: any, res: any) {
             ...(body.stylist ? [{ label: 'Friseur', value: body.stylist }] : []),
           ]
         : [{ label: 'Personen', value: body.people ? String(body.people) : '-' }]),
+      ...(mobileEnabled
+        ? [{ label: 'Buchungsort', value: isHomeVisit ? 'Hausbesuch' : 'Im Salon' }] : []),
+      ...(visitAddress
+        ? [
+            { label: 'Besuchsadresse', value: formatHomeVisitAddress(visitAddress) },
+            ...(visitAddress.details ? [{ label: 'Hinweise zum Hausbesuch', value: visitAddress.details }] : []),
+          ] : []),
       { label: 'Notiz', value: body.note || '-' },
     ];
 
@@ -750,10 +783,11 @@ module.exports = async function handler(req: any, res: any) {
             ? `Personen: ${body.people}`
             : null,
         isSalon && body.stylist ? `Friseur: ${body.stylist}` : null,
+        ...locationNotes,
         !isSalon && body.seating ? `Sitzplatz: ${body.seating}` : null,
         body.note ? `Notiz: ${body.note}` : null,
         '',
-        'Wir freuen uns auf Ihren Besuch!',
+        isHomeVisit ? 'Wir freuen uns auf den Termin bei Ihnen zu Hause!' : 'Wir freuen uns auf Ihren Besuch!',
         'Bei Fragen antworten Sie einfach auf diese E-Mail.',
         '',
         'Herzliche Grüße',
@@ -789,6 +823,7 @@ module.exports = async function handler(req: any, res: any) {
             ? `Personen: ${body.people}`
             : null,
         isSalon && body.stylist ? `Friseur: ${body.stylist}` : null,
+        ...locationNotes,
         !isSalon && body.seating ? `Sitzplatz: ${body.seating}` : null,
         '',
         'Unser Alternativvorschlag',
@@ -881,6 +916,7 @@ module.exports = async function handler(req: any, res: any) {
             ? `Personen: ${body.people}`
             : null,
         isSalon && body.stylist ? `Friseur: ${body.stylist}` : null,
+        ...locationNotes,
         body.note ? `Notiz: ${body.note}` : null,
       ]
         .filter(Boolean)

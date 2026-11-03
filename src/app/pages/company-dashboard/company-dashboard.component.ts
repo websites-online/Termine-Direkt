@@ -14,6 +14,7 @@ import {
 } from '../../services/company-reservations.service';
 import { SALON_SERVICES } from '../../shared/salon-services';
 import { CompanyEmployee } from '../../shared/salon-services';
+import { hasMobileService } from '../../shared/booking-location';
 
 interface CalendarDay {
   date: string;
@@ -523,6 +524,22 @@ export class CompanyDashboardComponent implements OnInit {
     return this.rejectingRequestIds.has(id);
   }
 
+  visitMapUrl(address: string): string {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+  }
+
+  private visitMailDetails(reservation: CompanyReservation): string[] {
+    if (!this.hasMobileService) {
+      return [];
+    }
+    return [
+      ...(reservation.bookingLocation
+        ? [`Buchungsort: ${reservation.bookingLocation === 'home' ? 'Hausbesuch' : 'Im Salon'}`] : []),
+      ...(reservation.visitAddress ? [`Besuchsadresse: ${reservation.visitAddress}`] : []),
+      ...(reservation.visitDetails ? [`Hinweise zum Hausbesuch: ${reservation.visitDetails}`] : []),
+    ];
+  }
+
   private openApprovalMailTemplate(reservation: CompanyReservation): void {
     if (!reservation.guestEmail || typeof window === 'undefined') {
       return;
@@ -551,11 +568,13 @@ export class CompanyDashboardComponent implements OnInit {
       `Uhrzeit: ${reservation.time} Uhr`,
       this.isSalon && reservation.service ? `Service: ${reservation.service}` : null,
       this.isSalon && reservation.stylist ? `Friseur: ${reservation.stylist}` : null,
+      ...this.visitMailDetails(reservation),
       !this.isSalon && reservation.people ? `Personen: ${reservation.people}` : null,
       reservation.note ? `Notiz: ${reservation.note}` : null,
       '────────────────────────',
       '',
-      'Wir freuen uns auf Ihren Besuch!',
+      this.hasMobileService && reservation.bookingLocation === 'home'
+        ? 'Wir freuen uns auf den Termin bei Ihnen zu Hause!' : 'Wir freuen uns auf Ihren Besuch!',
       '',
       'Falls Sie noch eine Frage haben oder etwas ändern möchten, antworten Sie einfach auf diese E-Mail.',
       '',
@@ -603,6 +622,7 @@ export class CompanyDashboardComponent implements OnInit {
       `Uhrzeit: ${reservation.time} Uhr`,
       this.isSalon && reservation.service ? `Service: ${reservation.service}` : null,
       this.isSalon && reservation.stylist ? `Friseur: ${reservation.stylist}` : null,
+      ...this.visitMailDetails(reservation),
       !this.isSalon && reservation.people ? `Personen: ${reservation.people}` : null,
       '────────────────────────',
       '',
@@ -633,6 +653,10 @@ export class CompanyDashboardComponent implements OnInit {
 
   get isSalon(): boolean {
     return this.session?.serviceType === 'friseur';
+  }
+
+  get hasMobileService(): boolean {
+    return hasMobileService(this.session?.slug, this.session?.serviceType);
   }
 
   get companyName(): string {

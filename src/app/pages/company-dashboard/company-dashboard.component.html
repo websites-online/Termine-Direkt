@@ -310,6 +310,13 @@
                     : reservation.guestName || 'Ohne Namen'
                 }}</strong>
                 <small *ngIf="reservation.service">{{ reservation.service }}</small>
+                <ng-container *ngIf="hasMobileService">
+                <small *ngIf="reservation.bookingLocation">{{ reservation.bookingLocation === 'home' ? 'Hausbesuch' : 'Im Salon' }}</small>
+                <small *ngIf="reservation.visitAddress">{{ reservation.visitAddress }}</small>
+                <small *ngIf="reservation.visitDetails">{{ reservation.visitDetails }}</small>
+                <a *ngIf="reservation.visitAddress" [href]="visitMapUrl(reservation.visitAddress)"
+                  target="_blank" rel="noopener noreferrer">Route öffnen ↗</a>
+                </ng-container>
               </div>
               <button
                 *ngIf="!reservation.isRequest"
@@ -381,6 +388,13 @@
                 {{ reservation.people }} Personen
               </p>
               <p *ngIf="!reservation.isBlock && reservation.phone">{{ reservation.phone }}</p>
+              <ng-container *ngIf="hasMobileService">
+              <p *ngIf="reservation.bookingLocation"><strong>{{ reservation.bookingLocation === 'home' ? 'Hausbesuch' : 'Im Salon' }}</strong></p>
+              <p *ngIf="reservation.visitAddress">{{ reservation.visitAddress }}</p>
+              <p *ngIf="reservation.visitDetails">{{ reservation.visitDetails }}</p>
+              <a *ngIf="reservation.visitAddress" [href]="visitMapUrl(reservation.visitAddress)"
+                target="_blank" rel="noopener noreferrer">Route öffnen ↗</a>
+              </ng-container>
             </div>
             <button
               *ngIf="!reservation.isRequest"

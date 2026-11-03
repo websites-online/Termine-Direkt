@@ -1,3 +1,5 @@
+import { extractBookingLocation, hasMobileService } from '../../src/app/shared/booking-location';
+
 const getActionSecret = (): string => {
   const secret = process.env.BOOKING_ACTION_SECRET?.trim();
   if (!secret) {
@@ -192,6 +194,9 @@ module.exports = async function handler(req: any, res: any) {
       extractFromNote(requestRow.note || null, 'Friseur') ||
       extractFromNote(requestRow.note || null, 'Wunsch-Friseur');
     const seating = extractFromNote(requestRow.note || null, 'Sitzplatz');
+    const visit = extractBookingLocation(
+      hasMobileService(requestRow.restaurant_slug, company?.service_type) ? requestRow.note : null,
+    );
     const mailto = createMailtoLink(
       requestRow.guest_email || '',
       `Alternativvorschlag von ${businessName}`,
@@ -215,6 +220,9 @@ module.exports = async function handler(req: any, res: any) {
             ? `Personen: ${requestRow.people}`
             : null,
         isSalon && stylist ? `Friseur: ${stylist}` : null,
+        visit.bookingLocation ? `Buchungsort: ${visit.bookingLocation === 'home' ? 'Hausbesuch' : 'Im Salon'}` : null,
+        visit.visitAddress ? `Besuchsadresse: ${visit.visitAddress}` : null,
+        visit.visitDetails ? `Hinweise zum Hausbesuch: ${visit.visitDetails}` : null,
         !isSalon && seating ? `Sitzplatz: ${seating}` : null,
         '',
         'Unser Alternativvorschlag',

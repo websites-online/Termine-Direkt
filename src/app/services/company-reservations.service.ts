@@ -4,6 +4,7 @@ import { Observable, delay, of, throwError } from 'rxjs';
 
 import { environment } from '../../environments/environment';
 import { CompanyAuthService } from './company-auth.service';
+import { BookingLocation, hasMobileService } from '../shared/booking-location';
 
 export interface CompanyReservation {
   id: string;
@@ -14,6 +15,9 @@ export interface CompanyReservation {
   phone?: string;
   people?: number;
   note?: string;
+  bookingLocation?: BookingLocation;
+  visitAddress?: string;
+  visitDetails?: string;
   service?: string;
   stylist?: string;
   employeeId?: string;
@@ -96,8 +100,9 @@ export class CompanyReservationsService {
       }
       const reservations = this.loadLocalReservations(slug);
       const blockCapacity = Math.min(Math.max(Number(payload.blockCapacity || 3), 1), 3);
+      const mobileEnabled = hasMobileService(slug, this.authService.getSession()?.serviceType);
       const count = reservations.reduce((total, item) => {
-        if (item.date !== payload.date || item.time !== payload.time) {
+        if (item.date !== payload.date || item.time !== payload.time || (mobileEnabled && item.isRequest)) {
           return total;
         }
         return total + (item.isBlock ? blockCapacity : 1);

@@ -1,5 +1,18 @@
 # NexTime
 
+## Lokale Vorschau von Atelier7
+
+Mit `npm start` starten und [localhost:4200/atelier7](http://localhost:4200/atelier7) öffnen.
+Atelier7 bietet die Auswahl zwischen Salon und Hausbesuch an. Beide Varianten sind
+unverbindliche Anfragen ohne Preisanzeige. Fahrtzeiten werden weiterhin manuell blockiert.
+
+Auf localhost werden Testanfragen ausschließlich im Browser gespeichert; es werden keine
+E-Mails verschickt. Im lokalen Unternehmensbereich (`/unternehmen/login`) können sie mit
+Benutzername `atelier7` und Vorschau-PIN `123456` angesehen und verwaltet werden.
+Diese Vorschau-Zugangsdaten gelten ausschließlich für die lokalen Beispieldaten.
+
+Die API-Tests für Hausbesuche mit `npm run test:mobile` ausführen.
+
 ## Push-Benachrichtigungen und Conversion-Statistik
 
 Vor dem Deployment einmal `supabase-push-conversion.sql` im Supabase SQL Editor ausführen.

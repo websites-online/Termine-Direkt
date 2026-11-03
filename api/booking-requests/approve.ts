@@ -1,3 +1,5 @@
+import { extractBookingLocation, hasMobileService } from '../../src/app/shared/booking-location';
+
 const platformUrl =
   process.env.PUBLIC_SITE_URL?.trim() ||
   process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
@@ -375,6 +377,9 @@ module.exports = async function handler(req: any, res: any) {
       extractFromNote(requestRow.note || null, 'Friseur') ||
       extractFromNote(requestRow.note || null, 'Wunsch-Friseur');
     const customerNote = extractFromNote(requestRow.note || null, 'Notiz');
+    const visit = extractBookingLocation(
+      hasMobileService(requestRow.restaurant_slug, company.service_type) ? requestRow.note : null,
+    );
     const employeeMode = isEmployeeCalendar(company);
     let approvedEmployeeId = requestRow.employee_id || '';
     let approvedDuration =
@@ -403,10 +408,14 @@ module.exports = async function handler(req: any, res: any) {
             ? `Personen: ${requestRow.people}`
             : null,
         isSalon && stylist ? `Friseur: ${stylist}` : null,
+        visit.bookingLocation ? `Buchungsort: ${visit.bookingLocation === 'home' ? 'Hausbesuch' : 'Im Salon'}` : null,
+        visit.visitAddress ? `Besuchsadresse: ${visit.visitAddress}` : null,
+        visit.visitDetails ? `Hinweise zum Hausbesuch: ${visit.visitDetails}` : null,
         !isSalon && seating ? `Sitzplatz: ${seating}` : null,
         customerNote ? `Notiz: ${customerNote}` : null,
         '',
-        'Wir freuen uns auf Ihren Besuch!',
+        visit.bookingLocation === 'home'
+          ? 'Wir freuen uns auf den Termin bei Ihnen zu Hause!' : 'Wir freuen uns auf Ihren Besuch!',
         'Bei Fragen antworten Sie einfach auf diese E-Mail.',
         '',
         'Herzliche Grüße',

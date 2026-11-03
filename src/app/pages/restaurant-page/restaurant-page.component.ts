@@ -6,6 +6,10 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { Company, CompanyApiService } from '../../services/company-api.service';
 import { BookingAnalyticsService } from '../../services/booking-analytics.service';
+import { PublicBookingService } from '../../services/public-booking.service';
+import {
+  BookingLocation, formatHomeVisitAddress, hasMobileService, normalizeHomeVisitAddress,
+} from '../../shared/booking-location';
 import {
   SALON_SERVICES,
   SalonServiceAudience,
@@ -30,6 +34,7 @@ export class RestaurantPageComponent implements OnInit {
   private readonly companyService = inject(CompanyApiService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly http = inject(HttpClient);
+  readonly publicBooking = inject(PublicBookingService);
   private readonly analytics = inject(BookingAnalyticsService);
   @ViewChild('calendarCard') private calendarCard?: ElementRef<HTMLElement>;
   @ViewChild('detailsCard') private detailsCard?: ElementRef<HTMLElement>;
@@ -83,6 +88,8 @@ export class RestaurantPageComponent implements OnInit {
   logoLoadFailed = false;
   lastReservationDate = '';
   lastReservationTime = '';
+  lastBookingLocation: BookingLocation = 'salon';
+  lastVisitAddress = '';
 
   readonly bookingForm = this.formBuilder.group({
     name: ['', Validators.required],
@@ -94,9 +101,21 @@ export class RestaurantPageComponent implements OnInit {
     stylist: [''],
     note: [''],
     time: ['', Validators.required],
+    bookingLocation: this.formBuilder.nonNullable.control<BookingLocation>('salon'),
+    street: [''],
+    houseNumber: [''],
+    postalCode: [''],
+    city: [''],
+    visitDetails: [''],
   });
 
   ngOnInit(): void {
+    this.bookingForm.controls.bookingLocation.valueChanges.subscribe(() => {
+      if (this.hasMobileService) {
+        this.updateAddressValidators();
+        this.errorMessage = '';
+      }
+    });
     this.bookingForm.get('service')?.valueChanges.subscribe(() => {
       const selectedStylist = this.bookingForm.value.stylist || '';
       if (
@@ -120,6 +139,15 @@ export class RestaurantPageComponent implements OnInit {
       this.bookingForm.markAllAsTouched();
       if (this.bookingForm.get('time')?.invalid) {
         this.errorMessage = 'Bitte wählen Sie eine Uhrzeit.';
+      } else if (this.hasMobileService) {
+        this.errorMessage = 'Bitte prüfen Sie die markierten Pflichtfelder.';
+      }
+      if (this.hasMobileService && typeof window !== 'undefined') {
+        window.requestAnimationFrame(() => {
+          this.detailsCard?.nativeElement
+            .querySelector<HTMLElement>('input.ng-invalid, select.ng-invalid, textarea.ng-invalid')
+            ?.focus();
+        });
       }
       return;
     }
@@ -133,7 +161,9 @@ export class RestaurantPageComponent implements OnInit {
     const seatingValue = this.getSeatingLabel(this.bookingForm.value.seating ?? '');
 
     if (!this.company?.email) {
-      this.errorMessage = 'Restaurant-E-Mail fehlt. Bitte später erneut versuchen.';
+      this.errorMessage = this.hasMobileService
+        ? 'Kontakt-E-Mail fehlt. Bitte später erneut versuchen.'
+        : 'Restaurant-E-Mail fehlt. Bitte später erneut versuchen.';
       return;
     }
 
@@ -148,6 +178,18 @@ export class RestaurantPageComponent implements OnInit {
     }
     if (this.isSlotTooSoon(requestedTime)) {
       this.errorMessage = `Bitte beachten Sie: Buchungen sind frühestens ${this.getBookingBufferLabel()} im Voraus möglich.`;
+      return;
+    }
+
+    const visitAddress = this.isHomeVisit ? normalizeHomeVisitAddress({
+      street: this.bookingForm.value.street,
+      houseNumber: this.bookingForm.value.houseNumber,
+      postalCode: this.bookingForm.value.postalCode,
+      city: this.bookingForm.value.city,
+      details: this.bookingForm.value.visitDetails,
+    }) : null;
+    if (this.isHomeVisit && !visitAddress) {
+      this.errorMessage = 'Bitte geben Sie eine vollständige Besuchsadresse mit gültiger PLZ an.';
       return;
     }
 
@@ -175,19 +217,27 @@ export class RestaurantPageComponent implements OnInit {
       people: this.isSalon ? 1 : (this.bookingForm.value.people ?? 2),
       phone: this.bookingForm.value.phone ?? '',
       note: this.bookingForm.value.note ?? '',
+      ...(this.hasMobileService ? {
+        bookingLocation: this.bookingForm.controls.bookingLocation.value,
+        ...(visitAddress ? { homeVisitAddress: visitAddress } : {}),
+      } : {}),
     };
 
     const reservationDate = this.selectedDateLabel;
     const reservationTime = requestedTime;
+    const bookingLocation = this.bookingForm.controls.bookingLocation.value;
 
     this.isSubmitting = true;
-    this.http
-      .post<{ success: boolean; requestMode?: boolean }>('/api/reservations', payload)
-      .subscribe({
+    const submission = this.hasMobileService
+      ? this.publicBooking.submit(this.company, payload)
+      : this.http.post<{ success: boolean; requestMode?: boolean }>('/api/reservations', payload);
+    submission.subscribe({
         next: () => {
           this.isSubmitting = false;
           this.lastReservationDate = reservationDate;
           this.lastReservationTime = reservationTime;
+          this.lastBookingLocation = bookingLocation;
+          this.lastVisitAddress = visitAddress ? formatHomeVisitAddress(visitAddress) : '';
           this.showThanksModal = true;
           this.successMessage = this.getSuccessMessage();
           this.loadSlotAvailability();
@@ -201,6 +251,12 @@ export class RestaurantPageComponent implements OnInit {
             stylist: '',
             note: '',
             time: this.getDefaultTimeForCurrentDate(),
+            bookingLocation: 'salon',
+            street: '',
+            houseNumber: '',
+            postalCode: '',
+            city: '',
+            visitDetails: '',
           });
         },
         error: (error) => {
@@ -210,7 +266,8 @@ export class RestaurantPageComponent implements OnInit {
             this.loadSlotAvailability();
             return;
           }
-          this.errorMessage = 'Senden fehlgeschlagen. Bitte später erneut versuchen.';
+          this.errorMessage = (this.hasMobileService && error?.error?.error)
+            || 'Senden fehlgeschlagen. Bitte später erneut versuchen.';
         },
       });
   }
@@ -262,7 +319,30 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   get isRequestMode(): boolean {
-    return this.company?.bookingMode === 'request';
+    return this.hasMobileService || this.company?.bookingMode === 'request';
+  }
+
+  get hasMobileService(): boolean {
+    return hasMobileService(this.company?.slug, this.company?.serviceType);
+  }
+
+  get isHomeVisit(): boolean {
+    return this.hasMobileService && this.bookingForm.controls.bookingLocation.value === 'home';
+  }
+
+  private updateAddressValidators(): void {
+    const fields = { street: 120, houseNumber: 20, postalCode: 5, city: 100 } as const;
+    for (const [field, maxLength] of Object.entries(fields)) {
+      const control = this.bookingForm.get(field);
+      control?.setValidators(this.isHomeVisit
+        ? [Validators.required, Validators.pattern(/\S/), Validators.maxLength(maxLength),
+            ...(field === 'postalCode' ? [Validators.pattern(/^\d{5}$/)] : [])]
+        : []);
+      control?.updateValueAndValidity({ emitEvent: false });
+    }
+    this.bookingForm.controls.visitDetails.setValidators(
+      this.isHomeVisit ? [Validators.maxLength(300)] : []);
+    this.bookingForm.controls.visitDetails.updateValueAndValidity({ emitEvent: false });
   }
 
   get hasSeatingChoice(): boolean {
@@ -314,6 +394,9 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   get bookingTitle(): string {
+    if (this.isHomeVisit) {
+      return 'Hausbesuch anfragen';
+    }
     if (this.isRequestMode) {
       return this.isSalon ? 'Terminanfrage' : 'Reservierungsanfrage';
     }
@@ -321,6 +404,9 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   get bookingButtonLabel(): string {
+    if (this.isHomeVisit) {
+      return 'Hausbesuch anfragen';
+    }
     if (this.isRequestMode) {
       return this.isSalon ? 'Terminanfrage senden' : 'Reservierungsanfrage senden';
     }
@@ -328,6 +414,11 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   get bookingSuccessHeadline(): string {
+    if (this.hasMobileService) {
+      return this.lastBookingLocation === 'home'
+        ? 'Deine Anfrage für einen Hausbesuch ist angekommen!'
+        : 'Deine Terminanfrage ist angekommen!';
+    }
     if (this.isRequestMode) {
       return this.isSalon
         ? 'Vielen Dank für Ihre Terminanfrage!'
@@ -337,6 +428,11 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   get bookingConfirmText(): string {
+    if (this.hasMobileService) {
+      return this.lastBookingLocation === 'home'
+        ? 'Atelier7 prüft deinen Wunschtermin und die Besuchsadresse und meldet sich bei dir. Dein Hausbesuch ist erst nach persönlicher Bestätigung verbindlich.'
+        : 'Atelier7 meldet sich bei dir, um deinen Wunschtermin zu bestätigen. Deine Anfrage ist noch keine verbindliche Terminbuchung.';
+    }
     if (this.isRequestMode) {
       return this.isSalon
         ? 'Ihre Terminanfrage wurde gesendet. Der Salon meldet sich zeitnah bei Ihnen.'
@@ -356,7 +452,7 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   formatSalonServiceOption(service: SalonServiceOption): string {
-    if (this.company?.showServicePrices !== true || service.price === undefined) {
+    if (this.hasMobileService || this.company?.showServicePrices !== true || service.price === undefined) {
       return service.label;
     }
     return `${service.label} – ${new Intl.NumberFormat('de-DE', {
@@ -466,7 +562,7 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   showDetailsStep(): void {
-    if (!this.hasSelectedDate) {
+    if (!this.hasSelectedDate || (this.hasMobileService && this.activeFlowStep === 'details')) {
       return;
     }
     this.trackBookingStarted();
@@ -475,24 +571,26 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   private scrollDetailsIntoViewOnMobile(): void {
-    if (typeof window === 'undefined' || !window.matchMedia('(max-width: 480px)').matches) {
-      return;
-    }
-    window.requestAnimationFrame(() => {
-      this.detailsCard?.nativeElement.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
-    });
+    this.scrollBookingPanelIntoView(this.detailsCard);
   }
 
   private scrollCalendarIntoViewOnMobile(): void {
-    if (typeof window === 'undefined' || !window.matchMedia('(max-width: 480px)').matches) {
+    this.scrollBookingPanelIntoView(this.calendarCard);
+  }
+
+  private scrollBookingPanelIntoView(panel?: ElementRef<HTMLElement>): void {
+    if (
+      typeof window === 'undefined' ||
+      !window.matchMedia(this.hasMobileService
+        ? '(max-width: 900px), (max-height: 500px) and (pointer: coarse)'
+        : '(max-width: 480px)').matches
+    ) {
       return;
     }
     window.requestAnimationFrame(() => {
-      this.calendarCard?.nativeElement.scrollIntoView({
-        behavior: 'smooth',
+      panel?.nativeElement.scrollIntoView({
+        behavior: this.hasMobileService && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? 'auto' : 'smooth',
         block: 'start',
       });
     });
@@ -509,7 +607,7 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   trackBookingStarted(): void {
-    if (this.company) {
+    if (this.company && !(this.hasMobileService && this.publicBooking.isLocalPreview)) {
       this.analytics.trackBookingStarted(this.slug);
     }
   }
@@ -976,10 +1074,13 @@ export class RestaurantPageComponent implements OnInit {
     this.companyService.getCompany(this.slug).subscribe({
       next: (company) => {
         this.company = company;
-        this.analytics.trackPageView(this.slug);
+        if (!(this.hasMobileService && this.publicBooking.isLocalPreview)) {
+          this.analytics.trackPageView(this.slug);
+        }
         this.logoLoadFailed = false;
         this.updateServiceValidators();
         this.updateSeatingValidators();
+        this.updateAddressValidators();
         this.refreshCalendar();
         this.loadSlotAvailability();
       },
@@ -1007,9 +1108,10 @@ export class RestaurantPageComponent implements OnInit {
         query.set('employeeId', employeeId);
       }
     }
-    this.http
-      .get<{ slots: Record<string, number> }>(`/api/reservations?${query.toString()}`)
-      .subscribe({
+    const availability = this.hasMobileService
+      ? this.publicBooking.availability(this.company, this.selectedDate, query)
+      : this.http.get<{ slots: Record<string, number> }>(`/api/reservations?${query.toString()}`);
+    availability.subscribe({
         next: (response) => {
           this.slotCounts = response.slots || {};
           this.syncSelectedTimeWithMode();
