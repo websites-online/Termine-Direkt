@@ -1,3 +1,5 @@
+import { hasMobileService } from '../../src/app/shared/booking-location';
+
 type StatsPeriod = 30 | 90 | 365;
 
 type ActivityRow = {
@@ -232,7 +234,8 @@ module.exports = async function handler(req: any, res: any) {
     const from = addDays(to, -(period - 1));
     const previousTo = addDays(from, -1);
     const previousFrom = addDays(previousTo, -(period - 1));
-    const requestMode = company.booking_mode === 'request';
+    const requestMode =
+      hasMobileService(company.slug, company.service_type) || company.booking_mode === 'request';
     const allRows = await fetchAllRows(
       supabase,
       requestMode ? 'booking_requests' : 'reservations',

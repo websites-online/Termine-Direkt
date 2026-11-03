@@ -19,6 +19,8 @@ test('deployed API handlers start with their actual TypeScript configuration', (
     'api/companies.ts',
     'api/reservations.ts',
     'api/company/reservations.ts',
+    'api/company/stats.ts',
+    'api/admin-stats.ts',
     'api/booking-requests/approve.ts',
     'api/booking-requests/reject.ts',
   ];

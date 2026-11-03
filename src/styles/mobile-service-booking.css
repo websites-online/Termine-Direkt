@@ -311,7 +311,6 @@
   }
 
   .mobile-service-page .company-hero .company-meta {
-    font-size: 0.78rem;
     line-height: 1.5;
   }
 
@@ -324,8 +323,8 @@
     margin-bottom: 16px;
   }
 
-  .mobile-service-page .booking-location p {
-    font-size: 0.88rem;
+  .mobile-service-page .booking-location h2 {
+    font-size: 0.98rem;
   }
 
   .mobile-service-page .booking-location .booking-location__hint {
@@ -340,7 +339,6 @@
   .mobile-service-page.booking-flow-page .flow-step {
     min-height: 44px;
     padding-inline: 14px;
-    font-size: 0.88rem;
     touch-action: manipulation;
   }
 
@@ -360,23 +358,17 @@
   }
 
   .mobile-service-page.demo-page .demo-grid.flow-ready > .card > h2 {
-    font-size: 1.1rem;
     line-height: 1.35;
   }
 
   .mobile-service-page.demo-page .details-card > .muted {
-    font-size: 0.88rem;
+    font-size: 1rem;
     line-height: 1.5;
   }
 
   .mobile-service-page .calendar-card .month-nav {
     width: 44px;
     height: 44px;
-    font-size: 1.25rem;
-  }
-
-  .mobile-service-page .calendar-card .month-label {
-    font-size: 1rem;
   }
 
   .mobile-service-page .calendar-card .calendar-weekdays {
@@ -384,16 +376,15 @@
     margin: 0;
     padding: 0 3px;
     align-items: center;
-    font-size: 0.75rem;
+    font-size: 0.52rem;
   }
 
   .mobile-service-page .calendar-card .day {
-    font-size: 0.9rem;
+    font-size: 0.56rem;
     touch-action: manipulation;
   }
 
   .mobile-service-page.demo-page.booking-flow-page .details-card .label {
-    font-size: 0.88rem;
     line-height: 1.4;
     overflow-wrap: anywhere;
   }
@@ -404,7 +395,6 @@
     min-width: 0;
     min-height: 44px;
     padding: 10px;
-    font-size: 16px;
     line-height: 1.4;
     border-radius: 9px;
   }
@@ -428,15 +418,15 @@
     align-content: start;
   }
 
-  .mobile-service-page .home-visit-fields h3 {
-    font-size: 0.95rem;
+  .mobile-service-page .home-visit-fields p,
+  .mobile-service-page .request-notice {
+    font-size: 0.85rem;
   }
 
   .mobile-service-page .home-visit-fields p,
   .mobile-service-page .details-card .helptext,
   .mobile-service-page .request-notice,
   .mobile-service-page .details-card .error {
-    font-size: 0.82rem;
     line-height: 1.5;
     overflow-wrap: anywhere;
   }
@@ -462,7 +452,6 @@
   .mobile-service-page.demo-page .details-card .demo-form .btn {
     min-height: 48px;
     padding: 12px;
-    font-size: 1rem;
     touch-action: manipulation;
   }
 
@@ -477,7 +466,6 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 4px;
-    font-size: 0.9rem;
     line-height: 1.5;
   }
 
@@ -489,11 +477,34 @@
   .mobile-service-modal .reservation-modal__panel .btn {
     min-height: 48px;
     width: 100%;
-    font-size: 1rem;
   }
 }
 
 @media (max-width: 480px) {
+  .mobile-service-page .booking-location p,
+  .mobile-service-page .booking-location .booking-location__hint,
+  .mobile-service-page.demo-page .details-card > .muted,
+  .mobile-service-page .home-visit-fields p,
+  .mobile-service-page .request-notice {
+    font-size: 0.82rem;
+  }
+
+  .mobile-service-page .location-option strong {
+    font-size: 0.8rem;
+  }
+
+  .mobile-service-page .location-option small {
+    font-size: 0.68rem;
+  }
+
+  .mobile-service-page .calendar-card .calendar-weekdays {
+    font-size: 0.5rem;
+  }
+
+  .mobile-service-page .calendar-card .day {
+    font-size: 0.52rem;
+  }
+
   .mobile-service-page .booking-location__options {
     grid-template-columns: 1fr;
     gap: 9px;
