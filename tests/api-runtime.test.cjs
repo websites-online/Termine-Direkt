@@ -27,6 +27,7 @@ test('deployed API handlers start with their actual TypeScript configuration', (
   const files = [
     ...handlers,
     'src/app/shared/booking-location.ts',
+    'src/app/shared/company-profile.ts',
     ...fs.readdirSync(path.join(root, 'api/_lib'))
       .filter((file) => file.endsWith('.ts'))
       .map((file) => `api/_lib/${file}`),

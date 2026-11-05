@@ -38,7 +38,7 @@
       <a
         class="public-page-link"
         *ngIf="standaloneEditSlug && editingSlug"
-        [routerLink]="['/', editingSlug]"
+        [routerLink]="customerPageLink"
       >
         Kundenseite öffnen <span>↗</span>
       </a>
@@ -49,6 +49,7 @@
         <span>Einstellungen</span>
         <button type="button" (click)="scrollToSection('grunddaten')">Grunddaten</button>
         <button type="button" (click)="scrollToSection('design')">Erscheinungsbild</button>
+        <button type="button" (click)="scrollToSection('profil')">Profil & Fotos</button>
         <button type="button" (click)="scrollToSection('buchung')">Buchung & Zeiten</button>
         <button type="button" (click)="scrollToSection('angebot')">Angebot</button>
         <button type="button" (click)="scrollToSection('kontakt')">Benachrichtigungen</button>
@@ -59,7 +60,7 @@
         </div>
       </aside>
 
-      <main class="settings-content">
+      <main class="settings-content" *ngIf="!standaloneEditSlug || editingSlug; else companyLoading">
         <form class="admin-form" [formGroup]="companyForm" (ngSubmit)="submitCompany()">
           <section class="settings-section" id="grunddaten">
             <div class="settings-section-heading">
@@ -178,6 +179,15 @@
                 </label>
               </div>
             </div>
+          </section>
+
+          <section class="settings-section" id="profil">
+            <div class="settings-section-heading">
+              <span class="section-number">✦</span>
+              <div><h2>Profil & Fotos</h2><p>Begrüßung, Vorstellung und {{ companyForm.value.serviceType === 'restaurant' ? 'Speisekarte' : 'Leistungsbeschreibungen' }} der Kundenseite.</p></div>
+            </div>
+            <app-company-profile-editor formControlName="profile" [serviceType]="companyForm.value.serviceType || 'restaurant'" [services]="salonServiceSettings" />
+            <p class="helptext">Die Inhalte werden zusammen mit den Unternehmenseinstellungen gespeichert. Danach kannst du die Kundenseite oben öffnen.</p>
           </section>
 
           <section class="settings-section" id="buchung">
@@ -639,6 +649,7 @@
           </div>
         </form>
       </main>
+      <ng-template #companyLoading><section class="settings-section"><p>{{ formError || 'Unternehmen wird geladen…' }}</p></section></ng-template>
     </div>
 
     <section class="company-overview" *ngIf="!standaloneEditSlug">
@@ -684,7 +695,7 @@
             </div>
           </dl>
           <div class="company-actions">
-            <a class="btn btn-outline" [routerLink]="['/', company.slug]">Seite</a>
+            <a class="btn btn-outline" [routerLink]="companyPageLink(company)">Seite</a>
             <a class="btn btn-primary" [routerLink]="['/admin/unternehmen', company.slug]"
               >Einstellungen</a
             >

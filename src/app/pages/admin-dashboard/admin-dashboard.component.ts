@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, isDevMode } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -17,12 +17,15 @@ import {
   SalonServiceOption,
 } from '../../shared/salon-services';
 
+import { CompanyProfileEditorComponent } from '../../components/company-profile-editor/company-profile-editor.component';
+import { CompanyProfile, defaultCompanyProfile } from '../../shared/company-profile';
+
 type SalonServiceSetting = SalonServiceOption;
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, HttpClientModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, HttpClientModule, CompanyProfileEditorComponent],
   templateUrl: './admin-dashboard.component.html',
   styleUrl: './admin-dashboard.component.css',
 })
@@ -39,6 +42,7 @@ export class AdminDashboardComponent implements OnInit {
   salonServiceSettings: SalonServiceSetting[] = this.createDefaultSalonServiceSettings();
   employeeSettings: CompanyEmployee[] = [];
   readonly companyForm = this.formBuilder.group({
+    profile: this.formBuilder.control<CompanyProfile>(defaultCompanyProfile('restaurant'), { nonNullable: true }),
     name: ['', [Validators.required, Validators.minLength(2)]],
     address: ['Beispielstraße 12, 12345 Musterstadt', Validators.required],
     hours: ['Mo–So 12:00–20:00', Validators.required],
@@ -74,7 +78,10 @@ export class AdminDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.resetForm();
-    this.companyForm.valueChanges.subscribe(() => this.updateWomenServicesEmailValidators());
+    this.companyForm.valueChanges.subscribe(() => {
+      this.updateWomenServicesEmailValidators();
+      this.formSuccess = '';
+    });
     this.companyForm.get('calendarMode')?.valueChanges.subscribe((mode) => {
       if (mode !== 'employee' || this.employeeSettings.length > 0) {
         return;
@@ -85,6 +92,17 @@ export class AdminDashboardComponent implements OnInit {
       if (this.employeeSettings.length === 0) {
         this.addEmployee();
       }
+    });
+    this.companyForm.controls.serviceType.valueChanges.subscribe(type => {
+      const profile = this.companyForm.controls.profile.value;
+      const defaults = defaultCompanyProfile(type || 'restaurant');
+      const examplePhotos = profile.photos.length > 0 && profile.photos.every(photo => photo.src.startsWith('/media/profile-preview/'));
+      this.companyForm.controls.profile.setValue({
+        ...profile,
+        photos: examplePhotos ? defaults.photos : profile.photos,
+        offeringsTitle: ['Unsere Leistungen', 'Unsere Speisekarte'].includes(profile.offeringsTitle) ? defaults.offeringsTitle : profile.offeringsTitle,
+        welcomeSubtitle: ['Dein Termin. Ganz entspannt.', 'Ein guter Abend beginnt hier.'].includes(profile.welcomeSubtitle) ? defaults.welcomeSubtitle : profile.welcomeSubtitle,
+      }, { emitEvent: false });
     });
     this.updateWomenServicesEmailValidators();
     this.loadCompanies();
@@ -101,6 +119,7 @@ export class AdminDashboardComponent implements OnInit {
     this.updateWomenServicesEmailValidators();
     if (this.companyForm.invalid) {
       this.companyForm.markAllAsTouched();
+      this.formError = 'Bitte die markierten Angaben prüfen und laufende Bild-Uploads abwarten.';
       return;
     }
 
@@ -183,15 +202,26 @@ export class AdminDashboardComponent implements OnInit {
       timeSelectionMode: (value.timeSelectionMode || 'slots') as TimeSelectionMode,
       logoUrl: value.logoUrl?.trim() || undefined,
       brandColor: value.brandColor || '#4f46e5',
+      profile: value.profile,
     };
 
-    const request$ = this.editingSlug
-      ? this.companyService.updateCompany(this.editingSlug, payload)
-      : this.companyService.createCompany(payload);
+    let request$;
+    try {
+      request$ = this.editingSlug
+        ? this.companyService.updateCompany(this.editingSlug, payload)
+        : this.companyService.createCompany(payload);
+    } catch {
+      this.formError = 'Die Änderungen konnten nicht lokal gespeichert werden. Bitte weniger oder kleinere Fotos verwenden.';
+      return;
+    }
     this.isSaving = true;
     request$.subscribe({
       next: (company) => {
         this.isSaving = false;
+        if (payload.profile && !company.profile) {
+          this.formError = 'Die Profilinhalte wurden nicht übernommen. Bitte die Profil-Erweiterung der API und Datenbank bereitstellen.';
+          return;
+        }
         if (
           employeeCalendarEnabled &&
           (company.calendarMode !== 'employee' || (company.employees?.length || 0) === 0)
@@ -202,6 +232,8 @@ export class AdminDashboardComponent implements OnInit {
         }
         if (this.standaloneEditSlug) {
           this.editingSlug = company.slug;
+          if (company.profile) this.companyForm.controls.profile.setValue(company.profile, { emitEvent: false });
+          this.companyForm.markAsPristine();
           this.formSuccess = 'Alle Änderungen wurden gespeichert.';
           if (company.slug !== this.standaloneEditSlug) {
             this.router.navigate(['/admin/unternehmen', company.slug], { replaceUrl: true });
@@ -223,6 +255,7 @@ export class AdminDashboardComponent implements OnInit {
   startEdit(company: Company): void {
     this.editingSlug = company.slug;
     this.companyForm.patchValue({
+      profile: company.profile || defaultCompanyProfile(company.serviceType),
       name: company.name,
       address: company.address,
       hours: company.hours,
@@ -295,17 +328,19 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   private loadCompanies(): void {
+    if (this.standaloneEditSlug) {
+      this.companyService.getCompany(this.standaloneEditSlug).subscribe({
+        next: company => {
+          if (company) this.startEdit(company);
+          else this.formError = 'Das Unternehmen wurde nicht gefunden.';
+        },
+        error: () => { this.formError = 'Das Unternehmen konnte nicht geladen werden.'; },
+      });
+      return;
+    }
     this.companyService.listCompanies().subscribe({
       next: (companies) => {
         this.companies = companies;
-        if (this.standaloneEditSlug) {
-          const company = companies.find((item) => item.slug === this.standaloneEditSlug);
-          if (company) {
-            this.startEdit(company);
-          } else {
-            this.formError = 'Das Unternehmen wurde nicht gefunden.';
-          }
-        }
       },
     });
   }
@@ -315,6 +350,7 @@ export class AdminDashboardComponent implements OnInit {
     this.formError = '';
     this.formSuccess = '';
     this.companyForm.reset({
+      profile: defaultCompanyProfile('restaurant'),
       name: '',
       address: 'Beispielstraße 12, 12345 Musterstadt',
       hours: 'Mo–So 12:00–20:00',
@@ -444,6 +480,17 @@ export class AdminDashboardComponent implements OnInit {
 
   get employeeCalendarEnabled(): boolean {
     return this.employeeCalendarAvailable && this.companyForm.value.calendarMode === 'employee';
+  }
+
+  get customerPageLink(): string[] {
+    return this.companyPageLink({ slug: this.editingSlug || '', serviceType: this.companyForm.value.serviceType === 'friseur' ? 'friseur' : 'restaurant' });
+  }
+
+  companyPageLink(company: Pick<Company, 'slug' | 'serviceType'>): string[] {
+    const local = isDevMode() && typeof window !== 'undefined' && window.location.hostname === 'localhost';
+    return local
+      ? ['/vorschau', company.serviceType === 'friseur' ? 'salon' : 'restaurant', company.slug]
+      : ['/', company.slug];
   }
 
   get logoPreview(): string {

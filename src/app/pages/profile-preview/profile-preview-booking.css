@@ -1,4 +1,4 @@
-.profile-preview .booking-shell{padding:21px 23px 23px;border:1px solid var(--p-line);border-radius:17px;background:#fff;scroll-margin-top:79px}
+.profile-preview .booking-shell{padding:21px 23px 23px;border:1px solid var(--p-line);border-radius:17px;background:#fff;box-shadow:0 12px 35px rgba(var(--brand-rgb),.035);scroll-margin-top:79px}
 .profile-preview .booking-shell app-restaurant-page{display:block}
 .profile-preview .booking-shell app-restaurant-page .demo-page{display:block;min-height:0;height:auto;padding:0;overflow:visible;background:none;transform:none}
 .profile-preview .booking-shell app-restaurant-page .demo-page>.container{max-width:none;width:100%;padding:0;margin:0}
@@ -7,20 +7,20 @@
 .profile-preview .booking-shell app-restaurant-page .booking-location>h2,.profile-preview .booking-shell app-restaurant-page .booking-location>p:not(.booking-location__hint){display:none}
 .profile-preview .booking-shell app-restaurant-page .booking-location__options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 .profile-preview .booking-shell app-restaurant-page .location-option{min-height:52px;padding:10px 11px;gap:9px;border:1px solid #e7e3ef;border-radius:10px;background:#fff;transition:border-color .2s,background .2s}
-.profile-preview .booking-shell app-restaurant-page .location-option--selected{border-color:#a59ae8;background:#f6f4fd;box-shadow:0 0 0 1px #a59ae833}
-.profile-preview .booking-shell app-restaurant-page .location-option>svg{width:19px;height:19px;flex-basis:19px;color:#a69ab7;stroke:#9e8eb8}
-.profile-preview .booking-shell app-restaurant-page .location-option--selected>svg{stroke:#a192d4}
+.profile-preview .booking-shell app-restaurant-page .location-option--selected{border-color:rgba(var(--brand-rgb),.55);background:rgba(var(--brand-rgb),.065);box-shadow:0 0 0 1px rgba(var(--brand-rgb),.08)}
+.profile-preview .booking-shell app-restaurant-page .location-option>svg{width:19px;height:19px;flex-basis:19px;color:#7d87a0;stroke:#7d87a0}
+.profile-preview .booking-shell app-restaurant-page .location-option--selected>svg{stroke:var(--p-purple)}
 .profile-preview .booking-shell app-restaurant-page .location-option>span:not(.location-option__check){min-width:0;flex:1}
-.profile-preview .booking-shell app-restaurant-page .location-option strong{font-size:12px;font-weight:600;color:#81718d;line-height:1.5}
+.profile-preview .booking-shell app-restaurant-page .location-option strong{font-size:12px;font-weight:600;color:#56627b;line-height:1.5}
 .profile-preview .booking-shell app-restaurant-page .location-option small{font-size:8px;color:#b0a3ba;line-height:1.5;margin-top:3px}
 .profile-preview .booking-shell app-restaurant-page .location-option__check{flex-basis:14px;height:14px;font-size:8px;margin-left:0;border-color:#ddd5e8}
-.profile-preview .booking-shell app-restaurant-page .location-option--selected .location-option__check{background:#9c8cce;border-color:#9c8cce}
+.profile-preview .booking-shell app-restaurant-page .location-option--selected .location-option__check{background:var(--p-purple);border-color:var(--p-purple)}
 .profile-preview .booking-shell app-restaurant-page .booking-location .booking-location__hint{display:none}
 .profile-preview .booking-shell app-restaurant-page .booking-flow{width:100%;margin:0 0 14px;gap:11px}
 .profile-preview .booking-shell app-restaurant-page .flow-step{min-height:29px;padding:5px 11px;border:1px solid #ece5f3;background:#fff;font-size:9px;color:#c2afd0;border-radius:7px;line-height:1.5;box-shadow:none;transform:none}
-.profile-preview .booking-shell app-restaurant-page .flow-step--active{background:#eee9fa;color:#8b6aa5;border-color:#e4d9f2}
+.profile-preview .booking-shell app-restaurant-page .flow-step--active{background:rgba(var(--brand-rgb),.09);color:var(--brand-dark);border-color:rgba(var(--brand-rgb),.18)}
 .profile-preview .booking-shell app-restaurant-page .flow-line{background:#f1ebf6;height:1px}
-.profile-preview .booking-shell app-restaurant-page .flow-line::before{background:#bca6d6}
+.profile-preview .booking-shell app-restaurant-page .flow-line::before{background:rgba(var(--brand-rgb),.5)}
 .profile-preview .booking-shell app-restaurant-page .grid-2.demo-grid.flow-ready{display:block;width:100%;gap:0}
 .profile-preview .booking-shell app-restaurant-page .demo-grid.flow-ready>.card{height:auto;min-height:0;width:100%;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none;filter:none;transform:none;opacity:1;animation:none;overflow:visible}
 .profile-preview .booking-shell app-restaurant-page .demo-grid.flow-ready.show-calendar>.details-card,.profile-preview .booking-shell app-restaurant-page .demo-grid.flow-ready.show-details>.calendar-card{display:none}
@@ -28,14 +28,16 @@
 .profile-preview .booking-shell app-restaurant-page .demo-grid.flow-ready>.details-card{display:block}
 .profile-preview .booking-shell app-restaurant-page .demo-grid.flow-ready>.card>h2{font-size:12px;font-weight:550;line-height:1.5;color:#7a6588;margin:0 0 2px;gap:7px;letter-spacing:0}
 .profile-preview .booking-shell app-restaurant-page .demo-grid.flow-ready>.card>h2::before{width:6px;height:6px;border:0;border-radius:50%;background:#b6a4ca}
-.profile-preview .booking-shell app-restaurant-page .calendar-card .calendar-header{min-height:40px;padding:4px;background:#f8f5fb;border-radius:9px;gap:8px}
-.profile-preview .booking-shell app-restaurant-page .month-label{font-size:13px;font-weight:500;color:#877095}
-.profile-preview .booking-shell app-restaurant-page .calendar-card .month-nav{width:32px;height:32px;border:0;border-radius:7px;background:#fff;color:#baa3cf;font-size:18px;font-weight:400}
+.profile-preview .booking-shell app-restaurant-page .calendar-card .calendar-header{min-height:40px;padding:4px;background:linear-gradient(110deg,rgba(var(--brand-rgb),.075),rgba(var(--brand-rgb),.035));border-radius:9px;gap:8px}
+.profile-preview .booking-shell app-restaurant-page .month-label{font-size:13px;font-weight:500;color:var(--brand-dark)}
+.profile-preview .booking-shell app-restaurant-page .calendar-card .month-nav{width:32px;height:32px;border:0;border-radius:7px;background:#fff;color:var(--p-purple);font-size:18px;font-weight:400}
 .profile-preview .booking-shell app-restaurant-page .calendar-card .calendar-weekdays{font-size:9px;font-weight:500;min-height:0;line-height:1.5;text-align:center;color:#a08aaa;gap:5px;padding:0 3px;margin:0}
 .profile-preview .booking-shell app-restaurant-page .calendar-card .calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:auto;flex:none;gap:5px;background:none;outline:0;padding:0;min-height:0}
-.profile-preview .booking-shell app-restaurant-page .calendar-card .day{aspect-ratio:auto;min-width:0;min-height:0;font-size:12px;font-weight:450;background:#fff;border:1px solid #eee7f5;border-radius:8px;color:#756582;box-shadow:none;transform:none;height:40px}
-.profile-preview .booking-shell app-restaurant-page .calendar-card .day.muted{background:#faf8fc;border-color:#f5f0f8;color:#d8cbdc;opacity:1}
-.profile-preview .booking-shell app-restaurant-page .calendar-card .day.today:not(.active){border-color:#c1acd8;background:#f4eefb;color:#aa88bd}
-.profile-preview .booking-shell app-restaurant-page .calendar-card .day.active{background:#8a70b6;color:#fff;border-color:#8a70b6}
-.profile-preview .booking-shell app-restaurant-page .calendar-card .day:not(.muted):hover{border-color:#c4aedc;background:#f1e9fa}
-.profile-preview .booking-shell app-restaurant-page .calendar-card .day.active:hover{background:#9b81be}
+.profile-preview .booking-shell app-restaurant-page .calendar-card .day{aspect-ratio:auto;min-width:0;min-height:0;font-size:12px;font-weight:450;background:#fff;border:1px solid rgba(var(--brand-rgb),.13);border-radius:8px;color:#46536c;box-shadow:none;transform:none;height:40px}
+.profile-preview .booking-shell app-restaurant-page .calendar-card .day.muted{background:#f6f7fc;border-color:#eef0f7;color:#c0c7d5;opacity:1}
+.profile-preview .booking-shell app-restaurant-page .calendar-card .day.today:not(.active){border-color:rgba(var(--brand-rgb),.4);background:rgba(var(--brand-rgb),.075);color:var(--p-purple)}
+.profile-preview .booking-shell app-restaurant-page .calendar-card .day.active{background:var(--p-purple);color:#fff;border-color:var(--p-purple)}
+.profile-preview .booking-shell app-restaurant-page .calendar-card .day:not(.muted):hover{border-color:rgba(var(--brand-rgb),.4);background:rgba(var(--brand-rgb),.055)}
+.profile-preview .booking-shell app-restaurant-page .calendar-card .day.active:hover{background:var(--brand-dark)}
+.profile-preview .booking-shell.is-first-date-step app-restaurant-page .booking-flow,
+.profile-preview .booking-shell.is-first-date-step app-restaurant-page .calendar-card>.helptext{display:none}

@@ -1,30 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { afterEveryRender, afterNextRender, Component, ElementRef, inject, Injector, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
-import { delay, of } from 'rxjs';
+import { afterEveryRender, afterNextRender, Component, ElementRef, inject, Injector, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Subscription, switchMap } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+import { CompanyProfile, defaultCompanyProfile, normalizeCompanyProfile } from '../../shared/company-profile';
+import { LOCAL_PROFILE_PREVIEW, PublicBookingService } from '../../services/public-booking.service';
+import { SALON_SERVICES } from '../../shared/salon-services';
 import { Company, CompanyApiService } from '../../services/company-api.service';
 import { RestaurantPageComponent } from '../restaurant-page/restaurant-page.component';
 
-type ProfileTab = 'booking' | 'services' | 'about';
+type ProfileTab = 'booking' | 'services' | 'photos' | 'about';
 type SelectionKind = 'service' | 'stylist';
 
-// These fixtures belong only to the localhost UI route. No company settings are saved.
-const PREVIEW_COMPANY: Company = {
-  id: 'profile-ui-preview', slug: 'atelier7', name: 'Atelier7',
-  address: 'Bergmannstraße 12, 90429 Nürnberg',
-  hours: 'Di–Fr 10:00–19:00; Sa 09:00–16:00',
-  email: 'ui-preview@example.test', serviceType: 'friseur', bookingMode: 'request',
-  timeSelectionMode: 'free', slotCapacity: 1, slotIntervalMinutes: 30,
-  bookingBufferMinutes: 120, showServicePrices: false, brandColor: '#6963df',
-  stylistSelectionEnabled: true, stylists: ['Mara', 'Alex', 'Nila'],
-  salonServices: [
-    { value: 'herrenhaarschnitt', label: 'Signature Cut', audience: 'men', durationMinutes: 45 },
-    { value: 'damenhaarschnitt', label: 'Cut & Styling', audience: 'women', durationMinutes: 60 },
-    { value: 'balayage_frauen', label: 'Balayage & Gloss', audience: 'women', durationMinutes: 150 },
-    { value: 'waschen_foehnen_frauen', label: 'Wash & Blow Dry', audience: 'women', durationMinutes: 45 },
-    { value: 'kinderhaarschnitt_jungen', label: 'Little Ones Cut', audience: 'general', durationMinutes: 30 },
-    { value: 'sonstiges', label: 'Zeit für eine Beratung', audience: 'general', durationMinutes: 20 },
-  ],
-};
+interface PreviewService {
+  value: string; title: string; subtitle: string; duration: string;
+  category: string; icon: string; tag: string; price?: number;
+}
 
 @Component({
   selector: 'app-profile-preview',
@@ -33,27 +23,37 @@ const PREVIEW_COMPANY: Company = {
   templateUrl: './profile-preview.component.html',
   styleUrls: [
     './profile-preview.component.css', './profile-preview-navigation.css',
-    './profile-preview-services.css', './profile-preview-about.css', './profile-preview-overlays.css',
+    './profile-preview-services.css', './profile-preview-menu.css', './profile-preview-photos.css', './profile-preview-about.css', './profile-preview-overlays.css',
     './profile-preview-booking.css', './profile-preview-fields.css', './profile-preview-responsive.css',
   ],
   encapsulation: ViewEncapsulation.None,
-  host: { class: 'profile-preview', '[class.has-booking-dock]': 'showBookingDock' },
-  providers: [{
-    provide: CompanyApiService,
-    useValue: { getCompany: (slug: string) => of(slug === 'atelier7' ? PREVIEW_COMPANY : null).pipe(delay(100)) },
-  }],
+  host: {
+    class: 'profile-preview', '[class.has-booking-dock]': 'showBookingDock', '[class.is-restaurant]': 'isRestaurant',
+    '[style.--profile-tab-count]': 'tabs.length',
+    '[style.--brand-color]': 'booking?.brandColor || company?.brandColor',
+    '[style.--brand-rgb]': "booking?.brandColorRgb || '79, 70, 229'",
+    '[style.--brand-dark]': "booking?.brandColorDark || '#3c35ae'",
+    '[style.--brand-text]': "booking?.brandTextColor || '#ffffff'",
+  },
+  providers: [CompanyApiService, PublicBookingService, { provide: LOCAL_PROFILE_PREVIEW, useValue: true }],
 })
-export class ProfilePreviewComponent implements OnDestroy {
+export class ProfilePreviewComponent implements OnInit, OnDestroy {
   private readonly injector = inject(Injector);
-  readonly company = PREVIEW_COMPANY;
-  readonly mapUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(PREVIEW_COMPANY.address);
+  private readonly route = inject(ActivatedRoute);
+  private readonly companies = inject(CompanyApiService);
+  private readonly subscription = new Subscription();
+  company?: Company;
+  profile: CompanyProfile = normalizeCompanyProfile(undefined);
+  loading = true;
+  get isRestaurant(): boolean { return this.company?.serviceType === 'restaurant'; }
+  get bookingLabel(): string { return this.isRestaurant ? 'Tisch reservieren' : 'Termin anfragen'; }
+  get mapUrl(): string { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(this.company?.address || ''); }
   @ViewChild(RestaurantPageComponent) booking?: RestaurantPageComponent;
   @ViewChild('galleryDialog') galleryDialog?: ElementRef<HTMLDialogElement>;
   @ViewChild('selectionDialog') selectionDialog?: ElementRef<HTMLDialogElement>;
   activeTab: ProfileTab = 'booking';
   serviceCategory = 'all';
   selectionKind: SelectionKind = 'service';
-  bookingStarted = false;
   galleryIndex = 0;
   toast = '';
   private toastTimer?: ReturnType<typeof setTimeout>;
@@ -68,42 +68,63 @@ export class ProfilePreviewComponent implements OnDestroy {
       this.lastBookingStep = step;
     });
   }
-  readonly tabs: { id: ProfileTab; label: string; icon: string }[] = [
-    { id: 'booking', label: 'Termin', icon: 'calendar' },
-    { id: 'services', label: 'Leistungen', icon: 'scissors' },
-    { id: 'about', label: 'Über uns', icon: 'spark' },
-  ];
-  readonly categories = [
-    { id: 'all', label: 'Alles entdecken' }, { id: 'cut', label: 'Schnitt & Styling' },
-    { id: 'color', label: 'Farbe' }, { id: 'care', label: 'Beratung' },
-  ];
-  readonly services = [
-    { value: 'herrenhaarschnitt', title: 'Signature Cut', subtitle: 'Ein Schnitt, der zu dir passt. Inklusive Beratung und Styling.', duration: '45 Min.', category: 'cut', icon: 'scissors', tag: 'Lieblingsservice' },
-    { value: 'damenhaarschnitt', title: 'Cut & Styling', subtitle: 'Frischer Schnitt, sanfte Pflege und dein ganz persönliches Finish.', duration: '60 Min.', category: 'cut', icon: 'scissors', tag: '' },
-    { value: 'balayage_frauen', title: 'Balayage & Gloss', subtitle: 'Weiche Übergänge. Natürliches Leuchten. Individuell für dein Haar.', duration: '150 Min.', category: 'color', icon: 'spark', tag: 'Our signature' },
-    { value: 'waschen_foehnen_frauen', title: 'Wash & Blow Dry', subtitle: 'Eine kleine Auszeit mit einem richtig guten Haargefühl.', duration: '45 Min.', category: 'cut', icon: 'spark', tag: '' },
-    { value: 'kinderhaarschnitt_jungen', title: 'Little Ones Cut', subtitle: 'Mit Geduld, guter Laune und einem Schnitt für kleine Köpfe.', duration: '30 Min.', category: 'cut', icon: 'scissors', tag: '' },
-    { value: 'sonstiges', title: 'Zeit für eine Beratung', subtitle: 'Ein neuer Look im Kopf? Wir hören zu und denken mit.', duration: '20 Min.', category: 'care', icon: 'coffee', tag: '' },
-  ];
-  readonly gallery = [
-    { file: 'salon-hero.jpg', title: 'Ein Ort zum Ankommen', alt: 'Helles Saloninterieur mit Rundbogenspiegeln und warmen Naturmaterialien' },
-    { file: 'salon-detail.jpg', title: 'Dein Platz für eine kleine Auszeit', alt: 'Einblick in einen modernen Friseursalon' },
-    { file: 'hair-story.jpg', title: 'Mit Liebe zum Handwerk', alt: 'Persönliches Hairstyling im Salon' },
-  ];
-  readonly hours = this.company.hours.split(/[;\n]+/).map(value => value.trim()).filter(Boolean).map(value => {
-    const match = value.match(/^(.*?)\s+(\d.*|geschlossen)$/i);
-    return match ? { day: match[1], hours: match[2] } : { day: value, hours: '' };
-  });
+  tabs: { id: ProfileTab; label: string; icon: string }[] = [];
+  categories: { id: string; label: string }[] = [];
+  services: PreviewService[] = [];
+  hours: { day: string; hours: string }[] = [];
+  get gallery() { return this.profile.photos; }
+  get filteredMenu() { return this.profile.menu.filter(item => this.serviceCategory === 'all' || item.category === this.serviceCategory); }
+  price(value: number): string { return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value); }
+
+  ngOnInit(): void {
+    this.subscription.add(this.route.paramMap.pipe(switchMap(params => {
+      this.company = undefined;
+      this.loading = true;
+      this.activeTab = 'booking';
+      this.serviceCategory = 'all';
+      return this.companies.getCompany(params.get('slug') || '');
+    })).subscribe({
+      next: company => {
+        this.loading = false;
+        if (!company) return;
+        this.company = company;
+        this.profile = company.profile !== undefined ? normalizeCompanyProfile(company.profile) : defaultCompanyProfile(company.serviceType);
+        this.tabs = [
+          { id: 'booking', label: 'Termin', icon: 'calendar' },
+          { id: 'services', label: this.isRestaurant ? 'Speisekarte' : 'Leistungen', icon: this.isRestaurant ? 'menu' : 'scissors' },
+          ...(this.gallery.length ? [{ id: 'photos' as const, label: 'Fotos', icon: 'grid' }] : []),
+          { id: 'about', label: 'Über uns', icon: 'spark' },
+        ];
+        const configured = company.salonServices?.length ? company.salonServices : SALON_SERVICES;
+        this.services = this.isRestaurant ? [] : configured.map(service => ({
+          value: service.value, title: service.label,
+          subtitle: this.profile.serviceDescriptions[service.value] || '',
+          duration: service.durationMinutes ? `${service.durationMinutes} Min.` : '',
+          category: service.audience, icon: 'scissors', tag: '', price: service.price,
+        }));
+        this.categories = this.isRestaurant
+          ? [{ id: 'all', label: 'Alles entdecken' }, ...Array.from(new Set(this.profile.menu.map(item => item.category))).map(category => ({ id: category, label: category }))]
+          : [{ id: 'all', label: 'Alle Leistungen' }, ...[
+              { id: 'women', label: 'Damen' }, { id: 'men', label: 'Herren' }, { id: 'general', label: 'Für alle' },
+            ].filter(category => this.services.some(service => service.category === category.id))];
+        this.hours = company.hours.split(/[;\n]+/).map(value => value.trim()).filter(Boolean).map(value => {
+          const match = value.match(/^(.*?)\s+(\d.*|geschlossen)$/i);
+          return match ? { day: match[1], hours: match[2] } : { day: value, hours: '' };
+        });
+      },
+      error: () => { this.loading = false; },
+    }));
+  }
 
   get filteredServices() { return this.services.filter(service => this.serviceCategory === 'all' || service.category === this.serviceCategory); }
   get selectedService() { return this.services.find(service => service.value === this.booking?.bookingForm.controls.service.value); }
   get currentImage() { return this.gallery[this.galleryIndex]; }
-  get showBookingDock() { return this.activeTab !== 'booking' || (!this.bookingStarted && !this.booking?.hasSelectedDate); }
+  get showBookingDock() { return this.activeTab !== 'booking'; }
 
   setTab(tab: ProfileTab): void {
     if (tab === 'booking') { this.goBooking(); return; }
-    const identity = document.querySelector('.profile-preview .profile-identity');
-    const navigationTop = identity ? identity.getBoundingClientRect().bottom + window.scrollY : 0;
+    const intro = document.querySelector('.profile-preview .profile-welcome');
+    const navigationTop = intro ? intro.getBoundingClientRect().bottom + window.scrollY : 0;
     const shouldScroll = window.scrollY > navigationTop + 20;
     this.activeTab = tab;
     if (shouldScroll) requestAnimationFrame(() => {
@@ -124,16 +145,20 @@ export class ProfilePreviewComponent implements OnDestroy {
   }
   goBooking(): void {
     this.activeTab = 'booking';
-    this.bookingStarted = true;
     afterNextRender(() => this.scrollToBooking(), { injector: this.injector });
   }
   private scrollToBooking(): void {
-    const selector = this.booking?.activeFlowStep === 'details' ? '.booking-shell .booking-flow' : '.booking-shell';
-    const target = document.querySelector('.profile-preview ' + selector);
-    target?.scrollIntoView({ behavior: this.reducedMotion ? 'auto' : 'smooth', block: 'start' });
+    const behavior = this.reducedMotion ? 'auto' : 'smooth';
+    if (this.booking?.activeFlowStep === 'details') {
+      document.querySelector('.profile-preview .booking-flow')?.scrollIntoView({ behavior, block: 'start' });
+    } else if (this.booking?.hasSelectedDate) {
+      document.querySelector('.profile-preview .booking-shell')?.scrollIntoView({ behavior, block: 'start' });
+    } else {
+      window.scrollTo({ top: 0, behavior });
+    }
   }
   async share(): Promise<void> {
-    try { await navigator.clipboard.writeText(window.location.href); this.notify('Salonlink kopiert.'); }
+    try { await navigator.clipboard.writeText(window.location.href); this.notify(this.isRestaurant ? 'Restaurantlink kopiert.' : 'Salonlink kopiert.'); }
     catch { this.notify('Der Link konnte nicht kopiert werden. Du kannst ihn aus der Adresszeile kopieren.'); }
   }
   get selectedStylistLabel(): string {
@@ -178,5 +203,5 @@ export class ProfilePreviewComponent implements OnDestroy {
     this.toastTimer = setTimeout(() => this.toast = '', 3600);
   }
   private get reducedMotion(): boolean { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
-  ngOnDestroy(): void { clearTimeout(this.toastTimer); }
+  ngOnDestroy(): void { clearTimeout(this.toastTimer); this.subscription.unsubscribe(); }
 }

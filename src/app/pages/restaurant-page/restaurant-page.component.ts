@@ -229,7 +229,7 @@ export class RestaurantPageComponent implements OnInit {
     const bookingLocation = this.bookingForm.controls.bookingLocation.value;
 
     this.isSubmitting = true;
-    const submission = this.hasMobileService
+    const submission = this.hasMobileService || this.publicBooking.profilePreview
       ? this.publicBooking.submit(this.company, payload)
       : this.http.post<{ success: boolean; requestMode?: boolean }>('/api/reservations', payload);
     submission.subscribe({
@@ -608,7 +608,7 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   trackBookingStarted(): void {
-    if (this.company && !(this.hasMobileService && this.publicBooking.isLocalPreview)) {
+    if (this.company && !(this.publicBooking.profilePreview || (this.hasMobileService && this.publicBooking.isLocalPreview))) {
       this.analytics.trackBookingStarted(this.slug);
     }
   }
@@ -1075,7 +1075,7 @@ export class RestaurantPageComponent implements OnInit {
     this.companyService.getCompany(this.slug).subscribe({
       next: (company) => {
         this.company = company;
-        if (!(this.hasMobileService && this.publicBooking.isLocalPreview)) {
+        if (!(this.publicBooking.profilePreview || (this.hasMobileService && this.publicBooking.isLocalPreview))) {
           this.analytics.trackPageView(this.slug);
         }
         this.logoLoadFailed = false;
@@ -1109,7 +1109,7 @@ export class RestaurantPageComponent implements OnInit {
         query.set('employeeId', employeeId);
       }
     }
-    const availability = this.hasMobileService
+    const availability = this.hasMobileService || this.publicBooking.profilePreview
       ? this.publicBooking.availability(this.company, this.selectedDate, query)
       : this.http.get<{ slots: Record<string, number> }>(`/api/reservations?${query.toString()}`);
     availability.subscribe({

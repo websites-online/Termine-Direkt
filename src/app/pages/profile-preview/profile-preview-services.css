@@ -1,11 +1,11 @@
-.profile-preview .profile-primary-button{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:46px;padding:12px 20px;border:0;border-radius:10px;color:white;background:var(--p-purple);box-shadow:0 6px 14px #6963df1c;font-size:11px;font-weight:550;transition:background .2s,transform .2s,box-shadow .2s}
-.profile-preview .profile-primary-button:hover{background:#5952ce;box-shadow:0 7px 20px #6963df30;transform:translateY(-1px)}
+.profile-preview .profile-primary-button{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:46px;padding:12px 20px;border:0;border-radius:10px;color:white;background:var(--p-purple);box-shadow:0 6px 14px rgba(var(--brand-rgb),.13);font-size:11px;font-weight:550;transition:background .2s,transform .2s,box-shadow .2s}
+.profile-preview .profile-primary-button:hover{background:var(--brand-dark);box-shadow:0 7px 20px rgba(var(--brand-rgb),.19);transform:translateY(-1px)}
 .profile-preview .profile-primary-button svg{width:16px;height:16px}
 .profile-preview .profile-aside{position:sticky;top:82px;padding-top:2px}
 .profile-preview .profile-aside-card{border:1px solid var(--p-line);border-radius:17px;background:#fff;padding:26px 24px}
 .profile-preview .profile-aside-eyebrow{font-size:7px;letter-spacing:1.4px;color:#aca2b7;font-weight:600}
 .profile-preview .profile-aside-card h2{font:32px/1.2 Georgia,'Times New Roman',serif;letter-spacing:-.9px;margin:16px 0 13px;font-weight:400}
-.profile-preview .profile-aside-card h2 em{color:#a28e9b;font-weight:400}
+.profile-preview .profile-aside-card h2 em{color:var(--p-purple);font-weight:400}
 .profile-preview .profile-aside-card>p{font-size:10px;color:#a09aa9;line-height:1.9;margin:0 0 21px}
 .profile-preview .profile-aside-card>.profile-primary-button{width:100%}
 .profile-preview .profile-aside-divider{height:1px;background:#f0edf5;margin:23px 0 20px}
@@ -18,16 +18,16 @@
 .profile-preview .profile-chip-row{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding:3px 1px 8px;max-width:100%}
 .profile-preview .profile-chip-row::-webkit-scrollbar{display:none}
 .profile-preview .profile-chip-row button{flex-shrink:0;white-space:nowrap;background:#fff;border:1px solid #e9e5ef;border-radius:7px;padding:7px 12px;font-size:9px;color:#8b8199;transition:color .2s,background .2s,border-color .2s}
-.profile-preview .profile-chip-row button.is-active{background:#eeebfb;border-color:#ded7f4;color:#7864b7;font-weight:600}
+.profile-preview .profile-chip-row button.is-active{background:rgba(var(--brand-rgb),.08);border-color:rgba(var(--brand-rgb),.2);color:var(--brand-dark);font-weight:600}
 .profile-preview .profile-service-list{display:grid;border:1px solid var(--p-line);border-radius:16px;background:#fff;margin-top:10px;overflow:hidden}
 .profile-preview .profile-service{display:flex;align-items:center;text-align:left;gap:16px;border:0;border-bottom:1px solid #eeebf2;background:#fff;padding:23px 21px;width:100%;transition:background .22s}
 .profile-preview .profile-service:last-child{border-bottom:0}
 .profile-preview .profile-service:hover{background:#fbfafe}
-.profile-preview .profile-service-icon{display:grid;place-items:center;width:42px;height:42px;flex-shrink:0;background:#f6f2f6;border-radius:12px;color:#ae9ba9}
+.profile-preview .profile-service-icon{display:grid;place-items:center;width:42px;height:42px;flex-shrink:0;background:rgba(var(--brand-rgb),.06);border-radius:12px;color:var(--p-purple)}
 .profile-preview .profile-service-icon svg{width:20px;height:20px}
 .profile-preview .profile-service-copy{display:grid;gap:6px;min-width:0}
 .profile-preview .profile-service-title{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:14px;font-weight:600;line-height:1.5}
-.profile-preview .profile-service-tag{font-size:7px;padding:2px 6px;background:#eeeaf9;border-radius:4px;color:#9c8bb7;font-weight:500;white-space:nowrap}
+.profile-preview .profile-service-tag{font-size:7px;padding:2px 6px;background:rgba(var(--brand-rgb),.06);border-radius:4px;color:var(--brand-dark);font-weight:500;white-space:nowrap}
 .profile-preview .profile-service-description{font-size:12px;line-height:1.8;color:#817987}
 .profile-preview .profile-service-duration{display:flex;align-items:center;gap:4px;font-size:9px;color:#9f95a8;margin-top:1px}
 .profile-preview .profile-service-duration svg{width:11px;height:11px}

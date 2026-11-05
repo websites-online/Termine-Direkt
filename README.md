@@ -13,6 +13,43 @@ Diese Vorschau-Zugangsdaten gelten ausschließlich für die lokalen Beispieldate
 
 Die API-Tests für Hausbesuche mit `npm run test:mobile` ausführen.
 
+Die neue Profiloberfläche ist unter
+[localhost:4200/vorschau/salon/atelier7](http://localhost:4200/vorschau/salon/atelier7)
+verfügbar. Der Einstieg zeigt direkt die Buchung mit Kalender. Leistungen, Fotos und
+Öffnungszeiten/Adresse haben eigene Reiter; die Buchungseingaben bleiben beim Wechsel erhalten.
+Diese Designvorschau ist ausschließlich im Entwicklungsmodus auf localhost erreichbar
+und verwendet fiktive Profilinformationen sowie die lokale Testbuchung ohne E-Mail-Versand.
+
+## Profile, Fotos und Speisekarten bearbeiten
+
+Im lokalen Adminbereich unter `/admin/unternehmen/:slug` gibt es den Abschnitt
+**Profil & Fotos**. Dort lassen sich Begrüßung, Vorstellungstext, Galerie und
+Leistungsbeschreibungen bzw. Speisekarte pflegen. Änderungen werden mit
+**Änderungen speichern** übernommen. Ein leerer Vorstellungstext blendet den
+Abschnitt aus; ohne Fotos verschwindet der Fotos-Reiter. Die erste Aufnahme ist
+auch das kleine Bild neben der Begrüßung.
+
+Die Vorschau liest die gespeicherten Unternehmensangaben. Beispiele:
+
+- Salon: `/vorschau/salon/atelier7`
+- Restaurant: `/vorschau/restaurant/osteria-demo`
+
+Auf localhost sind auch Restaurant-Testbuchungen in diesen Vorschau-Routen lokal;
+es werden keine Reservierungs- oder Mail-APIs aufgerufen. Normale öffentliche
+Buchungsrouten behalten ihr Verhalten. Der lokale Admin-Login verwendet wie bisher
+die konfigurierte Admin-E-Mail und ein mindestens sechs Zeichen langes Passwort.
+
+Die neue Profiloberfläche bleibt auf den Entwicklungsmodus und localhost begrenzt.
+Für einen späteren PROD-Rollout des Profil-Editors liegt die additive Migration
+`supabase-company-profile.sql` bereit. Sie wurde nicht ausgeführt. Die API speichert
+Profilinhalte nur mit einer gültigen Admin-Sitzung und meldet eine fehlende Spalte,
+statt Änderungen still zu verwerfen. Alte Updates ohne `profile` erhalten bestehende
+Profilinhalte; die Unternehmensübersicht lädt keine Galerien mit.
+
+`npm run test:profile` prüft Normalisierung, Admin-Berechtigung, Speichern/Lesen und
+das Verhalten bei fehlender Migration. Bildquellen und Generierungsprompts stehen
+in `public/media/profile-preview/ASSETS.md`.
+
 ## Push-Benachrichtigungen und Conversion-Statistik
 
 Vor dem Deployment einmal `supabase-push-conversion.sql` im Supabase SQL Editor ausführen.

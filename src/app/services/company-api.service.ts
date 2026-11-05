@@ -1,10 +1,13 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { AdminAuthService } from './admin-auth.service';
 import { Observable, of, delay } from 'rxjs';
 
 import { environment } from '../../environments/environment';
 import { CompanyEmployee, SALON_SERVICES, SalonServiceOption } from '../shared/salon-services';
 import { hasMobileService } from '../shared/booking-location';
+import { CompanyProfile, normalizeCompanyProfile } from '../shared/company-profile';
+import { atelierProfileExample, restaurantProfileExample } from '../shared/profile-preview-fixtures';
 
 export type ServiceType = 'restaurant' | 'friseur';
 export type BookingMode = 'confirm' | 'request';
@@ -36,6 +39,7 @@ export interface Company {
   showServicePrices?: boolean;
   logoUrl?: string;
   brandColor?: string;
+  profile?: CompanyProfile;
   planTier?: PlanTier;
   calendarMode?: CalendarMode;
   employees?: CompanyEmployee[];
@@ -64,6 +68,7 @@ export interface CompanyPayload {
   showServicePrices?: boolean;
   logoUrl?: string;
   brandColor?: string;
+  profile?: CompanyProfile;
   planTier?: PlanTier;
   calendarMode?: CalendarMode;
   employees?: CompanyEmployee[];
@@ -76,18 +81,18 @@ export class CompanyApiService {
   private readonly baseUrl = '/api/companies';
   private readonly storageKey = 'termine-direkt.companies';
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly http: HttpClient, private readonly adminAuth: AdminAuthService) {}
 
   listCompanies(): Observable<Company[]> {
     if (this.isLocalMock()) {
-      return of(this.loadLocalCompanies()).pipe(delay(200));
+      return of(this.loadLocalCompanies(true)).pipe(delay(200));
     }
     return this.http.get<Company[]>(this.baseUrl);
   }
 
   getCompany(slug: string): Observable<Company | null> {
     if (this.isLocalMock()) {
-      const company = this.loadLocalCompanies(slug === 'atelier7').find((item) => item.slug === slug) || null;
+      const company = this.loadLocalCompanies(true).find((item) => item.slug === slug) || null;
       return of(company).pipe(delay(200));
     }
     return this.http.get<Company>(`${this.baseUrl}?slug=${encodeURIComponent(slug)}`);
@@ -105,6 +110,7 @@ export class CompanyApiService {
         slug,
         createdAt: new Date().toISOString(),
         ...payload,
+        ...(payload.profile !== undefined ? { profile: normalizeCompanyProfile(payload.profile) } : {}),
         slotIntervalMinutes: payload.slotIntervalMinutes || 45,
         bookingBufferMinutes: this.normalizeBookingBufferMinutes(payload.bookingBufferMinutes),
         timeSelectionMode: payload.timeSelectionMode || 'slots',
@@ -140,7 +146,7 @@ export class CompanyApiService {
       this.saveLocalCompanies(companies);
       return of(created).pipe(delay(200));
     }
-    return this.http.post<Company>(this.baseUrl, payload);
+    return this.http.post<Company>(this.baseUrl, payload, this.profileWriteOptions(payload));
   }
 
   updateCompany(slug: string, payload: CompanyPayload): Observable<Company> {
@@ -150,13 +156,14 @@ export class CompanyApiService {
       if (index === -1) {
         return of({ ...payload, slug } as Company).pipe(delay(200));
       }
-      const nextSlug = this.createUniqueSlug(
+      const nextSlug = companies[index].name === payload.name ? companies[index].slug : this.createUniqueSlug(
         payload.name,
         companies.filter((item) => item.slug !== slug).map((item) => item.slug),
       );
       const updated: Company = {
         ...companies[index],
         ...payload,
+        profile: payload.profile !== undefined ? normalizeCompanyProfile(payload.profile) : companies[index].profile,
         slug: nextSlug,
       };
       if (!payload.loginPin) {
@@ -215,7 +222,7 @@ export class CompanyApiService {
       this.saveLocalCompanies(companies);
       return of(updated).pipe(delay(200));
     }
-    return this.http.patch<Company>(`${this.baseUrl}?slug=${encodeURIComponent(slug)}`, payload);
+    return this.http.patch<Company>(`${this.baseUrl}?slug=${encodeURIComponent(slug)}`, payload, this.profileWriteOptions(payload));
   }
 
   deleteCompany(slug: string): Observable<{ success: boolean }> {
@@ -227,6 +234,12 @@ export class CompanyApiService {
     return this.http.delete<{ success: boolean }>(
       `${this.baseUrl}?slug=${encodeURIComponent(slug)}`,
     );
+  }
+
+  private profileWriteOptions(payload: CompanyPayload): { headers?: HttpHeaders } {
+    if (payload.profile === undefined) return {};
+    const token = this.adminAuth.getAuthToken();
+    return { headers: new HttpHeaders(token ? { Authorization: `Bearer ${token}` } : {}) };
   }
 
   private isLocalMock(): boolean {
@@ -252,11 +265,25 @@ export class CompanyApiService {
         parsed.push(this.createLocalAtelier7Company());
         this.saveLocalCompanies(parsed);
       }
+      if (includeAtelier7Preview) {
+        let changed = false;
+        const atelier = parsed.find(company => company.slug === 'atelier7');
+        if (atelier && atelier.profile === undefined) {
+          atelier.profile = atelierProfileExample().profile;
+          changed = true;
+        }
+        if (!parsed.some(company => company.id === 'local-restaurant-profile')) {
+          parsed.push(restaurantProfileExample());
+          changed = true;
+        }
+        if (changed) this.saveLocalCompanies(parsed);
+      }
       return parsed.map((company) => {
         const isDemo = company.slug === 'new-city-barber-demo';
         const configuredSalonServices = this.normalizeSalonServices(company.salonServices);
         return {
           ...company,
+          ...(company.profile !== undefined ? { profile: normalizeCompanyProfile(company.profile) } : {}),
           bookingMode: hasMobileService(company.slug, company.serviceType)
             ? 'request' as const
             : company.bookingMode,
@@ -342,28 +369,7 @@ export class CompanyApiService {
   }
 
   private createLocalAtelier7Company(): Company {
-    return {
-      id: 'local-atelier7-preview',
-      name: 'Atelier7',
-      slug: 'atelier7',
-      address: 'Waltherstraße 1, 90429 Nürnberg',
-      hours: 'Di–Fr 10:00–18:00; Sa 10:00–16:00',
-      email: 'atelier7-preview@example.test',
-      serviceType: 'friseur',
-      loginPin: '123456',
-      slotCapacity: 1,
-      slotIntervalMinutes: 30,
-      bookingBufferMinutes: 120,
-      timeSelectionMode: 'free',
-      bookingMode: 'request',
-      salonServices: SALON_SERVICES.map((service) => ({ ...service })),
-      showServicePrices: false,
-      logoUrl: '/media/examples/atelier7.jpg',
-      brandColor: '#4f46e5',
-      planTier: 'starter',
-      calendarMode: 'shared',
-      createdAt: new Date().toISOString(),
-    };
+    return { ...atelierProfileExample(), createdAt: new Date().toISOString() };
   }
 
   private createUniqueSlug(name: string, taken: string[]): string {
@@ -381,8 +387,8 @@ export class CompanyApiService {
     return value
       .toLowerCase()
       .trim()
-      .replace(/[^a-z0-9\\s-]/g, '')
-      .replace(/\\s+/g, '-')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
       .replace(/-+/g, '-');
   }
 

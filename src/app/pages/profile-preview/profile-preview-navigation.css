@@ -1,9 +1,9 @@
-.profile-preview .profile-tab-bar{display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:20;background:#f8f8fbf5;backdrop-filter:blur(18px);border-top:1px solid var(--p-line);border-bottom:1px solid var(--p-line);margin-bottom:30px}
-.profile-preview .profile-tab-bar [role=tablist]{display:flex;gap:26px;min-width:0}
-.profile-preview .profile-tab-bar [role=tab]{display:flex;align-items:center;gap:7px;padding:18px 0 16px;border:0;border-bottom:2px solid transparent;background:none;color:#94909e;white-space:nowrap;font-size:12px;font-weight:550;transition:color .2s,border-color .2s}
+.profile-preview .profile-tab-bar{display:flex;justify-content:space-between;align-items:center;position:sticky;top:8px;z-index:20;padding:5px;border:1px solid rgba(var(--brand-rgb),.1);border-radius:16px;background:#ffffffd9;backdrop-filter:blur(18px);box-shadow:0 4px 18px rgba(var(--brand-rgb),.035);margin-bottom:24px}
+.profile-preview .profile-tab-bar [role=tablist]{display:flex;gap:5px;min-width:0}
+.profile-preview .profile-tab-bar [role=tab]{display:flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:10px 17px;border:1px solid transparent;border-radius:11px;background:none;color:#838394;white-space:nowrap;font-size:12px;font-weight:550;transition:color .2s,background .2s,border-color .2s,box-shadow .2s}
 .profile-preview .profile-tab-bar [role=tab] svg{width:15px;height:15px}
-.profile-preview .profile-tab-bar [role=tab].is-active{color:var(--p-purple);border-bottom-color:var(--p-purple)}
-.profile-preview .profile-tabs-note{display:flex;align-items:center;gap:6px;color:#a6a0ac;font-size:9px}
+.profile-preview .profile-tab-bar [role=tab].is-active{color:var(--brand-dark);background:rgba(var(--brand-rgb),.075);border-color:rgba(var(--brand-rgb),.1);box-shadow:0 2px 5px rgba(var(--brand-rgb),.035)}
+.profile-preview .profile-tabs-note{display:flex;align-items:center;gap:6px;padding-right:13px;color:#a6a0ac;font-size:9px}
 .profile-preview .profile-tabs-note>span{width:5px;height:5px;background:#8da695;border-radius:50%}
 .profile-preview .profile-content-layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:34px;align-items:start}
 .profile-preview .profile-panels{min-width:0}
@@ -25,32 +25,16 @@
 @media(max-width:760px){
  .profile-preview{padding-bottom:0}
  .profile-preview.has-booking-dock{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
- .profile-preview .profile-topbar-inner{height:59px;padding:0 20px;gap:12px}
- .profile-preview .profile-logo img{width:124px}
- .profile-preview .profile-demo-label{font-size:8px;padding:4px 7px;gap:5px;margin-left:auto}
- .profile-preview .profile-header-caption{display:none}
+ .profile-preview .profile-logo img{width:112px}
  .profile-preview .profile-main{padding:14px 18px 0}
- .profile-preview .profile-hero{height:180px;display:block;border-radius:16px}
- .profile-preview .profile-hero-main{width:100%;height:100%}
- .profile-preview .profile-hero-small{display:none!important}
- .profile-preview .profile-hero-caption{font-size:27px;left:18px;bottom:18px}
- .profile-preview .profile-hero-caption>span{font-size:7px;letter-spacing:1.7px;margin-bottom:9px}
- .profile-preview .profile-hero .profile-gallery-button{font-size:9px;padding:7px 9px;right:11px;bottom:12px;border-radius:7px}
- .profile-preview .profile-gallery-button svg{width:11px;height:11px}
- .profile-preview .profile-identity{padding:18px 1px 16px;gap:0}
+ .profile-preview .profile-company-header{margin-bottom:12px}
+ .profile-preview .profile-company-header .profile-share-button{right:9px;top:10px;width:30px;height:30px}
+ .profile-preview .profile-company-header .profile-share-button svg{width:14px;height:14px}
  .profile-preview .profile-eyebrow{font-size:8px;letter-spacing:1.15px}
- .profile-preview .profile-title-line{justify-content:space-between;gap:15px}
- .profile-preview .profile-title-line h1{font-size:39px;letter-spacing:-2px;margin:5px 0 4px}
- .profile-preview .profile-title-actions{gap:7px;margin-top:4px}
  .profile-preview .profile-icon-button{width:36px;height:36px}
- .profile-preview .profile-tagline{font-size:11px;margin:3px 0 11px}
- .profile-preview .profile-meta{font-size:9px;gap:7px}
- .profile-preview .profile-highlights{gap:13px;font-size:9px;margin-top:13px}
- .profile-preview .profile-highlights svg{width:12px;height:12px}
- .profile-preview .profile-intro-note{display:none}
- .profile-preview .profile-tab-bar{margin:0 -1px 18px;top:0;display:block}
- .profile-preview .profile-tab-bar [role=tablist]{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0}
- .profile-preview .profile-tab-bar [role=tab]{padding:13px 2px 11px;gap:5px;justify-content:center;font-size:11px}
+ .profile-preview .profile-tab-bar{margin:0 0 12px;padding:4px;top:8px;display:block;border-radius:14px}
+ .profile-preview .profile-tab-bar [role=tablist]{display:grid;grid-template-columns:repeat(var(--profile-tab-count,4),minmax(0,1fr));gap:3px}
+ .profile-preview .profile-tab-bar [role=tab]{min-height:52px;padding:7px 8px;gap:3px;flex-direction:column;border-radius:10px;font-size:10px}
  .profile-preview .profile-tab-bar [role=tab] svg{width:13px;height:13px}
  .profile-preview .profile-tabs-note{display:none}
  .profile-preview .profile-content-layout{display:block}
@@ -67,5 +51,11 @@
  .profile-preview .profile-toast{bottom:87px;font-size:10px;width:max-content;padding:12px 14px}
  .profile-preview .profile-footer{margin-top:22px;padding:22px 0 12px}
 }
-@media(max-width:350px){.profile-preview .profile-main{padding-inline:13px}.profile-preview .profile-topbar-inner{padding-inline:15px}.profile-preview .profile-hero{height:168px}.profile-preview .profile-highlights{gap:8px;font-size:8px}.profile-preview .profile-booking-dock{padding-inline:13px;gap:9px}.profile-preview .profile-booking-dock .profile-primary-button{padding-inline:11px;font-size:12px}}
+@media(max-width:350px){
+ .profile-preview .profile-main{padding-inline:13px}
+ .profile-preview .profile-tab-bar [role=tab]{font-size:9.5px;gap:3px}
+ .profile-preview .profile-tab-bar [role=tab] svg{width:12px;height:12px}
+ .profile-preview .profile-booking-dock{padding-inline:13px;gap:9px}
+ .profile-preview .profile-booking-dock .profile-primary-button{padding-inline:11px;font-size:12px}
+}
 @media(prefers-reduced-motion:reduce){.profile-preview *,.profile-preview *::before,.profile-preview *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

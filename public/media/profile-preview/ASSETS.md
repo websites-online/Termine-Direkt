@@ -24,3 +24,24 @@ Bildabrufe bei Unsplash erforderlich.
 | --- | --- |
 | `salon-detail.jpg` | https://images.unsplash.com/photo-1600948836101-f9ffda59d250?auto=format&fit=crop&w=1100&q=85 |
 | `hair-story.jpg` | https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=1100&q=85 |
+
+## Generierte Restaurantbilder
+
+Mit dem eingebauten Imagegen-Werkzeug erstellt; als JPEG für die mobile Webansicht
+optimiert. Die Motive zeigen ein fiktives Restaurant.
+
+- `public/media/profile-preview/restaurant-interior.jpg`
+- `public/media/profile-preview/restaurant-food.jpg`
+
+Originale:
+`/Users/danielodobasic/.codex/generated_images/01a1a123-ccde-7560-bff9-6f74def219e1/exec-b626a915-394b-4e57-a5a9-4a73a47b10b4.png`
+und
+`/Users/danielodobasic/.codex/generated_images/01a1a123-ccde-7560-bff9-6f74def219e1/exec-da55fe77-5091-4f90-ac8d-140fdcf88930.png`.
+
+Prompt Innenraum:
+
+> Use case: photorealistic-natural. Asset type: restaurant profile gallery photograph for a mobile booking website. Create one realistic editorial photograph of a small contemporary Italian neighborhood restaurant. Warm cream plaster walls, walnut dining tables, olive green upholstered banquette, linen napkins, understated ceramic plates and wine glasses, sunlight through tall windows, a hint of plants. Intimate, welcoming, refined but relaxed, authentic lived-in textures, natural soft afternoon light. Horizontal composition, coherent warm neutral palette with muted olive and terracotta accents, no people, no text, no logos, no watermark. This is a fictional example restaurant, not a real place.
+
+Prompt Speise:
+
+> Use case: photorealistic-natural. Asset type: restaurant profile gallery and menu photograph for a mobile booking website. Create one realistic high-end but candid editorial food photograph: handmade pappardelle with cherry tomatoes, basil and shaved parmesan in a simple off-white ceramic plate on a walnut table in a contemporary small Italian neighborhood restaurant. Linen napkin and a wine glass softly out of focus, warm cream and muted olive surroundings. Natural soft window light, appetizing natural colors, realistic food texture, restrained styling, horizontal composition, no people, no text, no logos, no watermark. Fictional example restaurant.

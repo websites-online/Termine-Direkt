@@ -22,6 +22,11 @@ export const routes: Routes = [
     canMatch: [() => typeof window !== 'undefined' && window.location.hostname === 'localhost'],
     loadComponent: () => import('./pages/profile-preview/profile-preview.component')
       .then((module) => module.ProfilePreviewComponent),
+  }, {
+    path: 'vorschau/restaurant/:slug',
+    canMatch: [() => typeof window !== 'undefined' && window.location.hostname === 'localhost'],
+    loadComponent: () => import('./pages/profile-preview/profile-preview.component')
+      .then((module) => module.ProfilePreviewComponent),
   }] : []),
   {
     path: '',
