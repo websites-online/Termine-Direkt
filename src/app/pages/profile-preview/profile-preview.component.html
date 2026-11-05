@@ -1,0 +1,143 @@
+<svg class="profile-symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <symbol id="p-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5" /></symbol>
+    <symbol id="p-back" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6" /></symbol>
+        <symbol id="p-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></symbol>
+    <symbol id="p-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></symbol>
+    <symbol id="p-heart" viewBox="0 0 24 24"><path d="M20.8 5.6a5.5 5.5 0 0 0-7.8 0L12 6.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 22l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></symbol>
+    <symbol id="p-share" viewBox="0 0 24 24"><path d="M12 15V3m-4 4 4-4 4 4M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8" /></symbol>
+    <symbol id="p-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M7 3v4m10-4v4M3 11h18m-13 5h2m4 0h2" /></symbol>
+    <symbol id="p-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="m8.5 7.5 12 12m-12-3 12-12M12 12l-3 3" /></symbol>
+    <symbol id="p-spark" viewBox="0 0 24 24"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5ZM20 2v4m-2-2h4" /></symbol>
+    <symbol id="p-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></symbol>
+    <symbol id="p-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+    <symbol id="p-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6" /></symbol>
+    <symbol id="p-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></symbol>
+    <symbol id="p-coffee" viewBox="0 0 24 24"><path d="M4 8h13v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5Zm13 1h2a3 3 0 0 1 0 6h-2M7 3v2m4-2v2m4-2v2M2 22h18" /></symbol>
+    <symbol id="p-leaf" viewBox="0 0 24 24"><path d="M20 3C9 2 3 6 4 13a7 7 0 0 0 10 6c5-3 6-9 6-16ZM3 22 15 10" /></symbol>
+  </defs>
+</svg>
+
+<header class="profile-topbar">
+  <div class="profile-topbar-inner">
+    <span class="profile-logo"><img src="/nextimeNeuesLogo.png" width="1189" height="323" alt="NexTime – Online Booking" /></span>
+    <span class="profile-demo-label"><span></span> Designvorschau</span>
+    <span class="profile-header-caption">Dein Termin bei Atelier7</span>
+  </div>
+</header>
+
+<main class="profile-main">
+  <section class="profile-hero" aria-label="Einblicke in den Salon">
+    <button class="profile-hero-main" type="button" (click)="openGallery(0)" aria-label="Salonfotos öffnen">
+      <img src="/media/profile-preview/salon-hero.jpg" alt="Ein lichtdurchfluteter Salon mit warmen Naturmaterialien" fetchpriority="high" />
+      <span class="profile-hero-shade"></span><span class="profile-hero-caption"><span>GOOD HAIR. GOOD ENERGY.</span>Ein schöner Ort.<br />Ein gutes Gefühl.</span>
+    </button>
+    <button class="profile-hero-small" type="button" (click)="openGallery(1)" aria-label="Weiteren Einblick in den Salon öffnen"><img src="/media/profile-preview/salon-detail.jpg" alt="Moderner Salon mit stilvollen Friseurstühlen" /></button>
+    <button class="profile-hero-small" type="button" (click)="openGallery(2)" aria-label="Foto vom Hairstyling öffnen"><img src="/media/profile-preview/hair-story.jpg" alt="Individuelles Hairstyling mit Liebe zum Detail" /></button>
+    <button class="profile-gallery-button" type="button" (click)="openGallery()"><svg><use href="#p-grid" /></svg> Alle Fotos</button>
+  </section>
+
+  <section class="profile-identity" aria-label="Atelier7 im Überblick">
+    <div class="profile-identity-main">
+      <div class="profile-eyebrow">DEIN HAIR ATELIER IN GOSTENHOF</div>
+      <div class="profile-title-line"><h1>Atelier<span>7</span><span class="profile-title-dot">.</span></h1><div class="profile-title-actions"><button class="profile-icon-button" type="button" (click)="share()" aria-label="Salon teilen" title="Salonlink kopieren"><svg><use href="#p-share" /></svg></button></div></div>
+      <p class="profile-tagline">Gutes Haar beginnt mit einem guten Gefühl.</p>
+      <div class="profile-meta"><span><svg><use href="#p-pin" /></svg>Nürnberg · Gostenhof</span></div>
+      <div class="profile-highlights"><span><svg><use href="#p-leaf" /></svg>Bewusste Pflege</span><span><svg><use href="#p-coffee" /></svg>Guter Kaffee</span><span><svg><use href="#p-heart" /></svg>Mit Zeit für dich</span></div>
+    </div>
+    <div class="profile-intro-note"><span class="profile-note-spark">✳</span><p>Dein Look. Dein Moment.<br /><strong>Schön, dass du da bist.</strong></p><span class="profile-handwritten">Dein Atelier7-Team</span></div>
+  </section>
+
+  <nav class="profile-tab-bar" aria-label="Salonbereiche"><div role="tablist" aria-label="Saloninformationen"><button *ngFor="let tab of tabs; let index = index" type="button" role="tab" [id]="'profile-tab-' + tab.id" [attr.aria-controls]="'profile-panel-' + tab.id" [attr.aria-selected]="activeTab === tab.id" [attr.tabindex]="activeTab === tab.id ? 0 : -1" [class.is-active]="activeTab === tab.id" (click)="setTab(tab.id)" (keydown)="onTabKey($event, index)"><svg><use [attr.href]="'#p-' + tab.icon" /></svg>{{ tab.label }}</button></div><span class="profile-tabs-note"><span></span>Persönlich. Unkompliziert.</span></nav>
+
+  <div class="profile-content-layout">
+    <div class="profile-panels">
+      <section id="profile-panel-booking" class="profile-tab-panel" role="tabpanel" aria-labelledby="profile-tab-booking" [hidden]="activeTab !== 'booking'">
+        <div class="profile-panel-heading profile-booking-heading"><div><h2>Dein Wunschtermin</h2></div></div>
+        <p class="profile-panel-intro">Im Atelier oder bei dir zu Hause. Wir freuen uns auf dich.</p>
+        <div class="booking-shell"><app-restaurant-page [salonFieldsTemplate]="salonFields" /></div>
+        <div class="profile-booking-footnote"><svg><use href="#p-heart" /></svg>Wir freuen uns auf dich – im Atelier oder bei dir zu Hause.</div>
+      </section>
+
+      <section id="profile-panel-services" class="profile-tab-panel" role="tabpanel" aria-labelledby="profile-tab-services" [hidden]="activeTab !== 'services'">
+        <div class="profile-panel-heading"><div><span class="profile-eyebrow">FÜR DEIN HAAR. FÜR DICH.</span><h2>Ein Look, der sich<br class="profile-mobile-break" /> nach dir anfühlt.</h2></div></div>
+        <p class="profile-panel-intro">Von einer kleinen Veränderung bis zum ganz neuen Lieblingslook. Wir beraten dich persönlich.</p>
+        <div class="profile-chip-row" aria-label="Leistungen filtern"><button *ngFor="let category of categories" type="button" [class.is-active]="serviceCategory === category.id" [attr.aria-pressed]="serviceCategory === category.id" (click)="serviceCategory = category.id">{{ category.label }}</button></div>
+        <div class="profile-service-list"><button *ngFor="let service of filteredServices" type="button" class="profile-service" (click)="bookService(service.value)"><span class="profile-service-icon"><svg><use [attr.href]="'#p-' + service.icon" /></svg></span><span class="profile-service-copy"><span class="profile-service-title">{{ service.title }}<span *ngIf="service.tag" class="profile-service-tag">{{ service.tag }}</span></span><span class="profile-service-description">{{ service.subtitle }}</span><span class="profile-service-duration"><svg><use href="#p-clock" /></svg>{{ service.duration }}</span></span><span class="profile-service-add"><svg><use [attr.href]="selectedService?.value === service.value ? '#p-check' : '#p-plus'" /></svg></span></button></div>
+        <div class="profile-advice-card"><span>✳</span><div><h3>Du bist dir noch nicht ganz sicher?</h3><p>Dann starten wir mit einer guten Beratung. Ganz entspannt.</p><button type="button" (click)="bookService('sonstiges')">Gemeinsam deinen Look finden <svg><use href="#p-arrow" /></svg></button></div></div>
+      </section>
+
+      <section id="profile-panel-about" class="profile-tab-panel" role="tabpanel" aria-labelledby="profile-tab-about" [hidden]="activeTab !== 'about'">
+        <div class="profile-info-grid">
+          <article class="profile-info-card">
+            <span class="profile-card-icon"><svg><use href="#p-clock" /></svg></span>
+            <h3>Öffnungszeiten</h3>
+            <div class="profile-hours"><div *ngFor="let row of hours"><span>{{ row.day }}</span><strong [class.is-closed]="row.hours === 'Geschlossen'">{{ row.hours }}</strong></div></div>
+          </article>
+          <article class="profile-info-card">
+            <span class="profile-card-icon"><svg><use href="#p-pin" /></svg></span>
+            <h3>Adresse</h3>
+            <p>{{ company.address }}</p>
+            <a [href]="mapUrl" target="_blank" rel="noopener noreferrer">Route planen <svg><use href="#p-arrow" /></svg></a>
+          </article>
+        </div>
+      </section>
+
+    </div>
+
+    <aside class="profile-aside"><div class="profile-aside-card"><span class="profile-aside-eyebrow">DEIN MOMENT IM ATELIER7</span><h2>Good hair.<br /><em>Better days.</em></h2><p>Ein neuer Look beginnt mit einem kleinen Moment für dich.</p><div class="profile-selected-service" *ngIf="selectedService"><span>Deine Auswahl</span><strong>{{ selectedService.title }}</strong><small>{{ selectedService.duration }}</small></div><button class="profile-primary-button" type="button" (click)="goBooking()">Termin anfragen <svg><use href="#p-arrow" /></svg></button><div class="profile-aside-divider"></div><div class="profile-aside-location"><svg><use href="#p-pin" /></svg><span><strong>Nürnberg · Gostenhof</strong><small>Im Atelier oder bei dir zu Hause.</small></span></div></div><span class="profile-aside-credit">Mit Liebe gebucht. Mit <strong>nextime.</strong></span></aside>
+  </div>
+
+  <footer class="profile-footer"><span class="profile-logo"><img src="/nextimeNeuesLogo.png" width="1189" height="323" alt="NexTime – Online Booking" loading="lazy" /></span><p>Mehr Zeit für das, was dir guttut.</p><span>Lokale Designvorschau · Fiktive Profilinformationen</span></footer>
+</main>
+
+<div class="profile-booking-dock" *ngIf="showBookingDock"><div><span>DEINE KLEINE AUSZEIT</span><strong>{{ selectedService?.title || 'Wir freuen uns auf dich.' }}</strong></div><button class="profile-primary-button" type="button" (click)="goBooking()">Termin anfragen <svg><use href="#p-arrow" /></svg></button></div>
+<div class="profile-toast" role="status" aria-live="polite" *ngIf="toast"><svg><use href="#p-check" /></svg>{{ toast }}</div>
+
+<dialog #galleryDialog class="profile-gallery-dialog" (keydown)="galleryKey($event)" (click)="$event.target === galleryDialog && closeGallery()" aria-labelledby="profile-gallery-title"><div class="profile-gallery-dialog-inner"><div class="profile-gallery-dialog-top"><span id="profile-gallery-title">Ein kleiner Einblick ins Atelier7</span><button class="profile-icon-button" type="button" (click)="closeGallery()" aria-label="Fotogalerie schließen"><svg><use href="#p-close" /></svg></button></div><img [src]="'/media/profile-preview/' + currentImage.file" [alt]="currentImage.alt" /><div class="profile-gallery-dialog-bottom"><div><strong>{{ currentImage.title }}</strong><span>{{ galleryIndex + 1 }} / {{ gallery.length }}</span></div><div><button class="profile-icon-button" type="button" (click)="galleryStep(-1)" aria-label="Vorheriges Foto"><svg><use href="#p-back" /></svg></button><button class="profile-icon-button" type="button" (click)="galleryStep(1)" aria-label="Nächstes Foto"><svg><use href="#p-arrow" /></svg></button></div></div></div></dialog>
+
+
+<ng-template #salonFields let-form>
+  <div class="profile-select-field">
+    <div class="profile-field-heading">
+      <span class="label" id="profile-service-label">Service*</span>
+      <span class="error" id="profile-service-error" *ngIf="form.bookingForm.controls.service.touched && form.bookingForm.controls.service.invalid">Pflichtfeld.</span>
+    </div>
+    <button type="button" class="profile-select-trigger" id="profile-service-trigger"
+      aria-haspopup="dialog" aria-controls="profile-selection-dialog"
+      aria-labelledby="profile-service-label profile-service-value"
+      [attr.aria-invalid]="form.bookingForm.controls.service.touched && form.bookingForm.controls.service.invalid"
+      [attr.aria-describedby]="form.bookingForm.controls.service.touched && form.bookingForm.controls.service.invalid ? 'profile-service-error' : null"
+      [class.is-placeholder]="!selectedService" (click)="openSelection('service')">
+      <span id="profile-service-value">{{ selectedService?.title || 'Bitte wählen' }}</span>
+      <svg class="profile-select-chevron"><use href="#p-back" /></svg>
+    </button>
+  </div>
+  <div class="profile-select-field" *ngIf="form.hasStylistChoice">
+    <div class="profile-field-heading"><span class="label" id="profile-stylist-label">Friseur (optional)</span></div>
+    <button type="button" class="profile-select-trigger" id="profile-stylist-trigger"
+      aria-haspopup="dialog" aria-controls="profile-selection-dialog"
+      aria-labelledby="profile-stylist-label profile-stylist-value" (click)="openSelection('stylist')">
+      <span id="profile-stylist-value">{{ selectedStylistLabel }}</span>
+      <svg class="profile-select-chevron"><use href="#p-back" /></svg>
+    </button>
+  </div>
+</ng-template>
+
+<dialog #selectionDialog id="profile-selection-dialog" class="profile-selection-dialog"
+  aria-labelledby="profile-selection-title" aria-describedby="profile-selection-description"
+  (close)="onSelectionClosed()" (click)="$event.target === selectionDialog && closeSelection()">
+  <div class="profile-selection-grip" aria-hidden="true"></div>
+  <div class="profile-selection-header">
+    <div><h2 id="profile-selection-title">{{ selectionKind === 'service' ? 'Deine Leistung' : 'Bei wem möchtest du buchen?' }}</h2>
+      <p id="profile-selection-description">{{ selectionKind === 'service' ? 'Wähle, was du dir für deinen Termin wünschst.' : 'Wähle deinen Wunschfriseur oder bleib flexibel.' }}</p></div>
+    <button type="button" class="profile-icon-button" (click)="closeSelection()" aria-label="Auswahl schließen"><svg><use href="#p-close" /></svg></button>
+  </div>
+  <div class="profile-selection-options">
+    <button type="button" class="profile-selection-option" *ngFor="let option of selectionOptions"
+      [attr.aria-pressed]="selectionValue === option.value" (click)="chooseSelection(option.value)">
+      <span><strong>{{ option.label }}</strong><small *ngIf="option.detail">{{ option.detail }}</small></span>
+      <span class="profile-selection-check" aria-hidden="true"><svg *ngIf="selectionValue === option.value"><use href="#p-check" /></svg></span>
+    </button>
+  </div>
+</dialog>

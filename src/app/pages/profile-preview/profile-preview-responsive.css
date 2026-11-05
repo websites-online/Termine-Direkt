@@ -1,0 +1,44 @@
+@media(max-width:760px){
+ .profile-preview .profile-service{padding:19px 14px;gap:12px}
+ .profile-preview .profile-service-icon{width:34px;height:34px;border-radius:10px}
+ .profile-preview .profile-service-icon svg{width:17px;height:17px}
+ .profile-preview .profile-service-title{font-size:13px;gap:5px}
+ .profile-preview .profile-service-description{font-size:11px;line-height:1.75}
+ .profile-preview .profile-service-tag{font-size:6px}
+ .profile-preview .profile-service-copy{gap:5px}
+ .profile-preview .profile-service-add{width:26px;height:26px}
+ .profile-preview .profile-advice-card{padding:21px 16px;gap:14px}
+ .profile-preview .profile-advice-card>span{font-size:34px}
+ .profile-preview .profile-advice-card h3{font-size:18px}
+ .profile-preview .profile-chip-row{gap:6px}
+ .profile-preview .profile-chip-row button{padding:7px 10px;font-size:8px}
+ .profile-preview .profile-info-grid{grid-template-columns:1fr;gap:14px;margin-top:0}
+ .profile-preview .profile-info-card{padding:22px}
+ .profile-preview .profile-hours>div{font-size:10px}
+ .profile-preview .profile-hours strong{font-size:10px}
+ .profile-preview .profile-info-card p{font-size:11px}
+ .profile-preview .profile-gallery-dialog{width:calc(100% - 24px);max-height:calc(100dvh - 24px);border-radius:14px}
+ .profile-preview .profile-gallery-dialog-top{padding:12px;font-size:10px}
+ .profile-preview .profile-gallery-dialog-bottom{padding:14px 12px}
+ .profile-preview .profile-gallery-dialog-bottom strong{font-size:10px}
+ .profile-preview .profile-gallery-dialog-inner>img{height:48vh}
+}
+@media(max-width:760px){.profile-preview .booking-shell{padding:18px 17px 20px;border-radius:14px;scroll-margin-top:56px}.profile-preview .booking-shell app-restaurant-page .location-option{padding:9px;gap:7px;min-height:50px}.profile-preview .booking-shell app-restaurant-page .location-option__check{display:none}.profile-preview .booking-shell app-restaurant-page .location-option strong{font-size:11px}.profile-preview .booking-shell app-restaurant-page .location-option small{font-size:7px}.profile-preview .booking-shell app-restaurant-page .calendar-card .calendar-grid{gap:4px}.profile-preview .booking-shell app-restaurant-page .calendar-card .day{font-size:12px;aspect-ratio:auto;height:36px;color:#756582}.profile-preview .booking-shell app-restaurant-page .calendar-card .calendar-weekdays{font-size:9px}.profile-preview .profile-booking-footnote{font-size:8px;gap:4px}.profile-preview .booking-shell app-restaurant-page .details-card :is(.input,.textarea){font-size:14px;min-height:40px}.profile-preview .booking-shell app-restaurant-page .details-card .input{height:40px}.profile-preview .booking-shell app-restaurant-page .details-card .demo-form .btn{min-height:46px}}
+@media(max-width:350px){.profile-preview .booking-shell{padding-inline:13px}.profile-preview .booking-shell app-restaurant-page .location-option small{display:none}.profile-preview .booking-shell app-restaurant-page .location-option{min-height:48px;gap:6px}.profile-preview .booking-shell app-restaurant-page .location-option strong{font-size:12px}.profile-preview .booking-shell app-restaurant-page .address-row{grid-template-columns:minmax(0,1fr)}}
+.profile-preview .profile-gallery-dialog[open]{animation:profile-gallery-arrive .25s ease}
+.profile-preview .profile-service:active{background:#f1edf9}
+@keyframes profile-gallery-arrive{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
+
+.profile-preview .profile-booking-heading h2{font:600 19px/1.4 'Inter','Segoe UI',sans-serif;letter-spacing:-.4px;margin:0}
+.profile-preview #profile-panel-booking>.profile-panel-intro{font-size:11px;line-height:1.6;margin-bottom:14px}
+.profile-preview .booking-shell app-restaurant-page .demo-grid.flow-ready>.card{scroll-margin-top:56px}
+.profile-preview .booking-shell app-restaurant-page .booking-flow{scroll-margin-top:56px}
+@media(max-width:760px){
+ .profile-preview .booking-shell{padding:15px}
+ .profile-preview .booking-shell app-restaurant-page .calendar-card>h2{display:none}
+ .profile-preview .booking-shell app-restaurant-page .location-option small{display:none}
+ .profile-preview .booking-shell app-restaurant-page .calendar-card .calendar-header{min-height:36px}
+ .profile-preview .booking-shell app-restaurant-page .calendar-card .month-nav{height:28px}
+}
+/* Keep editing legible on touch devices without enlarging the whole form. */
+@media(pointer:coarse){.profile-preview .booking-shell app-restaurant-page .details-card :is(input.input,.textarea):focus{font-size:16px}}

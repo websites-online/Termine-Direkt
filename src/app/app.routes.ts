@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { isDevMode } from '@angular/core';
 
 import { LandingPageComponent } from './pages/landing-page/landing-page.component';
 import { RestaurantPageComponent } from './pages/restaurant-page/restaurant-page.component';
@@ -16,6 +17,12 @@ import { CompanyStatsComponent } from './pages/company-stats/company-stats.compo
 import { companyGuard } from './guards/company.guard';
 
 export const routes: Routes = [
+  ...(isDevMode() ? [{
+    path: 'vorschau/salon/:slug',
+    canMatch: [() => typeof window !== 'undefined' && window.location.hostname === 'localhost'],
+    loadComponent: () => import('./pages/profile-preview/profile-preview.component')
+      .then((module) => module.ProfilePreviewComponent),
+  }] : []),
   {
     path: '',
     component: LandingPageComponent,

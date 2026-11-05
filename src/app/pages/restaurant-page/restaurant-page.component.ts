@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, Input, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
@@ -30,6 +30,7 @@ type ParsedSchedule = {
   styleUrl: './restaurant-page.component.css',
 })
 export class RestaurantPageComponent implements OnInit {
+  @Input() salonFieldsTemplate: TemplateRef<{ $implicit: RestaurantPageComponent }> | null = null;
   private readonly route = inject(ActivatedRoute);
   private readonly companyService = inject(CompanyApiService);
   private readonly formBuilder = inject(FormBuilder);

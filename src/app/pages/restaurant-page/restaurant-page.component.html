@@ -235,6 +235,8 @@
               </option>
             </select>
           </label>
+          <ng-container *ngTemplateOutlet="salonFieldsTemplate || defaultSalonFields; context: { $implicit: this }"></ng-container>
+          <ng-template #defaultSalonFields>
           <label *ngIf="isSalon">
             <span class="label">Service*</span>
             <select class="input" formControlName="service">
@@ -259,6 +261,7 @@
               </option>
             </select>
           </label>
+          </ng-template>
           <section class="home-visit-fields" *ngIf="isHomeVisit" aria-labelledby="home-visit-title">
             <h3 id="home-visit-title">Deine Besuchsadresse</h3>
             <p>Hier soll dein Hausbesuch stattfinden.</p>
