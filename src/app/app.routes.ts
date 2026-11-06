@@ -50,6 +50,12 @@ export const routes: Routes = [
     component: AdminLoginComponent,
   },
   {
+    path: 'admin/neu',
+    component: AdminDashboardComponent,
+    canActivate: [adminGuard],
+    data: { createCompany: true },
+  },
+  {
     path: 'admin/unternehmen/:slug',
     component: AdminDashboardComponent,
     canActivate: [adminGuard],

@@ -27,13 +27,18 @@ type SalonServiceSetting = SalonServiceOption;
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule, HttpClientModule, CompanyProfileEditorComponent],
   templateUrl: './admin-dashboard.component.html',
-  styleUrl: './admin-dashboard.component.css',
+  styleUrls: ['./admin-dashboard.component.css', './admin-overview.css'],
 })
 export class AdminDashboardComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   companies: Company[] = [];
   editingSlug: string | null = null;
   readonly standaloneEditSlug: string | null;
+  readonly isCreatingCompany: boolean;
+  isLoadingCompanies = false;
+  companyListError = '';
+  searchQuery = '';
+  companyFilter: 'all' | 'friseur' | 'restaurant' = 'all';
   isSaving = false;
   isProcessingLogo = false;
   formError = '';
@@ -74,6 +79,36 @@ export class AdminDashboardComponent implements OnInit {
     private readonly route: ActivatedRoute,
   ) {
     this.standaloneEditSlug = this.route.snapshot.paramMap.get('slug');
+    this.isCreatingCompany = this.route.snapshot.data['createCompany'] === true;
+  }
+
+  get isEditorView(): boolean {
+    return this.isCreatingCompany || this.standaloneEditSlug !== null;
+  }
+
+  get filteredCompanies(): Company[] {
+    const query = this.searchQuery.trim().toLocaleLowerCase('de');
+    return this.companies.filter(company =>
+      (this.companyFilter === 'all' || company.serviceType === this.companyFilter) &&
+      (!query || `${company.name} ${company.address || ''} ${company.slug}`.toLocaleLowerCase('de').includes(query)),
+    );
+  }
+
+  companyCount(type: 'friseur' | 'restaurant'): number {
+    return this.companies.filter(company => company.serviceType === type).length;
+  }
+
+  updateSearch(event: Event): void {
+    this.searchQuery = (event.target as HTMLInputElement).value;
+  }
+
+  clearFilters(): void {
+    this.searchQuery = '';
+    this.companyFilter = 'all';
+  }
+
+  retryLoading(): void {
+    this.loadCompanies();
   }
 
   ngOnInit(): void {
@@ -240,8 +275,7 @@ export class AdminDashboardComponent implements OnInit {
           }
           return;
         }
-        this.resetForm();
-        this.loadCompanies();
+        this.router.navigate(['/admin']);
       },
       error: (error) => {
         this.isSaving = false;
@@ -294,11 +328,7 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   cancelEdit(): void {
-    if (this.standaloneEditSlug) {
-      this.router.navigate(['/admin']);
-      return;
-    }
-    this.resetForm();
+    this.router.navigate(['/admin']);
   }
 
   scrollToSection(sectionId: string): void {
@@ -328,19 +358,32 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   private loadCompanies(): void {
+    if (this.isCreatingCompany) return;
+    this.isLoadingCompanies = true;
+    this.companyListError = '';
     if (this.standaloneEditSlug) {
+      this.formError = '';
       this.companyService.getCompany(this.standaloneEditSlug).subscribe({
         next: company => {
+          this.isLoadingCompanies = false;
           if (company) this.startEdit(company);
           else this.formError = 'Das Unternehmen wurde nicht gefunden.';
         },
-        error: () => { this.formError = 'Das Unternehmen konnte nicht geladen werden.'; },
+        error: () => {
+          this.isLoadingCompanies = false;
+          this.formError = 'Das Unternehmen konnte nicht geladen werden.';
+        },
       });
       return;
     }
     this.companyService.listCompanies().subscribe({
       next: (companies) => {
         this.companies = companies;
+        this.isLoadingCompanies = false;
+      },
+      error: () => {
+        this.isLoadingCompanies = false;
+        this.companyListError = 'Die Unternehmen konnten nicht geladen werden. Bitte versuche es erneut.';
       },
     });
   }

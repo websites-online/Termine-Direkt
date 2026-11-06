@@ -22,6 +22,10 @@ und verwendet fiktive Profilinformationen sowie die lokale Testbuchung ohne E-Ma
 
 ## Profile, Fotos und Speisekarten bearbeiten
 
+Der Einstieg unter `/admin` zeigt die Kundenübersicht mit Suche und Betriebsart-Filtern.
+**Unternehmen hinzufügen** öffnet das separate Formular unter `/admin/neu`;
+**Bearbeiten** öffnet die Einstellungen des ausgewählten Unternehmens.
+
 Im lokalen Adminbereich unter `/admin/unternehmen/:slug` gibt es den Abschnitt
 **Profil & Fotos**. Dort lassen sich Begrüßung, Vorstellungstext, Galerie und
 Leistungsbeschreibungen bzw. Speisekarte pflegen. Änderungen werden mit
