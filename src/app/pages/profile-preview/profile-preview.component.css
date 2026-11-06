@@ -44,7 +44,7 @@
  .profile-preview .profile-welcome h2{font-size:21px;letter-spacing:-.5px}
  .profile-preview .profile-welcome-photo{width:64px;height:64px}
 }
-@media(max-width:760px) and (max-height:620px){
+@media(max-width:760px) and (max-height:700px){
  .profile-preview .profile-welcome{min-height:48px;margin-block:8px 8px}
  .profile-preview .profile-welcome-photo{width:48px;height:48px;border-radius:13px}
  .profile-preview .profile-welcome-eyebrow{display:none}

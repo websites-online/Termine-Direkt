@@ -39,5 +39,4 @@
 .profile-preview .booking-shell app-restaurant-page .calendar-card .day.active{background:var(--p-purple);color:#fff;border-color:var(--p-purple)}
 .profile-preview .booking-shell app-restaurant-page .calendar-card .day:not(.muted):hover{border-color:rgba(var(--brand-rgb),.4);background:rgba(var(--brand-rgb),.055)}
 .profile-preview .booking-shell app-restaurant-page .calendar-card .day.active:hover{background:var(--brand-dark)}
-.profile-preview .booking-shell.is-first-date-step app-restaurant-page .booking-flow,
 .profile-preview .booking-shell.is-first-date-step app-restaurant-page .calendar-card>.helptext{display:none}
