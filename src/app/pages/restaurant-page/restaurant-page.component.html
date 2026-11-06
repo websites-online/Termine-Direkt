@@ -333,14 +333,20 @@
     </div>
   </div>
 </section>
-<div class="reservation-modal" [class.mobile-service-modal]="hasMobileService" *ngIf="showThanksModal">
+<div class="reservation-modal" [class.mobile-service-modal]="hasMobileService"
+  [class.reservation-modal--referral]="showReferralOffer"
+  *ngIf="showThanksModal">
   <div class="reservation-modal__backdrop" (click)="closeThanksModal()"></div>
   <div
+    #thanksPanel
     class="reservation-modal__panel"
     role="dialog"
+    tabindex="-1"
     aria-modal="true"
     aria-labelledby="reservation-modal-title"
+    (keydown)="onThanksKeydown($event)"
   >
+    <div class="reservation-modal__preview" *ngIf="isSuccessPreview">Lokale Vorschau · Keine Buchung ausgelöst</div>
     <div class="reservation-modal__badge">✓</div>
     <h3 id="reservation-modal-title">{{ bookingSuccessHeadline }}</h3>
     <p>{{ bookingConfirmText }}</p>
@@ -363,6 +369,10 @@
       </div>
     </div>
     <button class="btn btn-primary" type="button" (click)="closeThanksModal()">OK</button>
+    <app-booking-referral
+      *ngIf="showReferralOffer && company"
+      [companyName]="company.name"
+    />
   </div>
 </div>
 <footer class="demo-footer-note">

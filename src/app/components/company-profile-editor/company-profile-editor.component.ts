@@ -4,6 +4,7 @@ import { AbstractControl, ControlValueAccessor, FormBuilder, NG_VALIDATORS, NG_V
 import { Subscription } from 'rxjs';
 import { CompanyProfile, defaultCompanyProfile, normalizeCompanyProfile, ProfileMenuItem, ProfilePhoto } from '../../shared/company-profile';
 import { SalonServiceOption } from '../../shared/salon-services';
+import { exampleCompanyProfile } from '../../shared/profile-preview-fixtures';
 
 @Component({
   selector: 'app-company-profile-editor', standalone: true,
@@ -84,7 +85,7 @@ export class CompanyProfileEditorComponent implements ControlValueAccessor, Vali
     this.publish();
   }
   useExamplePhotos(): void {
-    this.value = { ...this.value, photos: defaultCompanyProfile(this.serviceType).photos };
+    this.value = { ...this.value, photos: exampleCompanyProfile(this.serviceType === 'friseur' ? 'friseur' : 'restaurant').photos };
     this.publish();
   }
   async upload(event: Event): Promise<void> {

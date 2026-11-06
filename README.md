@@ -1,5 +1,10 @@
 # NexTime
 
+Die öffentliche Profiloberfläche verwendet die bestehenden Buchungslinks `/:slug` und
+`/r/:slug`; Links in Google und auf den Unternehmensseiten müssen nicht geändert werden.
+Für den Livegang zuerst `supabase-profile-rollout.sql` im bestehenden Supabase-PROD-Projekt
+ausführen. Die genaue Reihenfolge steht in [der Merge-Anleitung](docs/merge-unternehmensprofil.md).
+
 ## PRO-Profil und bestehende Kunden
 
 In der neuen Profiloberfläche sind **Fotos**, **Über uns** und **Leistungen** bzw.
@@ -9,16 +14,17 @@ Die notwendige Serviceauswahl im Buchungsformular bleibt für jeden Friseursalon
 Im Adminbereich werden die zusätzlichen Profilfelder bei Starter mit einem PRO-Hinweis
 ausgeblendet. Ein Tarifwechsel löscht keine gespeicherten Profilinhalte.
 
-Vor dem PROD-Rollout die einmalige Migration `supabase-existing-companies-pro.sql`
-ausführen (setzt `supabase-company-plan.sql` voraus). Sie stellt alle zu diesem Zeitpunkt
+Vor dem PROD-Rollout die kombinierte Migration `supabase-profile-rollout.sql`
+ausführen. Sie ergänzt die Profilspalte und bei Bedarf die Tarifspalte und stellt alle zu diesem Zeitpunkt
 vorhandenen Unternehmen auf PRO um und sichert ihre bisherigen Tarifwerte im nicht
 öffentlichen Schema `nextime_migrations`. Ein Migrationsmerkmal verhindert, dass eine
 erneute Ausführung später angelegte Starter-Kunden oder manuelle Downgrades verändert.
 Neue Unternehmen behalten ihren bisherigen Starter-Standard. Buchungsregeln, Kontaktdaten,
 PINs und Mailkonfiguration werden nicht geändert.
 
-Die PROD-Migration ist vorbereitet, aber noch nicht ausgeführt; dafür ist eine mit dem
-PROD-Projekt verbundene Supabase-Sitzung erforderlich. Die beiden lokalen Profilbeispiele
+Die PROD-Migration ist vorbereitet, aber noch nicht ausgeführt. Sie kann im SQL Editor
+des richtigen PROD-Projekts oder über eine damit verbundene Sitzung ausgeführt werden.
+Die beiden lokalen Profilbeispiele
 werden separat einmalig auf PRO gesetzt. Spätere manuelle Tarifwechsel bleiben erhalten.
 
 ## Adminstatistik
@@ -66,7 +72,7 @@ Der Einstieg unter `/admin` zeigt die Kundenübersicht mit Suche und Betriebsart
 **Unternehmen hinzufügen** öffnet das separate Formular unter `/admin/neu`;
 **Bearbeiten** öffnet die Einstellungen des ausgewählten Unternehmens.
 
-Im lokalen Adminbereich unter `/admin/unternehmen/:slug` gibt es den Abschnitt
+Im Adminbereich unter `/admin/unternehmen/:slug` gibt es den Abschnitt
 **Profil & Fotos**. Dort lassen sich Begrüßung, Vorstellungstext, Galerie und
 Leistungsbeschreibungen bzw. Speisekarte pflegen. Änderungen werden mit
 **Änderungen speichern** übernommen. Ein leerer Vorstellungstext blendet den
@@ -80,12 +86,15 @@ Die Vorschau liest die gespeicherten Unternehmensangaben. Beispiele:
 
 Auf localhost sind auch Restaurant-Testbuchungen in diesen Vorschau-Routen lokal;
 es werden keine Reservierungs- oder Mail-APIs aufgerufen. Normale öffentliche
-Buchungsrouten behalten ihr Verhalten. Der lokale Admin-Login verwendet wie bisher
+Buchungsrouten verwenden die neue Oberfläche mit der bestehenden Buchungs-API. Der lokale Admin-Login verwendet wie bisher
 die konfigurierte Admin-E-Mail und ein mindestens sechs Zeichen langes Passwort.
 
-Die neue Profiloberfläche bleibt auf den Entwicklungsmodus und localhost begrenzt.
-Für einen späteren PROD-Rollout des Profil-Editors liegt die additive Migration
-`supabase-company-profile.sql` bereit. Sie wurde nicht ausgeführt. Die API speichert
+Die öffentlichen Routen laden dieselbe Profiloberfläche ohne lokale Vorschauhinweise.
+Echte Unternehmen erhalten bei fehlenden Profilangaben neutrale Texte und keine
+erfundenen Fotos, Speisen oder Vorstellungen. Generierte Fotos werden nur bei den
+lokalen Beispielfirmen automatisch eingesetzt; im Admin lassen sie sich ausdrücklich
+über „Passende Beispielbilder verwenden“ auswählen. Für den PROD-Rollout liegt die kombinierte Migration
+`supabase-profile-rollout.sql` bereit. Sie wurde nicht ausgeführt. Die API speichert
 Profilinhalte nur mit einer gültigen Admin-Sitzung und meldet eine fehlende Spalte,
 statt Änderungen still zu verwerfen. Alte Updates ohne `profile` erhalten bestehende
 Profilinhalte; die Unternehmensübersicht lädt keine Galerien mit.
@@ -93,6 +102,30 @@ Profilinhalte; die Unternehmensübersicht lädt keine Galerien mit.
 `npm run test:profile` prüft Normalisierung, Admin-Berechtigung, Speichern/Lesen und
 das Verhalten bei fehlender Migration. Bildquellen und Generierungsprompts stehen
 in `public/media/profile-preview/ASSETS.md`.
+
+## Empfehlungshinweis nach der Buchung
+
+Nach einer erfolgreichen Anfrage oder Buchung steht im Erfolgsfenster ein dezenter
+Empfehlungshinweis mit dem Namen des gebuchten Unternehmens. **Mehr erfahren** öffnet die
+Bedingungen direkt darunter, auch per Tastatur. Der Hinweis ist unabhängig vom PRO-Tarif
+des gebuchten Unternehmens. Bestätigungsmails erhalten keinen Empfehlungszusatz.
+
+Direktansichten ohne Testbuchung, Reservierungsspeicherung oder E-Mail-Versand:
+
+- Salon: `/vorschau/salon/atelier7?ansicht=erfolg`
+- Restaurant: `/vorschau/restaurant/osteria-demo?ansicht=erfolg`
+
+Diese Direktansichten sind ausschließlich im Entwicklungsmodus auf localhost aktiv.
+Auf öffentlichen Produktionsrouten kann der Parameter keine Buchungsbestätigung auslösen.
+
+Die vorgeschlagenen Aktionsbedingungen sind: 100-€-Gutschein für das gebuchte Unternehmen,
+finanziert von NexTime, sobald sich der empfohlene neue Betrieb nach der Testphase
+entscheidet, NexTime weiter zu nutzen;
+eine Prämie pro Betrieb, keine Barauszahlung. Die Zuordnung und Ausgabe sind zunächst
+manuell vorgesehen: Der Betrieb nennt bei seiner Kontaktaufnahme den Empfehlenden und das
+Gutscheinunternehmen. Es werden keine Kontakte automatisch angeschrieben oder übertragen.
+Vor einem Livegang müssen Finanzierung, Gutscheinausgabe bei den beteiligten Unternehmen
+und die endgültigen Aktionsbedingungen feststehen; es wurde kein Prämien-Backend gebaut.
 
 ## Push-Benachrichtigungen und Conversion-Statistik
 

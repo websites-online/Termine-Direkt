@@ -84,14 +84,7 @@ export function defaultCompanyProfile(type: string | undefined): CompanyProfile 
     aboutTitle: 'Über uns', aboutText: '',
     offeringsTitle: restaurant ? 'Unsere Speisekarte' : 'Unsere Leistungen',
     offeringsIntro: '', menu: [], serviceDescriptions: {},
-    photos: restaurant ? [
-      { src: '/media/profile-preview/restaurant-interior.jpg', title: 'Ein Platz zum Genießen', alt: 'Beispielbild: gemütliches italienisches Restaurant' },
-      { src: '/media/profile-preview/restaurant-food.jpg', title: 'Mit Liebe gekocht', alt: 'Beispielbild: frische Pasta mit Tomaten und Basilikum' },
-    ] : [
-      { src: '/media/profile-preview/salon-hero.jpg', title: 'Ein Ort zum Ankommen', alt: 'Beispielbild: heller Salon mit Naturmaterialien' },
-      { src: '/media/profile-preview/salon-detail.jpg', title: 'Dein Platz für eine kleine Auszeit', alt: 'Beispielbild: moderner Friseursalon' },
-      { src: '/media/profile-preview/hair-story.jpg', title: 'Mit Liebe zum Handwerk', alt: 'Beispielbild: persönliches Hairstyling im Salon' },
-    ],
+    photos: [],
   };
 }
 

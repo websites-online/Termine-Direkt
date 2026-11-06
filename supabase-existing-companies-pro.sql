@@ -16,6 +16,7 @@ create table if not exists nextime_migrations.applied_migrations (
   applied_at timestamptz not null default now(),
   snapshot jsonb not null
 );
+alter table nextime_migrations.applied_migrations enable row level security;
 revoke all on table nextime_migrations.applied_migrations from public;
 
 with applied as (

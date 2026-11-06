@@ -131,10 +131,8 @@ export class AdminDashboardComponent implements OnInit {
     this.companyForm.controls.serviceType.valueChanges.subscribe(type => {
       const profile = this.companyForm.controls.profile.value;
       const defaults = defaultCompanyProfile(type || 'restaurant');
-      const examplePhotos = profile.photos.length > 0 && profile.photos.every(photo => photo.src.startsWith('/media/profile-preview/'));
       this.companyForm.controls.profile.setValue({
         ...profile,
-        photos: examplePhotos ? defaults.photos : profile.photos,
         offeringsTitle: ['Unsere Leistungen', 'Unsere Speisekarte'].includes(profile.offeringsTitle) ? defaults.offeringsTitle : profile.offeringsTitle,
         welcomeSubtitle: ['Dein Termin. Ganz entspannt.', 'Ein guter Abend beginnt hier.'].includes(profile.welcomeSubtitle) ? defaults.welcomeSubtitle : profile.welcomeSubtitle,
       }, { emitEvent: false });

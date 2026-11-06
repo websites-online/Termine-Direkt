@@ -1,5 +1,19 @@
 import type { Company } from '../services/company-api.service';
-import { defaultCompanyProfile } from './company-profile';
+import { CompanyProfile, defaultCompanyProfile } from './company-profile';
+
+export function exampleCompanyProfile(type: 'friseur' | 'restaurant'): CompanyProfile {
+  return {
+    ...defaultCompanyProfile(type),
+    photos: type === 'restaurant' ? [
+      { src: '/media/profile-preview/restaurant-interior.jpg', title: 'Ein Platz zum Genießen', alt: 'Beispielbild: gemütliches italienisches Restaurant' },
+      { src: '/media/profile-preview/restaurant-food.jpg', title: 'Mit Liebe gekocht', alt: 'Beispielbild: frische Pasta mit Tomaten und Basilikum' },
+    ] : [
+      { src: '/media/profile-preview/salon-hero.jpg', title: 'Ein Ort zum Ankommen', alt: 'Beispielbild: heller Salon mit Naturmaterialien' },
+      { src: '/media/profile-preview/salon-detail.jpg', title: 'Dein Platz für eine kleine Auszeit', alt: 'Beispielbild: moderner Friseursalon' },
+      { src: '/media/profile-preview/hair-story.jpg', title: 'Mit Liebe zum Handwerk', alt: 'Beispielbild: persönliches Hairstyling im Salon' },
+    ],
+  };
+}
 
 // Local examples only. Never inserted into the production database.
 export function atelierProfileExample(): Company {
@@ -20,7 +34,7 @@ export function atelierProfileExample(): Company {
       { value: 'sonstiges', label: 'Zeit für eine Beratung', audience: 'general', durationMinutes: 20 },
     ],
     profile: {
-      ...defaultCompanyProfile('friseur'), aboutTitle: 'Hi, ich bin Arsel.',
+      ...exampleCompanyProfile('friseur'), aboutTitle: 'Hi, ich bin Arsel.',
       aboutText: 'Ich freue mich, dich bei Atelier7 begrüßen zu dürfen. Ob frischer Schnitt oder ein neuer Look – ich nehme mir Zeit für dich. Deinen Besuch im Salon oder unseren mobilen Service kannst du ganz unkompliziert anfragen.',
       offeringsIntro: 'Von einer kleinen Veränderung bis zum neuen Lieblingslook.',
     },
@@ -36,7 +50,7 @@ export function restaurantProfileExample(): Company {
     bookingBufferMinutes: 120, seatingOptionsEnabled: true, brandColor: '#a65d38',
     planTier: 'pro', calendarMode: 'shared',
     profile: {
-      ...defaultCompanyProfile('restaurant'), aboutTitle: 'Benvenuti bei uns.',
+      ...exampleCompanyProfile('restaurant'), aboutTitle: 'Benvenuti bei uns.',
       aboutText: 'Wir sind ein kleines Team mit einer großen Liebe zur italienischen Küche. Bei uns gibt es hausgemachte Pasta, frische Zutaten und Zeit für einen entspannten Abend. Wir freuen uns auf deinen Besuch.',
       offeringsIntro: 'Hausgemacht, saisonal und mit viel Liebe zubereitet. Eine kleine Auswahl aus unserer Küche.',
       menu: [

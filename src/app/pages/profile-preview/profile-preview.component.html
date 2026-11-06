@@ -55,8 +55,8 @@
   <div class="profile-content-layout">
     <div class="profile-panels">
       <section id="profile-panel-booking" class="profile-tab-panel" [attr.role]="hasProProfile ? 'tabpanel' : 'region'" [attr.aria-labelledby]="hasProProfile ? 'profile-tab-booking' : null" [attr.aria-label]="hasProProfile ? null : 'Termin buchen'" [hidden]="activeTab !== 'booking'">
-        <div class="booking-shell" [class.is-first-date-step]="!booking?.hasSelectedDate"><app-restaurant-page [salonFieldsTemplate]="isRestaurant ? null : salonFields" /></div>
-        <p class="profile-local-booking-note" *ngIf="!booking?.hasMobileService">Lokale Vorschau: Testbuchungen bleiben auf diesem Gerät. Es werden keine E-Mails versendet.</p>
+        <div class="booking-shell" [class.is-first-date-step]="!booking?.hasSelectedDate"><app-restaurant-page [salonFieldsTemplate]="isRestaurant ? null : salonFields" [showReferralOffer]="true" /></div>
+        <p class="profile-local-booking-note" *ngIf="isLocalDesignPreview && !booking?.hasMobileService">Lokale Vorschau: Testbuchungen bleiben auf diesem Gerät. Es werden keine E-Mails versendet.</p>
         <div class="profile-booking-footnote"><svg><use href="#p-heart" /></svg>{{ booking?.hasMobileService ? 'Wir freuen uns auf dich – im Salon oder bei dir zu Hause.' : 'Wir freuen uns auf deinen Besuch.' }}</div>
       </section>
 
@@ -107,7 +107,7 @@
     <aside class="profile-aside"><div class="profile-aside-card"><span class="profile-aside-eyebrow">DEIN BESUCH BEI {{ company.name | uppercase }}</span><h2>{{ isRestaurant ? 'Gute Küche.' : 'Dein Look.' }}<br /><em>{{ isRestaurant ? 'Gute Zeit.' : 'Dein Moment.' }}</em></h2><p>{{ profile.welcomeSubtitle }}</p><div class="profile-selected-service" *ngIf="selectedService"><span>Deine Auswahl</span><strong>{{ selectedService.title }}</strong><small>{{ selectedService.duration }}</small></div><button class="profile-primary-button" type="button" (click)="goBooking()">{{ bookingLabel }} <svg><use href="#p-arrow" /></svg></button><div class="profile-aside-divider"></div><div class="profile-aside-location"><svg><use href="#p-pin" /></svg><span><strong>{{ company.address }}</strong></span></div></div><span class="profile-aside-credit">Mit Liebe gebucht. Mit <strong>nextime.</strong></span></aside>
   </div>
 
-  <footer class="profile-footer"><span class="profile-logo"><img src="/nextimeNeuesLogo.png" width="1189" height="323" alt="NexTime – Online Booking" loading="lazy" /></span><p>Mehr Zeit für das, was dir guttut.</p><span>Lokale Designvorschau · Fiktive Profilinformationen</span></footer>
+  <footer class="profile-footer"><span class="profile-logo"><img src="/nextimeNeuesLogo.png" width="1189" height="323" alt="NexTime – Online Booking" loading="lazy" /></span><p>Mehr Zeit für das, was dir guttut.</p><span *ngIf="isLocalDesignPreview">Lokale Designvorschau · Fiktive Profilinformationen</span></footer>
 </main>
 
 <section class="profile-load-state" *ngIf="!company"><p *ngIf="loading">Deine Buchungsseite wird geladen…</p><p *ngIf="!loading">Dieses Unternehmen wurde nicht gefunden.</p></section>

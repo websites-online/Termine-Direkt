@@ -65,7 +65,16 @@ test('profile normalizer bounds uploads and rejects executable image sources', (
   assert.equal(normalized.photos.length, 1);
   assert.equal(normalized.menu.length, 1);
   assert.equal(normalized.menu[0].price, 12.35);
-  assert.equal(profile.defaultCompanyProfile('restaurant').photos.every(photo => photo.src.includes('restaurant-')), true);
+});
+
+test('real company defaults contain no invented photos, menu or introduction', () => {
+  const { profile } = setup();
+  for (const type of ['restaurant', 'friseur']) {
+    const defaults = profile.defaultCompanyProfile(type);
+    assert.equal(defaults.photos.length, 0);
+    assert.equal(defaults.menu.length, 0);
+    assert.equal(defaults.aboutText, '');
+  }
 });
 
 test('profile writes require an authenticated admin before accessing the database', async () => {

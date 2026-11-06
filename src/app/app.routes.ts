@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { isDevMode } from '@angular/core';
 
 import { LandingPageComponent } from './pages/landing-page/landing-page.component';
-import { RestaurantPageComponent } from './pages/restaurant-page/restaurant-page.component';
 import { DemoUnternehmenComponent } from './pages/demo-unternehmen/demo-unternehmen.component';
 import { ImpressumComponent } from './pages/impressum/impressum.component';
 import { DatenschutzComponent } from './pages/datenschutz/datenschutz.component';
@@ -19,11 +18,13 @@ import { companyGuard } from './guards/company.guard';
 export const routes: Routes = [
   ...(isDevMode() ? [{
     path: 'vorschau/salon/:slug',
+    data: { localProfilePreview: true },
     canMatch: [() => typeof window !== 'undefined' && window.location.hostname === 'localhost'],
     loadComponent: () => import('./pages/profile-preview/profile-preview.component')
       .then((module) => module.ProfilePreviewComponent),
   }, {
     path: 'vorschau/restaurant/:slug',
+    data: { localProfilePreview: true },
     canMatch: [() => typeof window !== 'undefined' && window.location.hostname === 'localhost'],
     loadComponent: () => import('./pages/profile-preview/profile-preview.component')
       .then((module) => module.ProfilePreviewComponent),
@@ -91,11 +92,13 @@ export const routes: Routes = [
   },
   {
     path: 'r/:slug',
-    component: RestaurantPageComponent,
+    loadComponent: () => import('./pages/profile-preview/profile-preview.component')
+      .then((module) => module.ProfilePreviewComponent),
   },
   {
     path: ':slug',
-    component: RestaurantPageComponent,
+    loadComponent: () => import('./pages/profile-preview/profile-preview.component')
+      .then((module) => module.ProfilePreviewComponent),
   },
   {
     path: '**',

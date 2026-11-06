@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { afterEveryRender, afterNextRender, Component, ElementRef, inject, Injector, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { afterEveryRender, afterNextRender, Component, ElementRef, inject, Injector, isDevMode, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subscription, switchMap } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { CompanyProfile, defaultCompanyProfile, hasProCompanyProfile, normalizeCompanyProfile } from '../../shared/company-profile';
@@ -25,6 +25,7 @@ interface PreviewService {
     './profile-preview.component.css', './profile-preview-navigation.css',
     './profile-preview-services.css', './profile-preview-menu.css', './profile-preview-photos.css', './profile-preview-about.css', './profile-preview-overlays.css',
     './profile-preview-booking.css', './profile-preview-fields.css', './profile-preview-responsive.css',
+    './profile-preview-success.css',
   ],
   encapsulation: ViewEncapsulation.None,
   host: {
@@ -36,13 +37,18 @@ interface PreviewService {
     '[style.--brand-dark]': "booking?.brandColorDark || '#3c35ae'",
     '[style.--brand-text]': "booking?.brandTextColor || '#ffffff'",
   },
-  providers: [CompanyApiService, PublicBookingService, { provide: LOCAL_PROFILE_PREVIEW, useValue: true }],
+  providers: [CompanyApiService, PublicBookingService, {
+    provide: LOCAL_PROFILE_PREVIEW,
+    useFactory: () => inject(ActivatedRoute).snapshot.data['localProfilePreview'] === true &&
+      isDevMode() && typeof window !== 'undefined' && window.location.hostname === 'localhost',
+  }],
 })
 export class ProfilePreviewComponent implements OnInit, OnDestroy {
   private readonly injector = inject(Injector);
   private readonly route = inject(ActivatedRoute);
   private readonly companies = inject(CompanyApiService);
   private readonly subscription = new Subscription();
+  readonly isLocalDesignPreview = inject(PublicBookingService).profilePreview;
   company?: Company;
   profile: CompanyProfile = normalizeCompanyProfile(undefined);
   loading = true;
