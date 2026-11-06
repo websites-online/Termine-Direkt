@@ -1,16 +1,17 @@
 <section
   class="section page admin-workspace"
-  [class.admin-workspace--settings]="standaloneEditSlug"
+  [class.admin-workspace--settings]="isEditorView"
+  [class.admin-workspace--overview]="!isEditorView"
 >
   <div class="container">
     <div class="admin-topbar">
       <a class="admin-brand" routerLink="/admin"><span>N</span>Nextime Admin</a>
       <div class="admin-actions">
         <a class="btn btn-outline" routerLink="/admin/leads">Leads</a>
-        <a class="btn btn-outline" routerLink="/admin/statistiken" *ngIf="!standaloneEditSlug"
+        <a class="btn btn-outline" routerLink="/admin/statistiken" *ngIf="!isEditorView"
           >Statistiken</a
         >
-        <a class="btn btn-outline" routerLink="/admin" *ngIf="standaloneEditSlug">Zur Übersicht</a>
+        <a class="btn btn-outline" routerLink="/admin" *ngIf="isEditorView">Alle Kunden</a>
         <button class="btn btn-outline" type="button" (click)="logout()">Logout</button>
       </div>
     </div>
@@ -18,48 +19,56 @@
     <header class="admin-page-header">
       <div>
         <p class="admin-eyebrow">
-          {{ standaloneEditSlug ? 'Unternehmensverwaltung' : 'Administration' }}
+          {{ isEditorView ? 'Unternehmensverwaltung' : 'Dein Überblick' }}
         </p>
         <h1>
           {{
-            standaloneEditSlug
-              ? companyForm.value.name || 'Unternehmen bearbeiten'
-              : 'Unternehmen verwalten'
+            isCreatingCompany
+              ? 'Unternehmen hinzufügen'
+              : standaloneEditSlug
+                ? companyForm.value.name || 'Unternehmen bearbeiten'
+                : 'Deine Kunden'
           }}
         </h1>
         <p>
           {{
-            standaloneEditSlug
-              ? 'Alle Einstellungen übersichtlich an einem Ort.'
-              : 'Unternehmen anlegen, öffnen und verwalten.'
+            isCreatingCompany
+              ? 'Lege einen neuen Kunden und seine Buchungsseite an.'
+              : standaloneEditSlug
+                ? 'Alle Einstellungen übersichtlich an einem Ort.'
+                : 'Finde ein Unternehmen und verwalte seine Buchungsseite.'
           }}
         </p>
       </div>
       <a
         class="public-page-link"
         *ngIf="standaloneEditSlug && editingSlug"
-        [routerLink]="['/', editingSlug]"
+        [routerLink]="customerPageLink"
       >
         Kundenseite öffnen <span>↗</span>
       </a>
+      <a class="btn btn-primary add-company-button" routerLink="/admin/neu" *ngIf="!isEditorView">
+        <span aria-hidden="true">+</span> Unternehmen hinzufügen
+      </a>
     </header>
 
-    <div class="settings-layout">
-      <aside class="settings-nav" *ngIf="standaloneEditSlug">
+    <div class="settings-layout" *ngIf="isEditorView">
+      <aside class="settings-nav" aria-label="Unternehmenseinstellungen">
         <span>Einstellungen</span>
         <button type="button" (click)="scrollToSection('grunddaten')">Grunddaten</button>
         <button type="button" (click)="scrollToSection('design')">Erscheinungsbild</button>
+        <button type="button" (click)="scrollToSection('profil')">Profil & Fotos</button>
         <button type="button" (click)="scrollToSection('buchung')">Buchung & Zeiten</button>
         <button type="button" (click)="scrollToSection('angebot')">Angebot</button>
         <button type="button" (click)="scrollToSection('kontakt')">Benachrichtigungen</button>
         <button type="button" (click)="scrollToSection('zugang')">Unternehmenszugang</button>
-        <div class="settings-nav-info">
+        <div class="settings-nav-info" *ngIf="editingSlug">
           <small>Öffentliche URL</small>
           <strong>/{{ editingSlug }}</strong>
         </div>
       </aside>
 
-      <main class="settings-content">
+      <main class="settings-content" *ngIf="!standaloneEditSlug || editingSlug; else companyLoading">
         <form class="admin-form" [formGroup]="companyForm" (ngSubmit)="submitCompany()">
           <section class="settings-section" id="grunddaten">
             <div class="settings-section-heading">
@@ -178,6 +187,15 @@
                 </label>
               </div>
             </div>
+          </section>
+
+          <section class="settings-section" id="profil">
+            <div class="settings-section-heading">
+              <span class="section-number">✦</span>
+              <div><h2>Profil & Fotos</h2><p>Begrüßung, Vorstellung und {{ companyForm.value.serviceType === 'restaurant' ? 'Speisekarte' : 'Leistungsbeschreibungen' }} der Kundenseite.</p></div>
+            </div>
+            <app-company-profile-editor formControlName="profile" [serviceType]="companyForm.value.serviceType || 'restaurant'" [services]="salonServiceSettings" [proFeaturesEnabled]="companyForm.value.planTier === 'pro'" (managePlan)="scrollToSection('zugang')" />
+            <p class="helptext">Die Inhalte werden zusammen mit den Unternehmenseinstellungen gespeichert. Danach kannst du die Kundenseite oben öffnen.</p>
           </section>
 
           <section class="settings-section" id="buchung">
@@ -576,11 +594,11 @@
               <label>
                 <span class="label">Tarif</span>
                 <select class="input" formControlName="planTier">
-                  <option value="starter">Starter – 18,99 €</option>
+                  <option value="starter">Starter – 19,99 €</option>
                   <option value="pro">PRO – 24,99 €</option>
                 </select>
                 <span class="helptext"
-                  >PRO schaltet die ausführliche Unternehmensstatistik frei.</span
+                  >PRO schaltet Fotos, Über uns, {{ companyForm.value.serviceType === 'restaurant' ? 'die Speisekarte' : 'die Leistungsübersicht' }} und die ausführliche Unternehmensstatistik frei.</span
                 >
               </label>
               <label>
@@ -614,15 +632,15 @@
               <p class="error" *ngIf="formError">{{ formError }}</p>
               <p class="success" *ngIf="formSuccess">{{ formSuccess }}</p>
               <span *ngIf="!formError && !formSuccess">{{
-                companyForm.dirty ? 'Nicht gespeicherte Änderungen' : 'Alle Angaben sind aktuell'
+                companyForm.dirty ? 'Nicht gespeicherte Änderungen' : isCreatingCompany ? 'Neues Unternehmen' : 'Alle Angaben sind aktuell'
               }}</span>
             </div>
             <div class="admin-form-actions">
               <button
                 class="btn btn-outline"
                 type="button"
-                *ngIf="editingSlug"
                 (click)="cancelEdit()"
+                [disabled]="isSaving"
               >
                 Abbrechen
               </button>
@@ -639,31 +657,77 @@
           </div>
         </form>
       </main>
+      <ng-template #companyLoading>
+        <section class="company-state" role="status">
+          <ng-container *ngIf="isLoadingCompanies; else companyLoadError">
+            <span class="loading-indicator" aria-hidden="true"></span>
+            <p>Unternehmen wird geladen…</p>
+          </ng-container>
+          <ng-template #companyLoadError>
+            <h2>Unternehmen nicht verfügbar</h2>
+            <p>{{ formError }}</p>
+            <button class="btn btn-outline" type="button" (click)="retryLoading()">Erneut versuchen</button>
+            <a routerLink="/admin">Zur Kundenübersicht</a>
+          </ng-template>
+        </section>
+      </ng-template>
     </div>
 
-    <section class="company-overview" *ngIf="!standaloneEditSlug">
-      <div class="overview-heading">
-        <div>
-          <p class="admin-eyebrow">Übersicht</p>
-          <h2>Alle Unternehmen</h2>
+    <main class="company-overview" *ngIf="!isEditorView" aria-label="Kundenübersicht">
+      <div class="company-toolbar">
+        <label class="company-search">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>
+          <input type="search" aria-label="Unternehmen suchen" placeholder="Nach Name oder Ort suchen…" [value]="searchQuery" (input)="updateSearch($event)" />
+        </label>
+        <div class="company-filters" role="group" aria-label="Nach Betriebsart filtern">
+          <button type="button" [attr.aria-pressed]="companyFilter === 'all'" (click)="companyFilter = 'all'">Alle <span>{{ companies.length }}</span></button>
+          <button type="button" [attr.aria-pressed]="companyFilter === 'friseur'" (click)="companyFilter = 'friseur'">Friseure <span>{{ companyCount('friseur') }}</span></button>
+          <button type="button" [attr.aria-pressed]="companyFilter === 'restaurant'" (click)="companyFilter = 'restaurant'">Restaurants <span>{{ companyCount('restaurant') }}</span></button>
         </div>
-        <span
-          >{{ companies.length }} {{ companies.length === 1 ? 'Unternehmen' : 'Unternehmen' }}</span
-        >
       </div>
-      <p class="helptext" *ngIf="companies.length === 0">Noch keine Unternehmen angelegt.</p>
-      <div class="company-grid" *ngIf="companies.length > 0">
-        <article class="company-card" *ngFor="let company of companies">
+
+      <section class="company-state" *ngIf="isLoadingCompanies" role="status">
+        <span class="loading-indicator" aria-hidden="true"></span>
+        <p>Deine Kunden werden geladen…</p>
+      </section>
+      <section class="company-state" *ngIf="companyListError && !isLoadingCompanies" role="alert">
+        <h2>Die Übersicht ist gerade nicht verfügbar</h2>
+        <p>{{ companyListError }}</p>
+        <button class="btn btn-outline" type="button" (click)="retryLoading()">Erneut versuchen</button>
+      </section>
+
+      <ng-container *ngIf="!isLoadingCompanies && !companyListError">
+      <div class="overview-heading" aria-live="polite">
+        <h2>{{ companyFilter === 'friseur' ? 'Friseursalons' : companyFilter === 'restaurant' ? 'Restaurants' : 'Alle Unternehmen' }}</h2>
+        <span>{{ filteredCompanies.length }}{{ searchQuery.trim() || companyFilter !== 'all' ? ' von ' + companies.length : '' }} Unternehmen</span>
+      </div>
+      <section class="company-state" *ngIf="companies.length === 0">
+        <span class="empty-company-icon" aria-hidden="true">+</span>
+        <h2>Hier beginnt deine Kundenübersicht</h2>
+        <p>Lege dein erstes Unternehmen an. Danach findest du hier seine Buchungsseite und alle Einstellungen.</p>
+        <a class="btn btn-primary" routerLink="/admin/neu">Erstes Unternehmen hinzufügen</a>
+      </section>
+      <section class="company-state" *ngIf="companies.length > 0 && filteredCompanies.length === 0">
+        <h2>Keine passenden Unternehmen</h2>
+        <p>Versuche einen anderen Namen oder Ort oder setze die Filter zurück.</p>
+        <button class="btn btn-outline" type="button" (click)="clearFilters()">Suche & Filter zurücksetzen</button>
+      </section>
+
+      <div class="company-grid" *ngIf="filteredCompanies.length > 0">
+        <article class="company-card" *ngFor="let company of filteredCompanies">
           <div class="company-card-top">
             <span class="company-logo" [style.background]="company.brandColor || '#4f46e5'">
               <img *ngIf="company.logoUrl" [src]="company.logoUrl" [alt]="company.name + ' Logo'" />
               <span *ngIf="!company.logoUrl">{{ company.name.slice(0, 2).toUpperCase() }}</span>
             </span>
+            <div class="company-card-identity">
+              <h3>{{ company.name }}</h3>
+              <span class="company-type">{{ company.serviceType === 'friseur' ? 'Friseursalon' : 'Restaurant' }}</span>
+            </div>
             <span class="company-tier" [class.company-tier--pro]="company.planTier === 'pro'">{{
               company.planTier === 'pro' ? 'PRO' : 'Starter'
             }}</span>
           </div>
-          <h3>{{ company.name }}</h3>
           <p>{{ company.address || 'Keine Adresse hinterlegt' }}</p>
           <dl>
             <div>
@@ -675,30 +739,28 @@
               <dd>{{ company.bookingMode === 'request' ? 'Anfrage' : 'Direkt' }}</dd>
             </div>
             <div>
-              <dt>Tarif</dt>
-              <dd>{{ company.planTier === 'pro' ? 'PRO – 24,99 €' : 'Starter – 18,99 €' }}</dd>
-            </div>
-            <div>
               <dt>URL</dt>
               <dd>/{{ company.slug }}</dd>
             </div>
           </dl>
           <div class="company-actions">
-            <a class="btn btn-outline" [routerLink]="['/', company.slug]">Seite</a>
             <a class="btn btn-primary" [routerLink]="['/admin/unternehmen', company.slug]"
-              >Einstellungen</a
+              [attr.aria-label]="company.name + ' bearbeiten'">Bearbeiten</a
             >
+            <a class="btn btn-outline" [routerLink]="companyPageLink(company)" [attr.aria-label]="company.name + ' Buchungsseite öffnen'">Buchungsseite <span aria-hidden="true">↗</span></a>
             <button
               class="delete-button"
               type="button"
               (click)="deleteCompany(company.slug)"
-              aria-label="Unternehmen löschen"
+              [attr.aria-label]="company.name + ' löschen'"
+              title="Unternehmen löschen"
             >
-              ×
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7m4-7v7"/></svg>
             </button>
           </div>
         </article>
       </div>
-    </section>
+      </ng-container>
+    </main>
   </div>
 </section>

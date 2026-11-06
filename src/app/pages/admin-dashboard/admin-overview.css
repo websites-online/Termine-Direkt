@@ -1,0 +1,71 @@
+.add-company-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  flex-shrink: 0;
+  width: auto;
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.add-company-button > span { font-size: 1.2rem; font-weight: 400; }
+.company-overview { padding-bottom: 36px; }
+.company-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; }
+.company-search { display: flex; align-items: center; gap: 10px; flex: 1 1 270px; min-width: 0; min-height: 48px; padding: 0 14px; border: 1px solid #e1e6ee; border-radius: 12px; background: #fff; }
+.company-search:focus-within { border-color: #9c95ef; box-shadow: 0 0 0 3px #4f46e50c; }
+.company-search svg { width: 18px; height: 18px; flex-shrink: 0; fill: none; stroke: #98a2b3; stroke-width: 1.7; stroke-linecap: round; }
+.company-search input { width: 100%; min-width: 0; min-height: 46px; border: 0; outline: 0; background: transparent; font: inherit; font-size: 0.8rem; color: #344054; }
+.company-search input::placeholder { color: #98a2b3; }
+.company-filters { display: flex; gap: 4px; padding: 4px; border: 1px solid #e5e9f0; border-radius: 12px; background: #edf0f6; }
+.company-filters button { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 38px; padding: 0 13px; border: 1px solid transparent; border-radius: 8px; background: transparent; font: inherit; font-size: 0.75rem; font-weight: 650; color: #667085; cursor: pointer; }
+.company-filters button[aria-pressed='true'] { border-color: #e2e5ed; background: #fff; color: #4f46e5; box-shadow: 0 2px 5px #34405408; }
+.company-filters button > span { padding: 1px 5px; border-radius: 5px; background: #e2e6ef; color: #7b8798; font-size: 0.6rem; }
+.company-filters button[aria-pressed='true'] > span { background: #eef0ff; color: #7068dd; }
+.overview-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.overview-heading h2 { margin: 0; color: #475467; font-size: 0.85rem; font-weight: 750; }
+.overview-heading > span { color: #8a94a6; font-size: 0.72rem; }
+.company-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.company-card { display: flex; flex-direction: column; min-width: 0; padding: 22px; border: 1px solid #e1e6ee; border-radius: 16px; background: #fff; box-shadow: 0 3px 12px #34405403; }
+.company-card-top { display: flex; align-items: center; gap: 12px; }
+.company-logo { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; border-radius: 12px; overflow: hidden; color: #fff; font-size: 0.72rem; font-weight: 800; }
+.company-logo img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+.company-card-identity { min-width: 0; flex: 1; }
+.company-card h3 { margin: 0 0 3px; color: #273349; font-size: 0.98rem; line-height: 1.35; overflow-wrap: anywhere; }
+.company-type { color: #8a94a6; font-size: 0.67rem; }
+.company-tier { flex-shrink: 0; padding: 4px 8px; border-radius: 6px; background: #f1f3f7; color: #667085; font-size: 0.6rem; font-weight: 750; }
+.company-tier--pro { background: #fff4d8; color: #a15c05; }
+.company-card > p { margin: 15px 0 0; color: #7b8798; font-size: 0.74rem; line-height: 1.5; overflow-wrap: anywhere; }
+.company-card dl { display: grid; gap: 9px; margin: 16px 0 20px; padding: 15px 0; border-top: 1px solid #eef0f4; border-bottom: 1px solid #eef0f4; }
+.company-card dl div { display: grid; grid-template-columns: 105px minmax(0, 1fr); gap: 10px; }
+.company-card dt { color: #98a2b3; font-size: 0.66rem; }
+.company-card dd { overflow: hidden; margin: 0; color: #5b677a; font-size: 0.68rem; font-weight: 650; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+.company-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) 40px; align-items: center; gap: 8px; margin-top: auto; }
+.company-actions .btn { display: flex; justify-content: center; align-items: center; gap: 6px; min-width: 0; min-height: 40px; padding: 0 10px; border-radius: 9px; font-size: 0.72rem; text-decoration: none; }
+.delete-button { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid transparent; border-radius: 9px; background: #fff; color: #a8b0be; cursor: pointer; }
+.delete-button:hover, .delete-button:focus-visible { border-color: #f5d6d6; background: #fff7f7; color: #c04444; }
+.delete-button svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.company-state { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 42px 22px; border: 1px solid #e4e8ef; border-radius: 16px; background: #fff; text-align: center; }
+.company-state h2 { margin: 0; color: #344054; font-size: 1rem; }
+.company-state p { max-width: 410px; margin: 0; color: #8a94a6; font-size: 0.8rem; line-height: 1.7; }
+.company-state .btn { width: auto; min-height: 44px; padding: 0 18px; margin-top: 4px; font-size: 0.77rem; text-decoration: none; }
+.empty-company-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 13px; background: #eef0ff; color: #7068dd; font-size: 1.4rem; }
+.loading-indicator { width: 23px; height: 23px; border: 2px solid #e8eaf5; border-top-color: #7068dd; border-radius: 50%; animation: admin-load 0.8s linear infinite; }
+@keyframes admin-load { to { transform: rotate(360deg); } }
+@media (max-width: 720px) {
+  .admin-workspace--overview .admin-page-header { flex-direction: column; gap: 20px; }
+  .add-company-button { width: 100%; }
+  .company-toolbar { gap: 12px; margin-bottom: 24px; }
+  .company-search { flex-basis: 100%; }
+  .company-filters { width: 100%; }
+  .company-filters button { flex: 1; min-width: 0; min-height: 40px; padding-inline: 8px; font-size: 0.72rem; gap: 5px; }
+  .company-grid { grid-template-columns: 1fr; gap: 14px; }
+  .company-card { padding: 18px; }
+  .company-actions .btn, .delete-button { min-height: 44px; height: 44px; }
+  .company-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) 40px; gap: 7px; }
+  .company-actions .btn { padding-inline: 7px; font-size: 0.7rem; }
+}
+@media (pointer: coarse) { .company-search input:focus { font-size: 16px; } }
+@media (prefers-reduced-motion: reduce) { .loading-indicator { animation: none; } }

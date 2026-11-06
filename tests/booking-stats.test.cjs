@@ -170,3 +170,27 @@ test('Atelier7 conversion counts submitted requests and approved completions', a
   assert.equal(result.conversion.submissions, 3);
   assert.equal(result.conversion.completions, 1);
 });
+
+test('admin returns per-company and overall previous-month comparisons plus a monthly trend', async () => {
+  const { company, state, call } = setup();
+  state.reservations.push(activity(company.slug), activity(company.slug, { created_at: '2026-10-01T10:00:00Z' }));
+  state.booking_requests.push(activity(company.slug, { status: 'pending' }));
+  const result = await call('admin-stats.ts', 'GET', {}, { period: 'this-month' });
+  assert.equal(result.interactionsTotal, 2);
+  assert.equal(result.requestsTotal, 1);
+  assert.equal(result.comparison.interactionsTotal, 1);
+  assert.equal(result.comparison.to, '2026-10-03');
+  assert.equal(result.rows[0].previousTotal, 1);
+  assert.equal(result.rows[0].changePercent, 100);
+  assert.equal(result.monthlyTrend.length, 6);
+});
+
+test('admin comparisons include paginated rows beyond the first 1000 records', async () => {
+  const { company, state, call } = setup();
+  for (let index = 0; index < 1002; index++) state.reservations.push(activity(company.slug));
+  state.reservations.push(activity(company.slug, { created_at: '2026-10-01T10:00:00Z' }));
+  const result = await call('admin-stats.ts', 'GET', {}, { period: 'this-month' });
+  assert.equal(result.bookingsTotal, 1002);
+  assert.equal(result.comparison.bookingsTotal, 1);
+  assert.equal(result.rows[0].change, 1001);
+});

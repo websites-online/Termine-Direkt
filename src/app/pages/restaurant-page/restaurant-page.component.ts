@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { afterNextRender, Component, ElementRef, Injector, Input, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
@@ -7,6 +7,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Company, CompanyApiService } from '../../services/company-api.service';
 import { BookingAnalyticsService } from '../../services/booking-analytics.service';
 import { PublicBookingService } from '../../services/public-booking.service';
+import { BookingReferralComponent } from '../../components/booking-referral/booking-referral.component';
 import {
   BookingLocation, formatHomeVisitAddress, hasMobileService, normalizeHomeVisitAddress,
 } from '../../shared/booking-location';
@@ -25,19 +26,24 @@ type ParsedSchedule = {
 @Component({
   selector: 'app-restaurant-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, HttpClientModule],
+  imports: [CommonModule, ReactiveFormsModule, HttpClientModule, BookingReferralComponent],
   templateUrl: './restaurant-page.component.html',
   styleUrl: './restaurant-page.component.css',
 })
 export class RestaurantPageComponent implements OnInit {
+  @Input() salonFieldsTemplate: TemplateRef<{ $implicit: RestaurantPageComponent }> | null = null;
+  @Input() showReferralOffer = false;
   private readonly route = inject(ActivatedRoute);
   private readonly companyService = inject(CompanyApiService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly http = inject(HttpClient);
   readonly publicBooking = inject(PublicBookingService);
   private readonly analytics = inject(BookingAnalyticsService);
+  private readonly injector = inject(Injector);
   @ViewChild('calendarCard') private calendarCard?: ElementRef<HTMLElement>;
   @ViewChild('detailsCard') private detailsCard?: ElementRef<HTMLElement>;
+  @ViewChild('thanksPanel') private thanksPanel?: ElementRef<HTMLElement>;
+  private thanksTrigger?: HTMLElement;
 
   readonly slug = this.route.snapshot.paramMap.get('slug') ?? '';
   company: Company | null = null;
@@ -228,7 +234,7 @@ export class RestaurantPageComponent implements OnInit {
     const bookingLocation = this.bookingForm.controls.bookingLocation.value;
 
     this.isSubmitting = true;
-    const submission = this.hasMobileService
+    const submission = this.hasMobileService || this.publicBooking.profilePreview
       ? this.publicBooking.submit(this.company, payload)
       : this.http.post<{ success: boolean; requestMode?: boolean }>('/api/reservations', payload);
     submission.subscribe({
@@ -238,7 +244,7 @@ export class RestaurantPageComponent implements OnInit {
           this.lastReservationTime = reservationTime;
           this.lastBookingLocation = bookingLocation;
           this.lastVisitAddress = visitAddress ? formatHomeVisitAddress(visitAddress) : '';
-          this.showThanksModal = true;
+          this.openThanksModal();
           this.successMessage = this.getSuccessMessage();
           this.loadSlotAvailability();
           this.bookingForm.reset({
@@ -274,6 +280,41 @@ export class RestaurantPageComponent implements OnInit {
 
   closeThanksModal(): void {
     this.showThanksModal = false;
+    if (this.showReferralOffer) this.thanksTrigger?.focus({ preventScroll: true });
+  }
+
+  get isSuccessPreview(): boolean {
+    return this.publicBooking.profilePreview && this.publicBooking.isLocalPreview &&
+      this.route.snapshot.queryParamMap.get('ansicht') === 'erfolg';
+  }
+
+  private openThanksModal(): void {
+    this.showThanksModal = true;
+    if (!this.showReferralOffer) return;
+    this.thanksTrigger = document.activeElement instanceof HTMLElement
+      ? document.activeElement : undefined;
+    afterNextRender(() => {
+      this.thanksPanel?.nativeElement.focus({ preventScroll: true });
+    }, { injector: this.injector });
+  }
+
+  onThanksKeydown(event: KeyboardEvent): void {
+    if (!this.showReferralOffer) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeThanksModal();
+    } else if (event.key === 'Tab') {
+      const elements = Array.from(this.thanksPanel?.nativeElement
+        .querySelectorAll<HTMLElement>('button:not([disabled]), summary, a[href]') || [])
+        .filter(element => element.getClientRects().length > 0);
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+      if (first && last && (document.activeElement === (event.shiftKey ? first : last) ||
+        (event.shiftKey && document.activeElement === this.thanksPanel?.nativeElement))) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      }
+    }
   }
 
   get isSalon(): boolean {
@@ -607,7 +648,7 @@ export class RestaurantPageComponent implements OnInit {
   }
 
   trackBookingStarted(): void {
-    if (this.company && !(this.hasMobileService && this.publicBooking.isLocalPreview)) {
+    if (this.company && !(this.publicBooking.profilePreview || (this.hasMobileService && this.publicBooking.isLocalPreview))) {
       this.analytics.trackBookingStarted(this.slug);
     }
   }
@@ -1074,7 +1115,7 @@ export class RestaurantPageComponent implements OnInit {
     this.companyService.getCompany(this.slug).subscribe({
       next: (company) => {
         this.company = company;
-        if (!(this.hasMobileService && this.publicBooking.isLocalPreview)) {
+        if (!(this.publicBooking.profilePreview || (this.hasMobileService && this.publicBooking.isLocalPreview))) {
           this.analytics.trackPageView(this.slug);
         }
         this.logoLoadFailed = false;
@@ -1083,6 +1124,12 @@ export class RestaurantPageComponent implements OnInit {
         this.updateAddressValidators();
         this.refreshCalendar();
         this.loadSlotAvailability();
+        // Open the design example without creating a booking or sending a message.
+        if (company && this.isSuccessPreview) {
+          this.lastReservationDate = this.selectedDateLabel;
+          this.lastReservationTime = this.isSalon ? '10:00' : '19:00';
+          this.openThanksModal();
+        }
       },
       error: () => {
         this.company = null;
@@ -1108,7 +1155,7 @@ export class RestaurantPageComponent implements OnInit {
         query.set('employeeId', employeeId);
       }
     }
-    const availability = this.hasMobileService
+    const availability = this.hasMobileService || this.publicBooking.profilePreview
       ? this.publicBooking.availability(this.company, this.selectedDate, query)
       : this.http.get<{ slots: Record<string, number> }>(`/api/reservations?${query.toString()}`);
     availability.subscribe({

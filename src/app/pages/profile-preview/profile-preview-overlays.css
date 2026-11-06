@@ -1,0 +1,38 @@
+.profile-preview .profile-gallery-dialog{max-width:900px;width:calc(100% - 48px);max-height:calc(100dvh - 48px);padding:0;border:1px solid #fff4;border-radius:19px;background:#fff;color:#51445d;box-shadow:0 24px 100px #13102440}
+.profile-preview .profile-gallery-dialog::backdrop{background:#211c29bc;backdrop-filter:blur(9px)}
+.profile-preview .profile-gallery-dialog-inner{display:grid;max-height:calc(100dvh - 50px);grid-template-rows:auto minmax(0,1fr) auto}
+.profile-preview .profile-gallery-dialog-top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 18px;font-size:11px}
+.profile-preview .profile-gallery-dialog-inner>img{width:100%;height:min(65vh,580px);min-height:0;object-fit:contain;background:#f5f1f0}
+.profile-preview .profile-gallery-dialog-bottom{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:17px 20px}
+.profile-preview .profile-gallery-dialog-bottom>div:first-child{display:grid;gap:5px}
+.profile-preview .profile-gallery-dialog-bottom strong{font-size:12px;font-weight:500}
+.profile-preview .profile-gallery-dialog-bottom span{font-size:9px;color:#ae9cba}
+.profile-preview .profile-gallery-dialog-bottom>div:last-child{display:flex;gap:9px}
+.profile-preview .profile-selection-dialog{width:440px;max-width:calc(100% - 32px);max-height:80dvh;padding:0;border:1px solid var(--p-line);border-radius:20px;background:#fff;color:var(--p-ink);box-shadow:0 24px 90px #24203830;overflow:hidden}
+.profile-preview .profile-selection-dialog[open]{display:flex;flex-direction:column;animation:profile-gallery-arrive .2s ease}
+.profile-preview .profile-selection-dialog::backdrop{background:#211d354d;backdrop-filter:blur(4px)}
+.profile-preview .profile-selection-grip{display:none}
+.profile-preview .profile-selection-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:23px 22px 17px;border-bottom:1px solid var(--p-line);flex-shrink:0}
+.profile-preview .profile-selection-header h2{font-size:18px;font-weight:600;line-height:1.4;letter-spacing:-.4px;margin:0 0 6px}
+.profile-preview .profile-selection-header p{font-size:12px;line-height:1.7;margin:0;color:var(--p-muted)}
+.profile-preview .profile-selection-header .profile-icon-button{flex-shrink:0;width:34px;height:34px}
+.profile-preview .profile-selection-options{overflow-y:auto;overscroll-behavior:contain;padding:8px 12px 12px;min-height:0}
+.profile-preview .profile-selection-option{display:flex;align-items:center;justify-content:space-between;gap:15px;min-height:62px;text-align:left;background:#fff;border:1px solid transparent;border-bottom-color:#f0edf4;border-radius:10px;padding:13px 14px;width:100%;color:var(--p-ink);transition:background .15s,border-color .15s}
+.profile-preview .profile-selection-option:last-child{border-bottom-color:transparent}
+.profile-preview .profile-selection-option>span:first-child{display:grid;gap:3px;min-width:0}
+.profile-preview .profile-selection-option strong{font-size:14px;line-height:1.5;font-weight:500;overflow-wrap:anywhere}
+.profile-preview .profile-selection-option small{font-size:11px;line-height:1.5;color:var(--p-muted)}
+.profile-preview .profile-selection-option:hover{background:#faf9fd}
+.profile-preview .profile-selection-option[aria-pressed=true]{background:#f3f0fc;border-color:#dfd7f2}
+.profile-preview .profile-selection-check{display:grid;place-items:center;width:21px;height:21px;border:1px solid #ddd7e9;border-radius:50%;flex-shrink:0}
+.profile-preview .profile-selection-check svg{width:13px;height:13px}
+.profile-preview .profile-selection-option[aria-pressed=true] .profile-selection-check{background:var(--p-purple);color:#fff;border-color:var(--p-purple)}
+@media(max-width:760px){
+ .profile-preview .profile-selection-dialog{position:fixed;inset:auto 0 0;width:100%;max-width:100%;max-height:min(78dvh,650px);margin:auto 0 0;border:0;border-top:1px solid var(--p-line);border-radius:22px 22px 0 0}
+ .profile-preview .profile-selection-grip{display:block;flex-shrink:0;width:34px;height:4px;border-radius:5px;background:#ddd8e5;margin:10px auto 0}
+ .profile-preview .profile-selection-header{padding:17px 20px 15px}
+ .profile-preview .profile-selection-header h2{font-size:18px}
+ .profile-preview .profile-selection-options{padding-bottom:max(14px,env(safe-area-inset-bottom))}
+ .profile-preview .profile-selection-dialog[open]{animation:profile-selection-arrive .22s ease}
+}
+@keyframes profile-selection-arrive{from{opacity:0;transform:translateY(25px)}to{opacity:1;transform:translateY(0)}}

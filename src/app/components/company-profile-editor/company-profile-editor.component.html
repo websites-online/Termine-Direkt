@@ -1,0 +1,55 @@
+<div class="profile-editor" [formGroup]="form" (focusout)="touch()">
+  <div class="editor-intro"><span>Dein Auftritt</span><p>Die Begrüßung kannst du für jedes Unternehmen anpassen. Fotos, Vorstellung und {{ serviceType === 'restaurant' ? 'Speisekarte' : 'Leistungsübersicht' }} gehören zu PRO.</p></div>
+  <div class="editor-fields">
+    <label><span>Begrüßung</span><input formControlName="welcomeTitle" maxlength="80" placeholder="Schön, dass du da bist." /></label>
+    <label><span>Kurzer Untertitel</span><input formControlName="welcomeSubtitle" maxlength="160" placeholder="Dein Termin. Ganz entspannt." /></label>
+  </div>
+  <div class="editor-pro-notice" *ngIf="!proFeaturesEnabled">
+    <span>PRO</span><h3>Mehr Platz für dein Unternehmen</h3>
+    <p>Die Reiter Fotos, Über uns und {{ serviceType === 'restaurant' ? 'Speisekarte' : 'Leistungen' }} sind im PRO-Tarif sichtbar. Bereits gespeicherte Inhalte bleiben erhalten.</p>
+    <button type="button" class="editor-add" (click)="managePlan.emit()">Tarif ansehen</button>
+  </div>
+  <ng-container *ngIf="proFeaturesEnabled">
+  <div class="editor-block">
+    <div class="editor-heading"><div><h3>Über uns</h3><p>Stell dich oder dein Unternehmen in wenigen Sätzen vor.</p></div><span class="editor-optional">Optional</span></div>
+    <label><span>Überschrift</span><input formControlName="aboutTitle" maxlength="100" placeholder="Hi, ich bin Arsel." /></label>
+    <label><span>Vorstellungstext</span><textarea formControlName="aboutText" rows="5" maxlength="2400" placeholder="Erzähl kurz, wer du bist und was deine Kunden bei dir erwartet."></textarea><small>{{ form.controls.aboutText.value.length }} / 2400 Zeichen · Absätze werden übernommen.</small></label>
+  </div>
+  <div class="editor-block">
+    <div class="editor-heading"><div><h3>Fotos</h3><p>Das erste Foto erscheint auch neben der Begrüßung.</p></div><span class="editor-optional">{{ value.photos.length }} / 6</span></div>
+    <div class="editor-photo-list">
+      <article class="editor-photo" *ngFor="let photo of value.photos; let index = index">
+        <div class="editor-photo-image"><img [src]="photo.src" [alt]="photo.alt || 'Fotovorschau'" /><span *ngIf="index === 0">Titelbild</span></div>
+        <div class="editor-photo-content">
+          <label><span>Bildtitel</span><input [value]="photo.title" (input)="photoText(photo, 'title', $event)" maxlength="100" placeholder="z. B. Ein Blick in unsere Räume" /></label>
+          <label><span>Bildbeschreibung</span><input [value]="photo.alt" (input)="photoText(photo, 'alt', $event)" maxlength="180" placeholder="Was ist auf dem Foto zu sehen?" /></label>
+          <div class="editor-photo-actions"><button type="button" [disabled]="index === 0" (click)="movePhoto(index, -1)" [attr.aria-label]="'Foto ' + (index + 1) + ' nach vorne'">↑</button><button type="button" [disabled]="index === value.photos.length - 1" (click)="movePhoto(index, 1)" [attr.aria-label]="'Foto ' + (index + 1) + ' nach hinten'">↓</button><button class="editor-remove" type="button" (click)="removePhoto(index)" [attr.aria-label]="'Foto ' + (index + 1) + ' entfernen'">Entfernen</button></div>
+        </div>
+      </article>
+    </div>
+    <input #photosInput type="file" accept="image/jpeg,image/png,image/webp" multiple hidden (change)="upload($event)" />
+    <div class="editor-upload-actions"><button type="button" class="editor-add" (click)="photosInput.click()" [disabled]="uploading || disabled || value.photos.length >= 6">{{ uploading ? 'Bilder werden vorbereitet…' : '+ Fotos hochladen' }}</button><button type="button" class="editor-text-button" *ngIf="!value.photos.length" (click)="useExamplePhotos()">Passende Beispielbilder verwenden</button></div>
+    <p class="editor-hint">JPG, PNG oder WebP bis 5 MB. Fotos werden automatisch für die mobile Ansicht verkleinert. Ohne Fotos wird der Reiter ausgeblendet.</p>
+    <p class="editor-error" role="alert" *ngIf="error">{{ error }}</p>
+  </div>
+  <div class="editor-block">
+    <div class="editor-heading"><div><h3>{{ serviceType === 'restaurant' ? 'Speisekarte' : 'Leistungen' }}</h3><p>{{ serviceType === 'restaurant' ? 'Gerichte nach Kategorie mit optionalen Preisen.' : 'Beschreibungen ergänzen die Leistungen aus dem Bereich „Angebot“.' }}</p></div></div>
+    <div class="editor-fields"><label><span>Überschrift</span><input formControlName="offeringsTitle" maxlength="100" [placeholder]="serviceType === 'restaurant' ? 'Unsere Speisekarte' : 'Unsere Leistungen'" /></label><label><span>Einleitung</span><textarea formControlName="offeringsIntro" rows="2" maxlength="600" placeholder="Ein kurzer Einblick in dein Angebot."></textarea></label></div>
+    <ng-container *ngIf="serviceType === 'restaurant'; else salonDescriptions">
+      <details class="editor-dish" *ngFor="let dish of value.menu; let index = index" [open]="openDishId === dish.id" (toggle)="dishToggle(dish.id, $event)">
+        <summary><span><strong>{{ dish.name || 'Neues Gericht' }}</strong><small>{{ dish.category }}</small></span><span class="editor-dish-summary-price">{{ dish.price !== undefined ? menuPrice(dish.price) : '' }}<span aria-hidden="true">⌄</span></span></summary>
+        <div class="editor-dish-fields">
+        <div class="editor-dish-top"><strong>Gericht {{ index + 1 }}</strong><button type="button" class="editor-remove" (click)="removeDish(index)" [attr.aria-label]="'Gericht ' + (index + 1) + ' entfernen'">Entfernen</button></div>
+        <label><span>Name*</span><input [value]="dish.name" (input)="dishText(dish, 'name', $event)" maxlength="120" placeholder="z. B. Pappardelle al Pomodoro" /></label>
+        <div class="editor-fields"><label><span>Kategorie</span><input [value]="dish.category" (input)="dishText(dish, 'category', $event)" maxlength="60" placeholder="z. B. Pasta" /></label><label><span>Preis in € (optional)</span><input type="number" min="0" max="10000" step="0.01" inputmode="decimal" [value]="dish.price ?? ''" (input)="dishPrice(dish, $event)" placeholder="16,50" /></label></div>
+        <label><span>Beschreibung</span><textarea [value]="dish.description" (input)="dishText(dish, 'description', $event)" maxlength="600" rows="2" placeholder="Zutaten oder eine kurze Beschreibung."></textarea></label>
+        </div>
+      </details>
+      <p class="editor-error" *ngIf="menuInvalid">Bitte jedem Gericht einen Namen und gegebenenfalls einen gültigen Preis geben.</p>
+      <button type="button" class="editor-add" (click)="addDish()" [disabled]="value.menu.length >= 60">+ Gericht hinzufügen</button>
+      <p class="editor-hint">Ohne Preis bleibt die Preisanzeige beim Gericht leer. Die Speisekarte verändert die Tischreservierung nicht.</p>
+    </ng-container>
+    <ng-template #salonDescriptions><label class="editor-service-description" *ngFor="let service of services"><span>{{ service.label || 'Neue Leistung' }}</span><textarea [value]="value.serviceDescriptions[service.value] || ''" (input)="serviceDescription(service.value, $event)" maxlength="600" rows="2" placeholder="Optionale Beschreibung dieser Leistung."></textarea></label></ng-template>
+  </div>
+  </ng-container>
+</div>

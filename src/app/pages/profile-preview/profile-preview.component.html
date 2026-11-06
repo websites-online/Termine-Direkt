@@ -1,0 +1,164 @@
+<svg class="profile-symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <symbol id="p-menu" viewBox="0 0 24 24"><path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v18M20 21V3c-4 3-5 8 0 10" /></symbol>
+    <symbol id="p-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5" /></symbol>
+    <symbol id="p-back" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6" /></symbol>
+        <symbol id="p-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></symbol>
+    <symbol id="p-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></symbol>
+    <symbol id="p-heart" viewBox="0 0 24 24"><path d="M20.8 5.6a5.5 5.5 0 0 0-7.8 0L12 6.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 22l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></symbol>
+    <symbol id="p-share" viewBox="0 0 24 24"><path d="M12 15V3m-4 4 4-4 4 4M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8" /></symbol>
+    <symbol id="p-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M7 3v4m10-4v4M3 11h18m-13 5h2m4 0h2" /></symbol>
+    <symbol id="p-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="m8.5 7.5 12 12m-12-3 12-12M12 12l-3 3" /></symbol>
+    <symbol id="p-spark" viewBox="0 0 24 24"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5ZM20 2v4m-2-2h4" /></symbol>
+    <symbol id="p-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></symbol>
+    <symbol id="p-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+    <symbol id="p-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6" /></symbol>
+    <symbol id="p-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></symbol>
+    <symbol id="p-coffee" viewBox="0 0 24 24"><path d="M4 8h13v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5Zm13 1h2a3 3 0 0 1 0 6h-2M7 3v2m4-2v2m4-2v2M2 22h18" /></symbol>
+    <symbol id="p-leaf" viewBox="0 0 24 24"><path d="M20 3C9 2 3 6 4 13a7 7 0 0 0 10 6c5-3 6-9 6-16ZM3 22 15 10" /></symbol>
+  </defs>
+</svg>
+
+<main class="profile-main" *ngIf="company as company">
+  <header class="company-hero profile-company-header" aria-label="Unternehmensinformationen">
+    <div class="company-identity">
+      <div class="company-hero-logo">
+        <img *ngIf="booking?.hasCompanyLogo" [src]="company.logoUrl" [alt]="company.name + ' Logo'" (error)="booking?.handleLogoError()" />
+        <span *ngIf="!booking?.hasCompanyLogo">{{ booking?.companyInitials || company.name[0] }}</span>
+      </div>
+      <div class="company-hero-copy">
+        <h1>{{ company.name }}</h1>
+        <div class="company-meta">
+          <span><svg aria-hidden="true"><use href="#p-pin" /></svg>{{ company.address || 'Adresse folgt' }}</span>
+          <span><svg aria-hidden="true"><use href="#p-clock" /></svg>{{ company.hours || 'Öffnungszeiten folgen' }}<ng-container *ngIf="company.breakHours"> · Pause {{ company.breakHours }}</ng-container></span>
+        </div>
+      </div>
+    </div>
+    <div class="company-hero-mark" aria-hidden="true"></div>
+    <button class="profile-icon-button profile-share-button" type="button" (click)="share()" [attr.aria-label]="isRestaurant ? 'Restaurant teilen' : 'Salon teilen'" title="Link kopieren"><svg><use href="#p-share" /></svg></button>
+  </header>
+
+  <section class="profile-welcome" aria-labelledby="profile-welcome-title">
+    <div class="profile-welcome-copy">
+      <span class="profile-welcome-eyebrow">WILLKOMMEN BEI UNS</span>
+      <h2 id="profile-welcome-title">{{ profile.welcomeTitle || 'Schön, dass du da bist.' }}</h2>
+      <p *ngIf="profile.welcomeSubtitle">{{ profile.welcomeSubtitle }}</p>
+    </div>
+    <button type="button" class="profile-welcome-photo" *ngIf="gallery.length" (click)="setTab('photos')" [attr.aria-label]="isRestaurant ? 'Restaurantfotos ansehen' : 'Salonfotos ansehen'">
+      <img [src]="gallery[0].src" alt="" width="152" height="152" decoding="async" />
+      <span aria-hidden="true"><svg><use href="#p-grid" /></svg></span>
+    </button>
+  </section>
+
+  <nav class="profile-tab-bar" *ngIf="hasProProfile" aria-label="Profilbereiche"><div role="tablist" aria-label="Unternehmensinformationen"><button *ngFor="let tab of tabs; let index = index" type="button" role="tab" [id]="'profile-tab-' + tab.id" [attr.aria-controls]="'profile-panel-' + tab.id" [attr.aria-selected]="activeTab === tab.id" [attr.tabindex]="activeTab === tab.id ? 0 : -1" [class.is-active]="activeTab === tab.id" (click)="setTab(tab.id)" (keydown)="onTabKey($event, index)"><svg><use [attr.href]="'#p-' + tab.icon" /></svg>{{ tab.label }}</button></div><span class="profile-tabs-note"><span></span>Persönlich. Unkompliziert.</span></nav>
+
+  <div class="profile-content-layout">
+    <div class="profile-panels">
+      <section id="profile-panel-booking" class="profile-tab-panel" [attr.role]="hasProProfile ? 'tabpanel' : 'region'" [attr.aria-labelledby]="hasProProfile ? 'profile-tab-booking' : null" [attr.aria-label]="hasProProfile ? null : 'Termin buchen'" [hidden]="activeTab !== 'booking'">
+        <div class="booking-shell" [class.is-first-date-step]="!booking?.hasSelectedDate"><app-restaurant-page [salonFieldsTemplate]="isRestaurant ? null : salonFields" [showReferralOffer]="true" /></div>
+        <p class="profile-local-booking-note" *ngIf="isLocalDesignPreview && !booking?.hasMobileService">Lokale Vorschau: Testbuchungen bleiben auf diesem Gerät. Es werden keine E-Mails versendet.</p>
+        <div class="profile-booking-footnote"><svg><use href="#p-heart" /></svg>{{ booking?.hasMobileService ? 'Wir freuen uns auf dich – im Salon oder bei dir zu Hause.' : 'Wir freuen uns auf deinen Besuch.' }}</div>
+      </section>
+
+      <section id="profile-panel-services" *ngIf="hasProProfile" class="profile-tab-panel" role="tabpanel" aria-labelledby="profile-tab-services" [hidden]="activeTab !== 'services'">
+        <div class="profile-panel-heading"><div><span class="profile-eyebrow">{{ isRestaurant ? 'FRISCH AUF DEN TISCH' : 'FÜR DICH' }}</span><h2>{{ profile.offeringsTitle || (isRestaurant ? 'Unsere Speisekarte' : 'Unsere Leistungen') }}</h2></div></div>
+        <p class="profile-panel-intro" *ngIf="profile.offeringsIntro">{{ profile.offeringsIntro }}</p>
+        <div class="profile-chip-row" *ngIf="categories.length > 1" [attr.aria-label]="isRestaurant ? 'Speisekarte filtern' : 'Leistungen filtern'"><button *ngFor="let category of categories" type="button" [class.is-active]="serviceCategory === category.id" [attr.aria-pressed]="serviceCategory === category.id" (click)="serviceCategory = category.id">{{ category.label }}</button></div>
+        <ng-container *ngIf="isRestaurant; else salonOfferings">
+          <div class="profile-menu-list" *ngIf="profile.menu.length; else emptyMenu">
+            <article class="profile-menu-item" *ngFor="let dish of filteredMenu">
+              <div class="profile-menu-copy"><span class="profile-menu-category">{{ dish.category }}</span><h3>{{ dish.name }}</h3><p *ngIf="dish.description">{{ dish.description }}</p></div>
+              <span class="profile-menu-price" *ngIf="dish.price !== undefined">{{ price(dish.price) }}</span>
+            </article>
+          </div>
+          <ng-template #emptyMenu><p class="profile-empty-menu">Unsere Speisekarte ergänzen wir hier in Kürze.</p></ng-template>
+        </ng-container>
+        <ng-template #salonOfferings><div class="profile-service-list"><button *ngFor="let service of filteredServices" type="button" class="profile-service" (click)="bookService(service.value)"><span class="profile-service-icon"><svg><use [attr.href]="'#p-' + service.icon" /></svg></span><span class="profile-service-copy"><span class="profile-service-title">{{ service.title }}</span><span class="profile-service-description" *ngIf="service.subtitle">{{ service.subtitle }}</span><span class="profile-service-duration" *ngIf="service.duration"><svg><use href="#p-clock" /></svg>{{ service.duration }}<span *ngIf="company.showServicePrices && !booking?.hasMobileService && service.price !== undefined"> · {{ price(service.price) }}</span></span></span><span class="profile-service-add"><svg><use [attr.href]="selectedService?.value === service.value ? '#p-check' : '#p-plus'" /></svg></span></button></div></ng-template>
+      </section>
+
+      <section id="profile-panel-photos" *ngIf="hasProProfile" class="profile-tab-panel" role="tabpanel" aria-labelledby="profile-tab-photos" [hidden]="activeTab !== 'photos'">
+        <div class="profile-panel-heading"><div><h2>Fotos</h2></div></div>
+        <div class="profile-photo-grid">
+          <button type="button" class="profile-photo-card" *ngFor="let photo of gallery; let index = index"
+            [class.profile-photo-card--cover]="index === 0" (click)="openGallery(index)" [attr.aria-label]="'Foto ' + (index + 1) + ' vergrößern'">
+            <img [src]="photo.src" [alt]="photo.alt" loading="lazy" decoding="async" />
+            <span class="profile-photo-caption"><span>{{ photo.title }}</span><svg><use href="#p-plus" /></svg></span>
+          </button>
+        </div>
+      </section>
+
+      <section id="profile-panel-about" *ngIf="hasProProfile" class="profile-tab-panel" role="tabpanel" aria-labelledby="profile-tab-about" [hidden]="activeTab !== 'about'">
+        <article class="profile-about-story" *ngIf="profile.aboutText"><span class="profile-eyebrow">ÜBER UNS</span><h2>{{ profile.aboutTitle || 'Schön, dich kennenzulernen.' }}</h2><p>{{ profile.aboutText }}</p></article>
+        <div class="profile-info-grid">
+          <article class="profile-info-card">
+            <div class="profile-info-heading"><span class="profile-card-icon"><svg><use href="#p-clock" /></svg></span><h3>Öffnungszeiten</h3></div>
+            <div class="profile-hours"><div *ngFor="let row of hours"><span>{{ row.day }}</span><strong [class.is-closed]="row.hours === 'Geschlossen'">{{ row.hours }}</strong></div></div>
+          </article>
+          <article class="profile-info-card">
+            <div class="profile-info-heading"><span class="profile-card-icon"><svg><use href="#p-pin" /></svg></span><h3>Adresse</h3></div>
+            <p>{{ company.address }}</p>
+            <a [href]="mapUrl" target="_blank" rel="noopener noreferrer">Route planen <svg><use href="#p-arrow" /></svg></a>
+          </article>
+        </div>
+      </section>
+
+    </div>
+
+    <aside class="profile-aside"><div class="profile-aside-card"><span class="profile-aside-eyebrow">DEIN BESUCH BEI {{ company.name | uppercase }}</span><h2>{{ isRestaurant ? 'Gute Küche.' : 'Dein Look.' }}<br /><em>{{ isRestaurant ? 'Gute Zeit.' : 'Dein Moment.' }}</em></h2><p>{{ profile.welcomeSubtitle }}</p><div class="profile-selected-service" *ngIf="selectedService"><span>Deine Auswahl</span><strong>{{ selectedService.title }}</strong><small>{{ selectedService.duration }}</small></div><button class="profile-primary-button" type="button" (click)="goBooking()">{{ bookingLabel }} <svg><use href="#p-arrow" /></svg></button><div class="profile-aside-divider"></div><div class="profile-aside-location"><svg><use href="#p-pin" /></svg><span><strong>{{ company.address }}</strong></span></div></div><span class="profile-aside-credit">Mit Liebe gebucht. Mit <strong>nextime.</strong></span></aside>
+  </div>
+
+  <footer class="profile-footer"><span class="profile-logo"><img src="/nextimeNeuesLogo.png" width="1189" height="323" alt="NexTime – Online Booking" loading="lazy" /></span><p>Mehr Zeit für das, was dir guttut.</p><span *ngIf="isLocalDesignPreview">Lokale Designvorschau · Fiktive Profilinformationen</span></footer>
+</main>
+
+<section class="profile-load-state" *ngIf="!company"><p *ngIf="loading">Deine Buchungsseite wird geladen…</p><p *ngIf="!loading">Dieses Unternehmen wurde nicht gefunden.</p></section>
+
+<div class="profile-booking-dock" *ngIf="company && showBookingDock"><div><span>DEIN BESUCH</span><strong>{{ selectedService?.title || 'Wir freuen uns auf dich.' }}</strong></div><button class="profile-primary-button" type="button" (click)="goBooking()">{{ bookingLabel }} <svg><use href="#p-arrow" /></svg></button></div>
+<div class="profile-toast" role="status" aria-live="polite" *ngIf="toast"><svg><use href="#p-check" /></svg>{{ toast }}</div>
+
+<dialog #galleryDialog *ngIf="currentImage as currentPhoto" class="profile-gallery-dialog" (keydown)="galleryKey($event)" (click)="$event.target === galleryDialog && closeGallery()" aria-labelledby="profile-gallery-title"><div class="profile-gallery-dialog-inner"><div class="profile-gallery-dialog-top"><span id="profile-gallery-title">Einblicke bei {{ company?.name }}</span><button class="profile-icon-button" type="button" (click)="closeGallery()" aria-label="Fotogalerie schließen"><svg><use href="#p-close" /></svg></button></div><img [src]="currentPhoto.src" [alt]="currentPhoto.alt" /><div class="profile-gallery-dialog-bottom"><div><strong>{{ currentPhoto.title }}</strong><span>{{ galleryIndex + 1 }} / {{ gallery.length }}</span></div><div><button class="profile-icon-button" type="button" (click)="galleryStep(-1)" aria-label="Vorheriges Foto"><svg><use href="#p-back" /></svg></button><button class="profile-icon-button" type="button" (click)="galleryStep(1)" aria-label="Nächstes Foto"><svg><use href="#p-arrow" /></svg></button></div></div></div></dialog>
+
+
+<ng-template #salonFields let-form>
+  <div class="profile-select-field">
+    <div class="profile-field-heading">
+      <span class="label" id="profile-service-label">Service*</span>
+      <span class="error" id="profile-service-error" *ngIf="form.bookingForm.controls.service.touched && form.bookingForm.controls.service.invalid">Pflichtfeld.</span>
+    </div>
+    <button type="button" class="profile-select-trigger" id="profile-service-trigger"
+      aria-haspopup="dialog" aria-controls="profile-selection-dialog"
+      aria-labelledby="profile-service-label profile-service-value"
+      [attr.aria-invalid]="form.bookingForm.controls.service.touched && form.bookingForm.controls.service.invalid"
+      [attr.aria-describedby]="form.bookingForm.controls.service.touched && form.bookingForm.controls.service.invalid ? 'profile-service-error' : null"
+      [class.is-placeholder]="!selectedService" (click)="openSelection('service')">
+      <span id="profile-service-value">{{ selectedService?.title || 'Bitte wählen' }}</span>
+      <svg class="profile-select-chevron"><use href="#p-back" /></svg>
+    </button>
+  </div>
+  <div class="profile-select-field" *ngIf="form.hasStylistChoice">
+    <div class="profile-field-heading"><span class="label" id="profile-stylist-label">Friseur (optional)</span></div>
+    <button type="button" class="profile-select-trigger" id="profile-stylist-trigger"
+      aria-haspopup="dialog" aria-controls="profile-selection-dialog"
+      aria-labelledby="profile-stylist-label profile-stylist-value" (click)="openSelection('stylist')">
+      <span id="profile-stylist-value">{{ selectedStylistLabel }}</span>
+      <svg class="profile-select-chevron"><use href="#p-back" /></svg>
+    </button>
+  </div>
+</ng-template>
+
+<dialog #selectionDialog id="profile-selection-dialog" class="profile-selection-dialog"
+  aria-labelledby="profile-selection-title" aria-describedby="profile-selection-description"
+  (close)="onSelectionClosed()" (click)="$event.target === selectionDialog && closeSelection()">
+  <div class="profile-selection-grip" aria-hidden="true"></div>
+  <div class="profile-selection-header">
+    <div><h2 id="profile-selection-title">{{ selectionKind === 'service' ? 'Deine Leistung' : 'Bei wem möchtest du buchen?' }}</h2>
+      <p id="profile-selection-description">{{ selectionKind === 'service' ? 'Wähle, was du dir für deinen Termin wünschst.' : 'Wähle deinen Wunschfriseur oder bleib flexibel.' }}</p></div>
+    <button type="button" class="profile-icon-button" (click)="closeSelection()" aria-label="Auswahl schließen"><svg><use href="#p-close" /></svg></button>
+  </div>
+  <div class="profile-selection-options">
+    <button type="button" class="profile-selection-option" *ngFor="let option of selectionOptions"
+      [attr.aria-pressed]="selectionValue === option.value" (click)="chooseSelection(option.value)">
+      <span><strong>{{ option.label }}</strong><small *ngIf="option.detail">{{ option.detail }}</small></span>
+      <span class="profile-selection-check" aria-hidden="true"><svg *ngIf="selectionValue === option.value"><use href="#p-check" /></svg></span>
+    </button>
+  </div>
+</dialog>

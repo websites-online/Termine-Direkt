@@ -152,7 +152,7 @@ export class AdminLeadsComponent implements OnInit {
         isSalon ? 'Kunden unkompliziert Termine' : 'Gäste unkompliziert Reservierungen'
       } eintragen können.`,
       '',
-      'Die ersten 3 Monate sind komplett kostenlos und unverbindlich. Danach kostet Nextime 18,99 € pro Monat – natürlich nur, wenn Sie es weiter nutzen möchten.',
+      'Die ersten 3 Monate sind komplett kostenlos und unverbindlich. Danach kostet Nextime 19,99 € pro Monat – natürlich nur, wenn Sie es weiter nutzen möchten.',
       '',
       `So sieht das zum Beispiel bei ${exampleName} aus:`,
       exampleUrl,

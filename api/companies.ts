@@ -1,4 +1,5 @@
 import { hasMobileService } from '../src/app/shared/booking-location';
+import { normalizeCompanyProfile } from '../src/app/shared/company-profile';
 
 type CompanyRow = {
   id: string;
@@ -27,6 +28,7 @@ type CompanyRow = {
   plan_tier?: string | null;
   calendar_mode?: string | null;
   employees?: unknown;
+  public_profile?: unknown;
   created_at: string;
 };
 
@@ -38,7 +40,7 @@ const createSlug = (value: string): string =>
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-');
 
-const toCompanyResponse = (row: CompanyRow) => ({
+const toCompanyResponse = (row: CompanyRow, includeProfile = true) => ({
   id: row.id,
   name: row.name,
   slug: row.slug,
@@ -75,6 +77,7 @@ const toCompanyResponse = (row: CompanyRow) => ({
       ? 'employee'
       : 'shared',
   employees: row.service_type === 'friseur' ? normalizeEmployees(row.employees) : [],
+  ...(includeProfile && row.public_profile != null ? { profile: normalizeCompanyProfile(row.public_profile) } : {}),
   createdAt: row.created_at,
 });
 
@@ -302,6 +305,13 @@ const getClient = () => {
 
 module.exports = async function handler(req: any, res: any) {
   try {
+    if ((req.method === 'POST' || req.method === 'PATCH') && req.body?.profile !== undefined) {
+      const { getBearerToken, verifyAdminToken } = require('./_lib/admin-auth');
+      if (!verifyAdminToken(getBearerToken(req))) {
+        res.status(401).json({ error: 'Bitte als Administrator anmelden.' });
+        return;
+      }
+    }
     const supabase = getClient();
     const slug = typeof req.query?.slug === 'string' ? req.query.slug : undefined;
 
@@ -328,7 +338,7 @@ module.exports = async function handler(req: any, res: any) {
         res.status(500).json({ error: error.message });
         return;
       }
-      res.status(200).json((data || []).map(toCompanyResponse));
+      res.status(200).json((data || []).map((row: CompanyRow) => toCompanyResponse(row, false)));
       return;
     }
 
@@ -400,6 +410,7 @@ module.exports = async function handler(req: any, res: any) {
         plan_tier: planTier,
         calendar_mode: calendarMode,
         employees,
+        ...(body.profile !== undefined ? { public_profile: normalizeCompanyProfile(body.profile) } : {}),
       };
       let { data, error } = await supabase.from('companies').insert(insert).select('*').single();
       if (error && splitServiceEmails && isMissingMailSplitColumn(error)) {
@@ -418,6 +429,10 @@ module.exports = async function handler(req: any, res: any) {
           .single();
         data = fallbackResult.data;
         error = fallbackResult.error;
+      }
+      if (error && body.profile !== undefined && isMissingColumnError(error, 'public_profile')) {
+        res.status(503).json({ error: 'Die Datenbank-Erweiterung für Profilinhalte fehlt. Bitte supabase-company-profile.sql vor dem Rollout ausführen.' });
+        return;
       }
       if (error) {
         res.status(500).json({ error: error.message });
@@ -497,6 +512,7 @@ module.exports = async function handler(req: any, res: any) {
         plan_tier: planTier,
         calendar_mode: calendarMode,
         employees,
+        ...(body.profile !== undefined ? { public_profile: normalizeCompanyProfile(body.profile) } : {}),
       };
       if (body.loginPin) {
         updates.login_pin = String(body.loginPin).trim();
@@ -530,6 +546,10 @@ module.exports = async function handler(req: any, res: any) {
           .single();
         data = fallbackResult.data;
         error = fallbackResult.error;
+      }
+      if (error && body.profile !== undefined && isMissingColumnError(error, 'public_profile')) {
+        res.status(503).json({ error: 'Die Datenbank-Erweiterung für Profilinhalte fehlt. Bitte supabase-company-profile.sql vor dem Rollout ausführen.' });
+        return;
       }
       if (error) {
         res.status(500).json({ error: error.message });

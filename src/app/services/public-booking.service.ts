@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable, InjectionToken } from '@angular/core';
 import { Observable, delay, of, throwError } from 'rxjs';
 
 import { environment } from '../../environments/environment';
@@ -32,8 +32,12 @@ export interface PublicBookingPayload {
   homeVisitAddress?: HomeVisitAddress;
 }
 
+// Only the localhost design route opts into local bookings for every business type.
+export const LOCAL_PROFILE_PREVIEW = new InjectionToken<boolean>('LOCAL_PROFILE_PREVIEW', { providedIn: 'root', factory: () => false });
+
 @Injectable({ providedIn: 'root' })
 export class PublicBookingService {
+  readonly profilePreview = inject(LOCAL_PROFILE_PREVIEW);
   constructor(private readonly http: HttpClient) {}
 
   get isLocalPreview(): boolean {
@@ -43,7 +47,7 @@ export class PublicBookingService {
 
   availability(company: Company, date: string, query: URLSearchParams):
     Observable<{ slots: Record<string, number> }> {
-    if (!this.isLocalPreview || !hasMobileService(company.slug, company.serviceType)) {
+    if (!this.isLocalPreview || (!this.profilePreview && !hasMobileService(company.slug, company.serviceType))) {
       return this.http.get<{ slots: Record<string, number> }>(`/api/reservations?${query}`);
     }
     const slots: Record<string, number> = {};
@@ -57,7 +61,7 @@ export class PublicBookingService {
 
   submit(company: Company, payload: PublicBookingPayload):
     Observable<{ success: boolean; requestMode?: boolean }> {
-    if (!this.isLocalPreview || !hasMobileService(company.slug, company.serviceType)) {
+    if (!this.isLocalPreview || (!this.profilePreview && !hasMobileService(company.slug, company.serviceType))) {
       return this.http.post<{ success: boolean; requestMode?: boolean }>('/api/reservations', payload);
     }
     const mobileEnabled = hasMobileService(company.slug, company.serviceType);
@@ -86,7 +90,7 @@ export class PublicBookingService {
         service: payload.service,
         stylist: payload.stylist,
         employeeId: payload.employeeId,
-        note: payload.note || undefined,
+        note: [payload.note, ...(this.profilePreview && company.serviceType === 'restaurant' && payload.seating ? [`Sitzplatz: ${payload.seating}`] : [])].filter(Boolean).join(' | ') || undefined,
         ...extractBookingLocation(locationNotes.join(' | ')),
         isRequest: requestMode,
         requestStatus: requestMode ? 'pending' : undefined,
