@@ -1,5 +1,45 @@
 # NexTime
 
+## PRO-Profil und bestehende Kunden
+
+In der neuen Profiloberfläche sind **Fotos**, **Über uns** und **Leistungen** bzw.
+**Speisekarte** ausschließlich für Unternehmen mit `planTier: 'pro'` sichtbar.
+Starter zeigt direkt die Buchung mit Unternehmenslogo, Name, Adresse und Öffnungszeiten.
+Die notwendige Serviceauswahl im Buchungsformular bleibt für jeden Friseursalon erhalten.
+Im Adminbereich werden die zusätzlichen Profilfelder bei Starter mit einem PRO-Hinweis
+ausgeblendet. Ein Tarifwechsel löscht keine gespeicherten Profilinhalte.
+
+Vor dem PROD-Rollout die einmalige Migration `supabase-existing-companies-pro.sql`
+ausführen (setzt `supabase-company-plan.sql` voraus). Sie stellt alle zu diesem Zeitpunkt
+vorhandenen Unternehmen auf PRO um und sichert ihre bisherigen Tarifwerte im nicht
+öffentlichen Schema `nextime_migrations`. Ein Migrationsmerkmal verhindert, dass eine
+erneute Ausführung später angelegte Starter-Kunden oder manuelle Downgrades verändert.
+Neue Unternehmen behalten ihren bisherigen Starter-Standard. Buchungsregeln, Kontaktdaten,
+PINs und Mailkonfiguration werden nicht geändert.
+
+Die PROD-Migration ist vorbereitet, aber noch nicht ausgeführt; dafür ist eine mit dem
+PROD-Projekt verbundene Supabase-Sitzung erforderlich. Die beiden lokalen Profilbeispiele
+werden separat einmalig auf PRO gesetzt. Spätere manuelle Tarifwechsel bleiben erhalten.
+
+## Adminstatistik
+
+Unter `/admin/statistiken` stehen Gesamtzahlen, Vergleiche je Unternehmen und ein
+anklickbarer Verlauf über sechs Kalendermonate zur Verfügung. Der laufende Monat
+wird bis heute mit den entsprechenden Tagen des Vormonats verglichen; bei kürzeren
+Vormonaten endet der Vergleich an dessen letztem Tag. Abgeschlossene Monate werden
+mit dem vollständigen Vormonat verglichen, 30 Tage mit den vorherigen 30 Tagen.
+Für „Gesamt“ wird kein Vorperiodenvergleich angezeigt.
+
+Gezählt wird nach dem Eingang in der Zeitzone Europe/Berlin. Offene Anfragen und
+Buchungen werden getrennt ausgewiesen; bestätigte Anfragen zählen einmal als Buchung
+im ursprünglichen Eingangsmonat. Abgelehnte Anfragen, interne Einträge und Blockierungen
+sind ausgeschlossen. Die Monatsgrafik zeigt dieselben Zählregeln für ganze Kalendermonate.
+
+Auf localhost werden die gespeicherten Testbuchungen und -anfragen ausgewertet.
+**Beispieldaten ansehen** aktiviert ausdrücklich gekennzeichnete, rein fiktive Zahlen
+ohne Schreibzugriff. Sie werden weder mit eigenen Daten vermischt noch in PROD angeboten.
+Die Erweiterung benötigt keine neue Datenbankspalte. Tests: `npm run test:stats`.
+
 ## Lokale Vorschau von Atelier7
 
 Mit `npm start` starten und [localhost:4200/atelier7](http://localhost:4200/atelier7) öffnen.

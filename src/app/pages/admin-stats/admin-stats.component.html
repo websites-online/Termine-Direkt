@@ -1,97 +1,83 @@
-<section class="section page">
+<section class="section page admin-stats-page">
   <div class="container">
-    <div class="card stats-card">
-      <div class="stats-header">
-        <div>
-          <h1 class="section-title">Statistiken</h1>
-          <p class="section-lead">Übersicht über Unternehmen und Buchungen.</p>
-        </div>
-        <div class="stats-actions">
-          <a class="btn btn-outline" routerLink="/admin">Zum Dashboard</a>
-          <a class="btn btn-outline" routerLink="/admin/leads">Leads</a>
-          <a class="btn btn-outline" routerLink="/">Zur Startseite</a>
-          <button class="btn btn-outline" type="button" (click)="logout()">Logout</button>
-        </div>
+    <div class="stats-topbar">
+      <a class="stats-brand" routerLink="/admin"><span>N</span>Nextime Admin</a>
+      <nav class="stats-actions" aria-label="Adminnavigation">
+        <a class="btn btn-outline" routerLink="/admin">Alle Kunden</a>
+        <a class="btn btn-outline" routerLink="/admin/leads">Leads</a>
+        <button class="btn btn-outline" type="button" (click)="logout()">Logout</button>
+      </nav>
+    </div>
+
+    <header class="stats-header">
+      <div><p class="stats-eyebrow">Deine Entwicklung</p><h1>Statistiken</h1><p>Buchungen, Anfragen und die Entwicklung deiner Unternehmen.</p></div>
+      <button class="btn btn-outline demo-toggle" *ngIf="isLocalPreview" type="button" (click)="toggleDemo()">{{ demoMode ? 'Eigene Daten anzeigen' : 'Beispieldaten ansehen' }}</button>
+    </header>
+
+    <p class="demo-notice" *ngIf="demoMode" role="status"><strong>Beispieldaten</strong> Fiktive Zahlen zur Ansicht. Deine gespeicherten Daten werden nicht verändert.</p>
+
+    <section class="stats-filter-card" aria-label="Statistikzeitraum">
+      <label><span>Zeitraum</span><select class="input" [(ngModel)]="period" (change)="loadStats()"><option *ngFor="let option of periodOptions" [value]="option.value">{{ option.label }}</option></select></label>
+      <label *ngIf="period === 'month'"><span>Monat</span><input class="input" type="month" min="2000-01" [max]="currentMonth" [(ngModel)]="month" (change)="onMonthChange()" /></label>
+      <button class="btn btn-outline refresh-stats" type="button" (click)="loadStats()" [disabled]="isLoading"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 18 17"/></svg>Aktualisieren</button>
+      <span class="local-data-label" *ngIf="isLocalPreview && !demoMode">Lokale Daten auf diesem Gerät</span>
+    </section>
+
+    <section class="stats-state" *ngIf="isLoading" role="status"><span class="stats-spinner" aria-hidden="true"></span><p>Statistiken werden geladen…</p></section>
+    <section class="stats-state" *ngIf="!isLoading && error" role="alert"><h2>Die Statistik ist gerade nicht verfügbar</h2><p>{{ error }}</p><button class="btn btn-outline" type="button" (click)="loadStats()">Erneut versuchen</button></section>
+
+    <ng-container *ngIf="!isLoading && !error && stats">
+      <div class="stats-range">
+        <div><span>Ausgewählter Zeitraum</span><strong>{{ dateRange(stats.from, stats.to) }}</strong></div>
+        <div class="comparison-range" *ngIf="stats.comparison as comparison"><span>Vergleich {{ comparisonLabel }}</span><strong>{{ dateRange(comparison.from, comparison.to) }}</strong></div>
       </div>
-    </div>
+      <p class="comparison-note" *ngIf="stats.comparison?.mode === 'month-to-date'">Der laufende Monat wird bis heute mit den entsprechenden Tagen des Vormonats verglichen.</p>
+      <p class="comparison-note" *ngIf="!stats.comparison">Für den gesamten Zeitraum wird kein Vorperiodenvergleich berechnet.</p>
+      <p class="data-warning" *ngIf="stats.requestsTableAvailable === false" role="status">Anfragen stehen derzeit nicht zur Verfügung. Die Statistik und ihre Vergleiche enthalten nur Buchungen.</p>
 
-    <div class="card stats-card filter-card">
-      <label>
-        <span class="label">Zeitraum</span>
-        <select class="input" [(ngModel)]="period" (change)="onPeriodChange()">
-          <option *ngFor="let option of periodOptions" [value]="option.value">
-            {{ option.label }}
-          </option>
-        </select>
-      </label>
-      <label *ngIf="period === 'month'">
-        <span class="label">Monat</span>
-        <input class="input" type="month" [(ngModel)]="month" (change)="onMonthChange()" />
-      </label>
-      <button class="btn btn-primary" type="button" (click)="loadStats()">Aktualisieren</button>
-    </div>
-
-    <div class="card stats-card" *ngIf="stats">
-      <p class="helptext">{{ formatRangeLabel() }}</p>
-      <p class="helptext">
-        Gezählt wird nach dem Eingang der Anfrage oder Buchung – unabhängig vom späteren
-        Termindatum.
-      </p>
       <div class="summary-grid">
-        <div class="summary-item">
-          <p>Unternehmen</p>
-          <strong>{{ stats.companiesTotal }}</strong>
-        </div>
-        <div class="summary-item">
-          <p>Buchungen</p>
-          <strong>{{ stats.bookingsTotal }}</strong>
-        </div>
-        <div class="summary-item">
-          <p>Anfragen</p>
-          <strong>{{ stats.requestsTotal }}</strong>
-        </div>
-        <div class="summary-item">
-          <p>Gesamt</p>
-          <strong>{{ stats.interactionsTotal }}</strong>
-        </div>
+        <article class="summary-item" *ngFor="let metric of metrics; let first = first" [class.summary-item--main]="first">
+          <h2>{{ metric.label }}</h2><strong class="summary-number">{{ count(metric.value) }}</strong><p>{{ metric.detail }}</p>
+          <div class="metric-comparison" *ngIf="metric.previous !== null">
+            <span class="stats-change" [class.is-positive]="metric.value > metric.previous" [class.is-negative]="metric.value < metric.previous">{{ changeLabel(metric.value, metric.previous) }}</span>
+            <span>vorher {{ count(metric.previous) }}</span>
+          </div>
+          <span class="no-comparison" *ngIf="metric.previous === null">Gesamtwert ohne Vergleich</span>
+        </article>
       </div>
-      <p class="helptext" *ngIf="stats.requestsTableAvailable === false">
-        Hinweis: Die Tabelle <code>booking_requests</code> fehlt in Supabase. Anfragen werden
-        aktuell nicht gezaehlt.
-      </p>
-    </div>
 
-    <div class="card stats-card">
-      <h2>Buchungen und Anfragen nach Unternehmen</h2>
-      <p class="helptext" *ngIf="isLoading">Lade Daten…</p>
-      <p class="helptext error" *ngIf="!isLoading && error">{{ error }}</p>
-      <p class="helptext" *ngIf="!isLoading && !error && stats && stats.rows.length === 0">
-        Keine Daten im ausgewählten Zeitraum.
-      </p>
-      <div class="table-wrap" *ngIf="!isLoading && !error && stats && stats.rows.length > 0">
-        <table>
-          <thead>
-            <tr>
-              <th>Unternehmen</th>
-              <th>Art</th>
-              <th>Slug</th>
-              <th class="col-number">Buchungen</th>
-              <th class="col-number">Anfragen</th>
-              <th class="col-number">Gesamt</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let row of stats.rows">
-              <td>{{ row.name }}</td>
-              <td>{{ row.serviceType === 'friseur' ? 'Friseur' : 'Restaurant' }}</td>
-              <td>/{{ row.slug }}</td>
-              <td class="col-number">{{ row.bookings }}</td>
-              <td class="col-number">{{ row.requests }}</td>
-              <td class="col-number">{{ row.total }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+      <section class="stats-panel trend-panel" aria-labelledby="trend-title">
+        <div class="stats-panel-heading"><div><p class="stats-eyebrow">Im Überblick</p><h2 id="trend-title">Monatsverlauf</h2><p>Sechs Kalendermonate. Tippe auf einen Monat, um ihn zu vergleichen.</p></div><div class="chart-legend"><span><i class="legend-bookings"></i>Buchungen</span><span><i class="legend-requests"></i>Offene Anfragen</span></div></div>
+        <div class="monthly-chart" role="group" aria-label="Buchungen und offene Anfragen nach Eingangsmonat">
+          <button class="chart-month" type="button" *ngFor="let point of stats.monthlyTrend" (click)="selectMonth(point.month)" [class.is-current]="point.month === currentMonth" [attr.aria-pressed]="stats.from?.slice(0, 7) === point.month && period !== 'last-30-days'" [attr.aria-label]="monthLabel(point.month) + ': ' + point.bookings + ' Buchungen, ' + point.requests + ' offene Anfragen. Monat auswählen.'" [title]="monthLabel(point.month) + ': ' + point.total + ' insgesamt'">
+            <strong class="chart-value">{{ count(point.total) }}</strong>
+            <span class="chart-column" aria-hidden="true"><span class="chart-stack" [style.height.%]="point.total / trendMax * 100"><span class="chart-bookings" [style.flex-grow]="point.bookings"></span><span class="chart-requests" [style.flex-grow]="point.requests"></span></span></span>
+            <span class="chart-month-label">{{ monthLabel(point.month, true) }}</span><small>{{ point.month.slice(0, 4) }}</small>
+          </button>
+        </div>
+        <p class="chart-caption">Der laufende Monat ist noch unvollständig. Der Vergleich oben berücksichtigt das.</p>
+      </section>
+
+      <section class="stats-panel company-panel" aria-labelledby="companies-title">
+        <div class="stats-panel-heading"><div><p class="stats-eyebrow">Deine Kunden</p><h2 id="companies-title">Entwicklung je Unternehmen</h2><p>{{ stats.companiesTotal }} Unternehmen · {{ stats.activeCompanies }} mit Aktivität im ausgewählten Zeitraum</p></div></div>
+        <div class="company-stats-toolbar">
+          <label class="stats-search"><span>Unternehmen suchen</span><input class="input" type="search" placeholder="Name oder URL…" [(ngModel)]="searchQuery" /></label>
+          <label><span>Sortieren nach</span><select class="input" [(ngModel)]="sortBy"><option value="total">Meiste Buchungen & Anfragen</option><option value="change" [disabled]="!stats.comparison">Stärkster Zuwachs (Anzahl)</option><option value="name">Name (A–Z)</option></select></label>
+        </div>
+        <p class="table-empty" *ngIf="!stats.rows.length">Es sind noch keine Unternehmen vorhanden. <a routerLink="/admin">Zur Kundenübersicht</a></p>
+        <p class="table-empty" *ngIf="stats.rows.length && !filteredRows.length">Kein passendes Unternehmen gefunden.</p>
+        <div class="company-stats-table" *ngIf="filteredRows.length">
+          <table><thead><tr><th scope="col">Unternehmen</th><th scope="col">Buchungen</th><th scope="col">Offene Anfragen</th><th scope="col">Gesamt</th><th scope="col" *ngIf="stats.comparison">Vorher</th><th scope="col" *ngIf="stats.comparison">Veränderung</th></tr></thead>
+            <tbody><tr *ngFor="let row of filteredRows; trackBy: trackCompany">
+              <th scope="row" class="stats-company-name"><a *ngIf="!demoMode; else demoCompany" [routerLink]="['/admin/unternehmen', row.slug]">{{ row.name }} <span aria-hidden="true">↗</span></a><ng-template #demoCompany><strong>{{ row.name }}</strong></ng-template><small>{{ row.serviceType === 'friseur' ? 'Friseursalon' : 'Restaurant' }} · {{ count(row.sharePercent) }} % der Gesamtaktivität</small><span class="company-share" aria-hidden="true"><span [style.width.%]="row.sharePercent"></span></span></th>
+              <td data-label="Buchungen">{{ count(row.bookings) }}</td><td data-label="Offene Anfragen">{{ count(row.requests) }}</td><td data-label="Gesamt" class="row-total">{{ count(row.total) }}</td>
+              <td data-label="Vorher" *ngIf="stats.comparison">{{ count(row.previousTotal ?? 0) }}</td>
+              <td data-label="Veränderung" class="row-change" *ngIf="stats.comparison"><span class="stats-change" [class.is-positive]="(row.change || 0) > 0" [class.is-negative]="(row.change || 0) < 0">{{ changeLabel(row.total, row.previousTotal) }}</span><small>{{ difference(row.total, row.previousTotal ?? 0) }} insgesamt</small></td>
+            </tr></tbody>
+          </table>
+        </div>
+      </section>
+      <footer class="stats-explanation"><strong>So werden die Zahlen gezählt</strong><p>Maßgeblich ist der Eingang der Buchung oder Anfrage, nicht das Termindatum. Bestätigte Anfragen zählen einmal als Buchung. Abgelehnte Anfragen, Blockierungen und interne Einträge werden nicht mitgezählt. Ein Unternehmen gilt als aktiv, sobald es im Zeitraum mindestens eine Buchung oder offene Anfrage hat.</p></footer>
+    </ng-container>
   </div>
 </section>

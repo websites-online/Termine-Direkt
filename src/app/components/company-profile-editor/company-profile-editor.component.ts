@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, forwardRef, Input, OnDestroy, Output } from '@angular/core';
 import { AbstractControl, ControlValueAccessor, FormBuilder, NG_VALIDATORS, NG_VALUE_ACCESSOR, ReactiveFormsModule, ValidationErrors, Validator, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { CompanyProfile, defaultCompanyProfile, normalizeCompanyProfile, ProfileMenuItem, ProfilePhoto } from '../../shared/company-profile';
@@ -18,6 +18,13 @@ import { SalonServiceOption } from '../../shared/salon-services';
 export class CompanyProfileEditorComponent implements ControlValueAccessor, Validator, OnDestroy {
   @Input() serviceType = 'restaurant';
   @Input() services: SalonServiceOption[] = [];
+  private proEnabled = false;
+  @Input() set proFeaturesEnabled(enabled: boolean) {
+    this.proEnabled = enabled;
+    this.validatorChanged();
+  }
+  get proFeaturesEnabled(): boolean { return this.proEnabled; }
+  @Output() managePlan = new EventEmitter<void>();
   value: CompanyProfile = defaultCompanyProfile('restaurant');
   disabled = false;
   uploading = false;
@@ -51,7 +58,7 @@ export class CompanyProfileEditorComponent implements ControlValueAccessor, Vali
     return this.form.invalid || this.menuInvalid || this.uploading ? { companyProfile: true } : null;
   }
   get menuInvalid(): boolean {
-    return this.serviceType === 'restaurant' && this.value.menu.some(item => !item.name.trim() ||
+    return this.proFeaturesEnabled && this.serviceType === 'restaurant' && this.value.menu.some(item => !item.name.trim() ||
       (item.price !== undefined && (!Number.isFinite(item.price) || item.price < 0 || item.price > 10000)));
   }
   touch(): void { this.touched(); }

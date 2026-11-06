@@ -50,17 +50,17 @@
     </button>
   </section>
 
-  <nav class="profile-tab-bar" aria-label="Profilbereiche"><div role="tablist" aria-label="Unternehmensinformationen"><button *ngFor="let tab of tabs; let index = index" type="button" role="tab" [id]="'profile-tab-' + tab.id" [attr.aria-controls]="'profile-panel-' + tab.id" [attr.aria-selected]="activeTab === tab.id" [attr.tabindex]="activeTab === tab.id ? 0 : -1" [class.is-active]="activeTab === tab.id" (click)="setTab(tab.id)" (keydown)="onTabKey($event, index)"><svg><use [attr.href]="'#p-' + tab.icon" /></svg>{{ tab.label }}</button></div><span class="profile-tabs-note"><span></span>Persönlich. Unkompliziert.</span></nav>
+  <nav class="profile-tab-bar" *ngIf="hasProProfile" aria-label="Profilbereiche"><div role="tablist" aria-label="Unternehmensinformationen"><button *ngFor="let tab of tabs; let index = index" type="button" role="tab" [id]="'profile-tab-' + tab.id" [attr.aria-controls]="'profile-panel-' + tab.id" [attr.aria-selected]="activeTab === tab.id" [attr.tabindex]="activeTab === tab.id ? 0 : -1" [class.is-active]="activeTab === tab.id" (click)="setTab(tab.id)" (keydown)="onTabKey($event, index)"><svg><use [attr.href]="'#p-' + tab.icon" /></svg>{{ tab.label }}</button></div><span class="profile-tabs-note"><span></span>Persönlich. Unkompliziert.</span></nav>
 
   <div class="profile-content-layout">
     <div class="profile-panels">
-      <section id="profile-panel-booking" class="profile-tab-panel" role="tabpanel" aria-labelledby="profile-tab-booking" [hidden]="activeTab !== 'booking'">
+      <section id="profile-panel-booking" class="profile-tab-panel" [attr.role]="hasProProfile ? 'tabpanel' : 'region'" [attr.aria-labelledby]="hasProProfile ? 'profile-tab-booking' : null" [attr.aria-label]="hasProProfile ? null : 'Termin buchen'" [hidden]="activeTab !== 'booking'">
         <div class="booking-shell" [class.is-first-date-step]="!booking?.hasSelectedDate"><app-restaurant-page [salonFieldsTemplate]="isRestaurant ? null : salonFields" /></div>
         <p class="profile-local-booking-note" *ngIf="!booking?.hasMobileService">Lokale Vorschau: Testbuchungen bleiben auf diesem Gerät. Es werden keine E-Mails versendet.</p>
         <div class="profile-booking-footnote"><svg><use href="#p-heart" /></svg>{{ booking?.hasMobileService ? 'Wir freuen uns auf dich – im Salon oder bei dir zu Hause.' : 'Wir freuen uns auf deinen Besuch.' }}</div>
       </section>
 
-      <section id="profile-panel-services" class="profile-tab-panel" role="tabpanel" aria-labelledby="profile-tab-services" [hidden]="activeTab !== 'services'">
+      <section id="profile-panel-services" *ngIf="hasProProfile" class="profile-tab-panel" role="tabpanel" aria-labelledby="profile-tab-services" [hidden]="activeTab !== 'services'">
         <div class="profile-panel-heading"><div><span class="profile-eyebrow">{{ isRestaurant ? 'FRISCH AUF DEN TISCH' : 'FÜR DICH' }}</span><h2>{{ profile.offeringsTitle || (isRestaurant ? 'Unsere Speisekarte' : 'Unsere Leistungen') }}</h2></div></div>
         <p class="profile-panel-intro" *ngIf="profile.offeringsIntro">{{ profile.offeringsIntro }}</p>
         <div class="profile-chip-row" *ngIf="categories.length > 1" [attr.aria-label]="isRestaurant ? 'Speisekarte filtern' : 'Leistungen filtern'"><button *ngFor="let category of categories" type="button" [class.is-active]="serviceCategory === category.id" [attr.aria-pressed]="serviceCategory === category.id" (click)="serviceCategory = category.id">{{ category.label }}</button></div>
@@ -76,7 +76,7 @@
         <ng-template #salonOfferings><div class="profile-service-list"><button *ngFor="let service of filteredServices" type="button" class="profile-service" (click)="bookService(service.value)"><span class="profile-service-icon"><svg><use [attr.href]="'#p-' + service.icon" /></svg></span><span class="profile-service-copy"><span class="profile-service-title">{{ service.title }}</span><span class="profile-service-description" *ngIf="service.subtitle">{{ service.subtitle }}</span><span class="profile-service-duration" *ngIf="service.duration"><svg><use href="#p-clock" /></svg>{{ service.duration }}<span *ngIf="company.showServicePrices && !booking?.hasMobileService && service.price !== undefined"> · {{ price(service.price) }}</span></span></span><span class="profile-service-add"><svg><use [attr.href]="selectedService?.value === service.value ? '#p-check' : '#p-plus'" /></svg></span></button></div></ng-template>
       </section>
 
-      <section id="profile-panel-photos" class="profile-tab-panel" role="tabpanel" aria-labelledby="profile-tab-photos" [hidden]="activeTab !== 'photos'">
+      <section id="profile-panel-photos" *ngIf="hasProProfile" class="profile-tab-panel" role="tabpanel" aria-labelledby="profile-tab-photos" [hidden]="activeTab !== 'photos'">
         <div class="profile-panel-heading"><div><h2>Fotos</h2></div></div>
         <div class="profile-photo-grid">
           <button type="button" class="profile-photo-card" *ngFor="let photo of gallery; let index = index"
@@ -87,7 +87,7 @@
         </div>
       </section>
 
-      <section id="profile-panel-about" class="profile-tab-panel" role="tabpanel" aria-labelledby="profile-tab-about" [hidden]="activeTab !== 'about'">
+      <section id="profile-panel-about" *ngIf="hasProProfile" class="profile-tab-panel" role="tabpanel" aria-labelledby="profile-tab-about" [hidden]="activeTab !== 'about'">
         <article class="profile-about-story" *ngIf="profile.aboutText"><span class="profile-eyebrow">ÜBER UNS</span><h2>{{ profile.aboutTitle || 'Schön, dich kennenzulernen.' }}</h2><p>{{ profile.aboutText }}</p></article>
         <div class="profile-info-grid">
           <article class="profile-info-card">

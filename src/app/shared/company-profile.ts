@@ -94,3 +94,6 @@ export function defaultCompanyProfile(type: string | undefined): CompanyProfile 
     ],
   };
 }
+
+/** Extra public profile sections belong to PRO; booking itself stays available to everyone. */
+export const hasProCompanyProfile = (planTier: unknown): boolean => planTier === 'pro';

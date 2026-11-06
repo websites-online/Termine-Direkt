@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { afterEveryRender, afterNextRender, Component, ElementRef, inject, Injector, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subscription, switchMap } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { CompanyProfile, defaultCompanyProfile, normalizeCompanyProfile } from '../../shared/company-profile';
+import { CompanyProfile, defaultCompanyProfile, hasProCompanyProfile, normalizeCompanyProfile } from '../../shared/company-profile';
 import { LOCAL_PROFILE_PREVIEW, PublicBookingService } from '../../services/public-booking.service';
 import { SALON_SERVICES } from '../../shared/salon-services';
 import { Company, CompanyApiService } from '../../services/company-api.service';
@@ -29,6 +29,7 @@ interface PreviewService {
   encapsulation: ViewEncapsulation.None,
   host: {
     class: 'profile-preview', '[class.has-booking-dock]': 'showBookingDock', '[class.is-restaurant]': 'isRestaurant',
+    '[class.has-pro-profile]': 'hasProProfile',
     '[style.--profile-tab-count]': 'tabs.length',
     '[style.--brand-color]': 'booking?.brandColor || company?.brandColor',
     '[style.--brand-rgb]': "booking?.brandColorRgb || '79, 70, 229'",
@@ -45,6 +46,7 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
   company?: Company;
   profile: CompanyProfile = normalizeCompanyProfile(undefined);
   loading = true;
+  get hasProProfile(): boolean { return hasProCompanyProfile(this.company?.planTier); }
   get isRestaurant(): boolean { return this.company?.serviceType === 'restaurant'; }
   get bookingLabel(): string { return this.isRestaurant ? 'Tisch reservieren' : 'Termin anfragen'; }
   get mapUrl(): string { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(this.company?.address || ''); }
@@ -72,7 +74,7 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
   categories: { id: string; label: string }[] = [];
   services: PreviewService[] = [];
   hours: { day: string; hours: string }[] = [];
-  get gallery() { return this.profile.photos; }
+  get gallery() { return this.hasProProfile ? this.profile.photos : []; }
   get filteredMenu() { return this.profile.menu.filter(item => this.serviceCategory === 'all' || item.category === this.serviceCategory); }
   price(value: number): string { return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value); }
 
@@ -91,9 +93,11 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
         this.profile = company.profile !== undefined ? normalizeCompanyProfile(company.profile) : defaultCompanyProfile(company.serviceType);
         this.tabs = [
           { id: 'booking', label: 'Termin', icon: 'calendar' },
-          { id: 'services', label: this.isRestaurant ? 'Speisekarte' : 'Leistungen', icon: this.isRestaurant ? 'menu' : 'scissors' },
-          ...(this.gallery.length ? [{ id: 'photos' as const, label: 'Fotos', icon: 'grid' }] : []),
-          { id: 'about', label: 'Über uns', icon: 'spark' },
+          ...(this.hasProProfile ? [
+            { id: 'services' as const, label: this.isRestaurant ? 'Speisekarte' : 'Leistungen', icon: this.isRestaurant ? 'menu' : 'scissors' },
+            ...(this.gallery.length ? [{ id: 'photos' as const, label: 'Fotos', icon: 'grid' }] : []),
+            { id: 'about' as const, label: 'Über uns', icon: 'spark' },
+          ] : []),
         ];
         const configured = company.salonServices?.length ? company.salonServices : SALON_SERVICES;
         this.services = this.isRestaurant ? [] : configured.map(service => ({
@@ -122,6 +126,7 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
   get showBookingDock() { return this.activeTab !== 'booking'; }
 
   setTab(tab: ProfileTab): void {
+    if (!this.tabs.some(item => item.id === tab)) return;
     if (tab === 'booking') { this.goBooking(); return; }
     const intro = document.querySelector('.profile-preview .profile-welcome');
     const navigationTop = intro ? intro.getBoundingClientRect().bottom + window.scrollY : 0;
@@ -140,6 +145,7 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
     document.getElementById(`profile-tab-${this.activeTab}`)?.focus();
   }
   bookService(value: string): void {
+    if (!this.hasProProfile) return;
     this.booking?.bookingForm.controls.service.setValue(value);
     this.goBooking();
   }
@@ -190,7 +196,10 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
   }
   closeSelection(): void { this.selectionDialog?.nativeElement.close(); }
   onSelectionClosed(): void { this.booking?.bookingForm.controls[this.selectionKind].markAsTouched(); }
-  openGallery(index = 0): void { this.galleryIndex = index; this.galleryDialog?.nativeElement.showModal(); }
+  openGallery(index = 0): void {
+    if (!this.hasProProfile || !this.gallery.length) return;
+    this.galleryIndex = index; this.galleryDialog?.nativeElement.showModal();
+  }
   closeGallery(): void { this.galleryDialog?.nativeElement.close(); }
   galleryStep(offset: number): void { this.galleryIndex = (this.galleryIndex + offset + this.gallery.length) % this.gallery.length; }
   galleryKey(event: KeyboardEvent): void {

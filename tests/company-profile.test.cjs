@@ -99,3 +99,21 @@ test('a missing profile migration reports failure without silently saving other 
   assert.equal(response.statusCode, 503);
   assert.equal(state.writes.length, 0);
 });
+
+test('downgrading and upgrading a company keeps its stored PRO profile contents', async () => {
+  const { request, state } = setup();
+  state.row.plan_tier = 'pro';
+  state.row.public_profile = { aboutTitle: 'Vorstellung', aboutText: 'Bleibt gespeichert.', photos: [{ src: 'https://example.test/salon.jpg', title: 'Salon', alt: 'Salon' }], menu: [{ id: 'dish', name: 'Pasta', category: 'Speisen', description: 'Hausgemacht', price: 15 }], serviceDescriptions: { cut: 'Mit Beratung.' } };
+  const original = JSON.stringify(state.row.public_profile);
+  const base = { name: state.row.name, address: state.row.address, hours: state.row.hours, email: state.row.email, serviceType: 'friseur' };
+  let response = await request('PATCH', { ...base, planTier: 'starter' });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.planTier, 'starter');
+  assert.equal(JSON.stringify(state.row.public_profile), original);
+  response = await request('PATCH', { ...base, planTier: 'pro' });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.planTier, 'pro');
+  assert.equal(response.body.profile.photos.length, 1);
+  assert.equal(response.body.profile.menu[0].name, 'Pasta');
+  assert.equal(JSON.stringify(state.row.public_profile), original);
+});

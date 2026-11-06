@@ -1,22 +1,12 @@
+import {
+  AdminStatsReservation as ReservationRow, AdminStatsRequest as BookingRequestRow,
+  buildAdminStats, collectAdminStatsActivities,
+} from '../src/app/shared/admin-statistics';
+
 type CompanyRow = {
   slug: string;
   name: string;
   service_type?: string | null;
-};
-
-type ReservationRow = {
-  restaurant_slug?: string | null;
-  guest_email?: string | null;
-  note?: string | null;
-  booking_request_id?: string | null;
-  created_at?: string | null;
-};
-
-type BookingRequestRow = {
-  id?: string | null;
-  restaurant_slug?: string | null;
-  status?: string | null;
-  created_at?: string | null;
 };
 
 const getClient = () => {
@@ -28,72 +18,6 @@ const getClient = () => {
     throw new Error('Missing SUPABASE_URL or SUPABASE key');
   }
   return createClient(url, key);
-};
-
-const parseCreatedAtDate = (value?: string | null): Date | null => {
-  if (!value) {
-    return null;
-  }
-  const timestamp = new Date(value);
-  if (Number.isNaN(timestamp.getTime())) {
-    return null;
-  }
-  const parts = new Intl.DateTimeFormat('de-DE', {
-    timeZone: 'Europe/Berlin',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(timestamp);
-  const year = Number(parts.find((part) => part.type === 'year')?.value);
-  const month = Number(parts.find((part) => part.type === 'month')?.value);
-  const day = Number(parts.find((part) => part.type === 'day')?.value);
-  if (!year || !month || !day) {
-    return null;
-  }
-  return new Date(year, month - 1, day);
-};
-
-const startOfDay = (date: Date): Date =>
-  new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-const getRange = (
-  period: string,
-  monthParam?: string | null,
-): { from: Date | null; to: Date | null } => {
-  const now = new Date();
-  if (period === 'all') {
-    return { from: null, to: null };
-  }
-  if (period === 'last-30-days') {
-    const to = startOfDay(now);
-    const from = new Date(to);
-    from.setDate(from.getDate() - 29);
-    return { from, to };
-  }
-  if (period === 'month' && monthParam) {
-    const m = /^(\d{4})-(\d{2})$/.exec(monthParam);
-    if (m) {
-      const year = Number(m[1]);
-      const month = Number(m[2]) - 1;
-      const from = new Date(year, month, 1);
-      const to = new Date(year, month + 1, 0);
-      return { from, to };
-    }
-  }
-
-  const from = new Date(now.getFullYear(), now.getMonth(), 1);
-  const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  return { from, to };
-};
-
-const fmt = (date: Date | null): string | null => {
-  if (!date) {
-    return null;
-  }
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
 };
 
 const isMissingTableError = (error: any, tableName: string): boolean => {
@@ -113,9 +37,6 @@ const isMissingStatusColumnError = (error: any): boolean => {
   );
 };
 
-const isInternalCalendarEntry = (note?: string | null): boolean =>
-  /^__(?:BLOCK|INTERNAL)__:/i.test(String(note || '').trim());
-
 module.exports = async function handler(req: any, res: any) {
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -126,7 +47,6 @@ module.exports = async function handler(req: any, res: any) {
     const supabase = getClient();
     const period = typeof req.query?.period === 'string' ? req.query.period : 'this-month';
     const monthParam = typeof req.query?.month === 'string' ? req.query.month : null;
-    const range = getRange(period, monthParam);
 
     const { data: companiesData, error: companiesError } = await supabase
       .from('companies')
@@ -188,93 +108,13 @@ module.exports = async function handler(req: any, res: any) {
       fromIndex += pageSize;
     }
 
-    const isInRange = (createdAt?: string | null): boolean => {
-      const parsed = parseCreatedAtDate(createdAt);
-      if (!parsed) {
-        return false;
-      }
-      const target = startOfDay(parsed);
-      if (range.from && target < range.from) {
-        return false;
-      }
-      if (range.to && target > range.to) {
-        return false;
-      }
-      return true;
-    };
-
-    const companyMap = new Map<string, CompanyRow>();
-    ((companiesData || []) as CompanyRow[]).forEach((company) =>
-      companyMap.set(company.slug, company),
-    );
-
-    const bookingRequestById = new Map<string, BookingRequestRow>();
-    bookingRequests.forEach((row) => {
-      if (row.id) {
-        bookingRequestById.set(row.id, row);
-      }
-    });
-
-    const bookingCounts = new Map<string, number>();
-    reservations.forEach((row) => {
-      const slug = row.restaurant_slug || '';
-      const originalRequest = row.booking_request_id
-        ? bookingRequestById.get(row.booking_request_id)
-        : undefined;
-      const receivedAt = originalRequest?.created_at || row.created_at;
-      if (
-        !slug ||
-        !isInRange(receivedAt) ||
-        !row.guest_email ||
-        isInternalCalendarEntry(row.note)
-      ) {
-        return;
-      }
-      bookingCounts.set(slug, (bookingCounts.get(slug) || 0) + 1);
-    });
-
-    const requestCounts = new Map<string, number>();
-    bookingRequests.forEach((row) => {
-      const slug = row.restaurant_slug || '';
-      if (
-        !slug ||
-        !isInRange(row.created_at) ||
-        ['approved', 'rejected'].includes(row.status || '')
-      ) {
-        return;
-      }
-      requestCounts.set(slug, (requestCounts.get(slug) || 0) + 1);
-    });
-
-    const rows = Array.from(companyMap.values())
-      .map((company) => {
-        const bookings = bookingCounts.get(company.slug) || 0;
-        const requests = requestCounts.get(company.slug) || 0;
-        return {
-          slug: company.slug,
-          name: company.name,
-          serviceType: company.service_type || 'restaurant',
-          bookings,
-          requests,
-          total: bookings + requests,
-        };
-      })
-      .sort(
-        (a, b) =>
-          b.total - a.total || b.bookings - a.bookings || a.name.localeCompare(b.name, 'de'),
-      );
-
-    res.status(200).json({
-      period,
-      from: fmt(range.from),
-      to: fmt(range.to),
-      companiesTotal: companyMap.size,
-      bookingsTotal: rows.reduce((sum, row) => sum + row.bookings, 0),
-      requestsTotal: rows.reduce((sum, row) => sum + row.requests, 0),
-      interactionsTotal: rows.reduce((sum, row) => sum + row.total, 0),
-      requestsTableAvailable,
-      rows,
-    });
+    const companies = ((companiesData || []) as CompanyRow[]).map(company => ({
+      slug: company.slug,
+      name: company.name,
+      serviceType: company.service_type === 'friseur' ? 'friseur' as const : 'restaurant' as const,
+    }));
+    const stats = buildAdminStats(companies, collectAdminStatsActivities(reservations, bookingRequests), period, monthParam);
+    res.status(200).json({ ...stats, requestsTableAvailable });
   } catch (error: any) {
     console.error('admin stats api error', error);
     res.status(500).json({ error: error.message || 'Server error' });

@@ -1,235 +1,90 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, delay, of } from 'rxjs';
+import { Observable, delay, map, of } from 'rxjs';
 
 import { environment } from '../../environments/environment';
+import { CompanyApiService } from './company-api.service';
+import { CompanyReservation } from './company-reservations.service';
+import {
+  AdminStatsCompany, AdminStatsPeriod, AdminStatsResponse, AdminStatsActivity,
+  AdminStatsReservation, AdminStatsRequest, adminStatsRange, buildAdminStats, collectAdminStatsActivities,
+} from '../shared/admin-statistics';
+export type { AdminStatsPeriod, AdminStatsResponse, AdminStatsRow } from '../shared/admin-statistics';
 
-export type AdminStatsPeriod = 'this-month' | 'last-30-days' | 'month' | 'all';
-
-export interface AdminStatsRow {
-  slug: string;
-  name: string;
-  serviceType: 'restaurant' | 'friseur';
-  bookings: number;
-  requests: number;
-  total: number;
-}
-
-export interface AdminStatsResponse {
-  period: AdminStatsPeriod;
-  from: string | null;
-  to: string | null;
-  companiesTotal: number;
-  bookingsTotal: number;
-  requestsTotal: number;
-  interactionsTotal: number;
-  requestsTableAvailable?: boolean;
-  rows: AdminStatsRow[];
-}
-
-interface LocalCompany {
-  slug: string;
-  name: string;
-  serviceType?: 'restaurant' | 'friseur';
-}
-
-interface LocalReservation {
-  date?: string;
-  createdAt?: string;
-  isBlock?: boolean;
-  isInternal?: boolean;
-  note?: string;
-}
-
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class AdminStatsService {
   private readonly baseUrl = '/api/admin-stats';
-  private readonly companiesKey = 'termine-direkt.companies';
   private readonly reservationsPrefix = 'termine-direkt.company-reservations.';
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly http: HttpClient, private readonly companies: CompanyApiService) {}
+
+  get isLocalPreview(): boolean {
+    return environment.mockApi && typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  }
 
   getStats(period: AdminStatsPeriod, month?: string): Observable<AdminStatsResponse> {
-    if (this.isLocalMock()) {
-      return of(this.getLocalStats(period, month)).pipe(delay(120));
+    if (this.isLocalPreview) {
+      return this.companies.listCompanies().pipe(map(companies => this.getLocalStats(companies, period, month)));
     }
-
     const params = new URLSearchParams({ period });
-    if (period === 'month' && month) {
-      params.set('month', month);
-    }
+    if (period === 'month' && month) params.set('month', month);
     return this.http.get<AdminStatsResponse>(`${this.baseUrl}?${params.toString()}`);
   }
 
-  private isLocalMock(): boolean {
-    return (
-      environment.mockApi &&
-      typeof window !== 'undefined' &&
-      window.location.hostname === 'localhost'
-    );
-  }
-
-  private getLocalStats(period: AdminStatsPeriod, month?: string): AdminStatsResponse {
-    const companies = this.loadCompanies();
-    const range = this.getRange(period, month);
-
-    const inRange = (dateValue?: string): boolean => {
-      const parsed = this.parseDate(dateValue);
-      if (!parsed) {
-        return false;
-      }
-      const target = this.startOfDay(parsed);
-      if (range.from && target < range.from) {
-        return false;
-      }
-      if (range.to && target > range.to) {
-        return false;
-      }
-      return true;
-    };
-
-    const rows: AdminStatsRow[] = companies.map((company) => {
-      const raw = window.localStorage.getItem(`${this.reservationsPrefix}${company.slug}`);
-      let reservations: LocalReservation[] = [];
-      if (raw) {
-        try {
-          reservations = JSON.parse(raw) as LocalReservation[];
-        } catch {
-          reservations = [];
+  /** Explicit, read-only examples. Never written to storage or mixed with real figures. */
+  getDemoStats(period: AdminStatsPeriod, month?: string): Observable<AdminStatsResponse> {
+    const companies: AdminStatsCompany[] = [
+      { slug: 'atelier7', name: 'Atelier7', serviceType: 'friseur' },
+      { slug: 'haarzeit-demo', name: 'Studio Haarzeit', serviceType: 'friseur' },
+      { slug: 'osteria-demo', name: 'Osteria Bella Sera', serviceType: 'restaurant' },
+    ];
+    const range = adminStatsRange(period, month);
+    const months = buildAdminStats(companies, [], period, month).monthlyTrend;
+    const activities: AdminStatsActivity[] = [];
+    months.forEach((point, index) => {
+      const [year, number] = point.month.split('-').map(Number);
+      const days = new Date(Date.UTC(year, number, 0)).getUTCDate();
+      companies.forEach((company, companyIndex) => {
+        for (let day = 1; day <= days; day++) {
+          const date = `${point.month}-${String(day).padStart(2, '0')}`;
+          if (date > range.today) continue;
+          const count = 1 + Math.floor(index / 2) + companyIndex + (day % 3 === 0 ? 1 : 0)
+            + (index === 5 ? (companyIndex === 1 ? -1 : 1) : 0);
+          for (let item = 0; item < count; item++) activities.push({ slug: company.slug, day: date,
+            kind: companyIndex === 0 && item % 3 !== 0 ? 'request' : 'booking' });
         }
-      }
-      const bookings = reservations.filter(
-        (item) =>
-          inRange(item.createdAt || item.date) &&
-          item.isBlock !== true &&
-          item.isInternal !== true &&
-          !/^__(?:BLOCK|INTERNAL)__:/i.test(String(item.note || '').trim()),
-      ).length;
-      const requests = 0;
-      return {
-        slug: company.slug,
-        name: company.name,
-        serviceType: company.serviceType || 'restaurant',
-        bookings,
-        requests,
-        total: bookings + requests,
-      };
+      });
     });
-
-    rows.sort(
-      (a, b) => b.total - a.total || b.bookings - a.bookings || a.name.localeCompare(b.name, 'de'),
-    );
-
-    return {
-      period,
-      from: this.formatDate(range.from),
-      to: this.formatDate(range.to),
-      companiesTotal: companies.length,
-      bookingsTotal: rows.reduce((sum, row) => sum + row.bookings, 0),
-      requestsTotal: rows.reduce((sum, row) => sum + row.requests, 0),
-      interactionsTotal: rows.reduce((sum, row) => sum + row.total, 0),
-      rows,
-    };
+    return of({ ...buildAdminStats(companies, activities, period, month), requestsTableAvailable: true }).pipe(delay(120));
   }
 
-  private loadCompanies(): LocalCompany[] {
-    if (typeof window === 'undefined') {
-      return [];
-    }
-    const raw = window.localStorage.getItem(this.companiesKey);
-    if (!raw) {
-      return [];
-    }
-    try {
-      return JSON.parse(raw) as LocalCompany[];
-    } catch {
-      return [];
-    }
-  }
-
-  private getRange(
-    period: AdminStatsPeriod,
-    month?: string,
-  ): { from: Date | null; to: Date | null } {
-    const now = new Date();
-    if (period === 'all') {
-      return { from: null, to: null };
-    }
-    if (period === 'last-30-days') {
-      const to = this.startOfDay(now);
-      const from = new Date(to);
-      from.setDate(from.getDate() - 29);
-      return { from, to };
-    }
-    if (period === 'month' && month) {
-      const m = /^(\d{4})-(\d{2})$/.exec(month);
-      if (m) {
-        const year = Number(m[1]);
-        const monthIndex = Number(m[2]) - 1;
-        return {
-          from: new Date(year, monthIndex, 1),
-          to: new Date(year, monthIndex + 1, 0),
-        };
+  private getLocalStats(companies: AdminStatsCompany[], period: AdminStatsPeriod, month?: string): AdminStatsResponse {
+    const reservations: AdminStatsReservation[] = [], requests: AdminStatsRequest[] = [];
+    for (const company of companies) {
+      let items: CompanyReservation[] = [];
+      try {
+        const value = JSON.parse(localStorage.getItem(`${this.reservationsPrefix}${company.slug}`) || '[]');
+        if (Array.isArray(value)) items = value;
+      } catch { /* A malformed local entry must not hide the other businesses. */ }
+      for (const item of items) {
+        if (!item || item.isBlock || item.isInternal || item.requestStatus === 'rejected') continue;
+        const createdAt = item.createdAt || this.legacyDate(item.date);
+        if (item.isRequest) requests.push({ id: item.id, restaurant_slug: company.slug, status: item.requestStatus || 'pending', created_at: createdAt });
+        else reservations.push({ restaurant_slug: company.slug, guest_email: item.guestEmail, note: item.note, created_at: createdAt });
       }
     }
-    return {
-      from: new Date(now.getFullYear(), now.getMonth(), 1),
-      to: new Date(now.getFullYear(), now.getMonth() + 1, 0),
-    };
+    return { ...buildAdminStats(companies, collectAdminStatsActivities(reservations, requests), period, month), requestsTableAvailable: true };
   }
 
-  private parseDate(value?: string): Date | null {
-    if (!value) {
-      return null;
-    }
-    const text = value.trim();
-    const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
-    if (iso) {
-      return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
-    }
-    const dmy = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(text);
-    if (dmy) {
-      return new Date(Number(dmy[3]), Number(dmy[2]) - 1, Number(dmy[1]));
-    }
-    const named = /^(\d{1,2})\.\s*([A-Za-zÄÖÜäöü]+)\s+(\d{4})$/.exec(text);
-    if (!named) {
-      return null;
-    }
-    const monthMap: Record<string, number> = {
-      januar: 0,
-      februar: 1,
-      maerz: 2,
-      märz: 2,
-      april: 3,
-      mai: 4,
-      juni: 5,
-      juli: 6,
-      august: 7,
-      september: 8,
-      oktober: 9,
-      november: 10,
-      dezember: 11,
-    };
-    const month = monthMap[named[2].toLowerCase()];
-    if (month === undefined) {
-      return null;
-    }
-    return new Date(Number(named[3]), month, Number(named[1]));
-  }
-
-  private startOfDay(date: Date): Date {
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  }
-
-  private formatDate(date: Date | null): string | null {
-    if (!date) {
-      return null;
-    }
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+  private legacyDate(value?: string): string | undefined {
+    if (!value) return undefined;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+    const numeric = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(value);
+    if (numeric) return `${numeric[3]}-${numeric[2].padStart(2, '0')}-${numeric[1].padStart(2, '0')}`;
+    const named = /^(\d{1,2})\.\s*([A-Za-zÄÖÜäöü]+)\s+(\d{4})$/.exec(value);
+    const months = ['januar', 'februar', 'märz', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'dezember'];
+    if (!named) return undefined;
+    const index = months.indexOf(named[2].toLocaleLowerCase('de').replace('maerz', 'märz'));
+    return index < 0 ? undefined : `${named[3]}-${String(index + 1).padStart(2, '0')}-${named[1].padStart(2, '0')}`;
   }
 }

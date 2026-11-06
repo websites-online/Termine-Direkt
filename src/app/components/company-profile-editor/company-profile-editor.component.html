@@ -1,9 +1,15 @@
 <div class="profile-editor" [formGroup]="form" (focusout)="touch()">
-  <div class="editor-intro"><span>Dein Auftritt</span><p>Texte und Bilder machen die Seite persönlich. Leere Vorstellungstexte werden ausgeblendet.</p></div>
+  <div class="editor-intro"><span>Dein Auftritt</span><p>Die Begrüßung kannst du für jedes Unternehmen anpassen. Fotos, Vorstellung und {{ serviceType === 'restaurant' ? 'Speisekarte' : 'Leistungsübersicht' }} gehören zu PRO.</p></div>
   <div class="editor-fields">
     <label><span>Begrüßung</span><input formControlName="welcomeTitle" maxlength="80" placeholder="Schön, dass du da bist." /></label>
     <label><span>Kurzer Untertitel</span><input formControlName="welcomeSubtitle" maxlength="160" placeholder="Dein Termin. Ganz entspannt." /></label>
   </div>
+  <div class="editor-pro-notice" *ngIf="!proFeaturesEnabled">
+    <span>PRO</span><h3>Mehr Platz für dein Unternehmen</h3>
+    <p>Die Reiter Fotos, Über uns und {{ serviceType === 'restaurant' ? 'Speisekarte' : 'Leistungen' }} sind im PRO-Tarif sichtbar. Bereits gespeicherte Inhalte bleiben erhalten.</p>
+    <button type="button" class="editor-add" (click)="managePlan.emit()">Tarif ansehen</button>
+  </div>
+  <ng-container *ngIf="proFeaturesEnabled">
   <div class="editor-block">
     <div class="editor-heading"><div><h3>Über uns</h3><p>Stell dich oder dein Unternehmen in wenigen Sätzen vor.</p></div><span class="editor-optional">Optional</span></div>
     <label><span>Überschrift</span><input formControlName="aboutTitle" maxlength="100" placeholder="Hi, ich bin Arsel." /></label>
@@ -45,4 +51,5 @@
     </ng-container>
     <ng-template #salonDescriptions><label class="editor-service-description" *ngFor="let service of services"><span>{{ service.label || 'Neue Leistung' }}</span><textarea [value]="value.serviceDescriptions[service.value] || ''" (input)="serviceDescription(service.value, $event)" maxlength="600" rows="2" placeholder="Optionale Beschreibung dieser Leistung."></textarea></label></ng-template>
   </div>
+  </ng-container>
 </div>

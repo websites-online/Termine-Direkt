@@ -10,7 +10,7 @@ export function atelierProfileExample(): Company {
     bookingMode: 'request', timeSelectionMode: 'free', slotCapacity: 1, slotIntervalMinutes: 30,
     bookingBufferMinutes: 120, showServicePrices: false, brandColor: '#4f46e5',
     logoUrl: '/media/examples/atelier7.jpg', stylistSelectionEnabled: true,
-    stylists: ['Mara', 'Alex', 'Nila'], planTier: 'starter', calendarMode: 'shared',
+    stylists: ['Mara', 'Alex', 'Nila'], planTier: 'pro', calendarMode: 'shared',
     salonServices: [
       { value: 'herrenhaarschnitt', label: 'Signature Cut', audience: 'men', durationMinutes: 45 },
       { value: 'damenhaarschnitt', label: 'Cut & Styling', audience: 'women', durationMinutes: 60 },
@@ -34,7 +34,7 @@ export function restaurantProfileExample(): Company {
     email: 'restaurant-preview@example.test', loginPin: '123456', serviceType: 'restaurant',
     bookingMode: 'confirm', timeSelectionMode: 'free', slotCapacity: 3, slotIntervalMinutes: 30,
     bookingBufferMinutes: 120, seatingOptionsEnabled: true, brandColor: '#a65d38',
-    planTier: 'starter', calendarMode: 'shared',
+    planTier: 'pro', calendarMode: 'shared',
     profile: {
       ...defaultCompanyProfile('restaurant'), aboutTitle: 'Benvenuti bei uns.',
       aboutText: 'Wir sind ein kleines Team mit einer großen Liebe zur italienischen Küche. Bei uns gibt es hausgemachte Pasta, frische Zutaten und Zeit für einen entspannten Abend. Wir freuen uns auf deinen Besuch.',

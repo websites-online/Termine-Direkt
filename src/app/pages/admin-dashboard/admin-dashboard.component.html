@@ -194,7 +194,7 @@
               <span class="section-number">✦</span>
               <div><h2>Profil & Fotos</h2><p>Begrüßung, Vorstellung und {{ companyForm.value.serviceType === 'restaurant' ? 'Speisekarte' : 'Leistungsbeschreibungen' }} der Kundenseite.</p></div>
             </div>
-            <app-company-profile-editor formControlName="profile" [serviceType]="companyForm.value.serviceType || 'restaurant'" [services]="salonServiceSettings" />
+            <app-company-profile-editor formControlName="profile" [serviceType]="companyForm.value.serviceType || 'restaurant'" [services]="salonServiceSettings" [proFeaturesEnabled]="companyForm.value.planTier === 'pro'" (managePlan)="scrollToSection('zugang')" />
             <p class="helptext">Die Inhalte werden zusammen mit den Unternehmenseinstellungen gespeichert. Danach kannst du die Kundenseite oben öffnen.</p>
           </section>
 
@@ -598,7 +598,7 @@
                   <option value="pro">PRO – 24,99 €</option>
                 </select>
                 <span class="helptext"
-                  >PRO schaltet die ausführliche Unternehmensstatistik frei.</span
+                  >PRO schaltet Fotos, Über uns, {{ companyForm.value.serviceType === 'restaurant' ? 'die Speisekarte' : 'die Leistungsübersicht' }} und die ausführliche Unternehmensstatistik frei.</span
                 >
               </label>
               <label>

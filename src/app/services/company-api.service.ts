@@ -80,6 +80,7 @@ export interface CompanyPayload {
 export class CompanyApiService {
   private readonly baseUrl = '/api/companies';
   private readonly storageKey = 'termine-direkt.companies';
+  private readonly proExamplesKey = 'termine-direkt.pro-profile-examples-v1';
 
   constructor(private readonly http: HttpClient, private readonly adminAuth: AdminAuthService) {}
 
@@ -276,7 +277,17 @@ export class CompanyApiService {
           parsed.push(restaurantProfileExample());
           changed = true;
         }
+        // Upgrade only the two existing preview fixtures once. Later manual downgrades
+        // and newly created Starter companies must remain Starter.
+        const upgradeExamples = !window.localStorage.getItem(this.proExamplesKey);
+        if (upgradeExamples) {
+          for (const company of parsed) {
+            if (company.id && ['local-atelier7-preview', 'local-restaurant-profile'].includes(company.id)) company.planTier = 'pro';
+          }
+          changed = true;
+        }
         if (changed) this.saveLocalCompanies(parsed);
+        if (upgradeExamples) window.localStorage.setItem(this.proExamplesKey, '1');
       }
       return parsed.map((company) => {
         const isDemo = company.slug === 'new-city-barber-demo';
