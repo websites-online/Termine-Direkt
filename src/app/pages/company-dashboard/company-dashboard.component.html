@@ -116,6 +116,33 @@
       <span class="push-card__loading" *ngIf="pushState === 'loading'">Wird geprüft…</span>
     </article>
 
+    <section class="value-hero value-hero--compact" *ngIf="isPro && revenue" aria-label="Geschätzter Umsatz durch NexTime">
+      <div>
+        <span class="eyebrow">Ihr Mehrwert · letzte 30 Tage</span>
+        <strong class="value-hero__amount" [countUp]="revenue.amount" countFormat="currency">0 €</strong>
+        <p class="value-hero__sub">
+          <span class="trend-chip" [class.trend-chip--down]="revenue.changeNegative">{{ revenue.changeLabel }}</span>
+          <span>{{ revenue.bookings }} Termine × {{ euro(avgTicket) }} · Schätzung</span>
+        </p>
+      </div>
+      <a class="value-hero__link" routerLink="/unternehmen/statistik">Details &amp; Durchschnittswert anpassen <span aria-hidden="true">→</span></a>
+    </section>
+    <div class="value-hero-skeleton" *ngIf="isPro && revenueLoading && !revenue" aria-hidden="true"></div>
+    <section class="value-teaser" *ngIf="!isPro">
+      <div>
+        <span class="eyebrow">In PRO enthalten</span>
+        <h2>Sehen Sie, wie viel Umsatz Ihnen NexTime bringt.</h2>
+        <p>Geschätzter Umsatz aus Ihren Buchungen, Statistik zu Ihren stärksten Tagen und Stammkunden.</p>
+      </div>
+      <a routerLink="/" fragment="contact">PRO anfragen</a>
+    </section>
+
+    <div class="request-banner" *ngIf="monthRequestCount > 0">
+      <span class="request-banner__dot" aria-hidden="true"></span>
+      <p><strong>{{ monthRequestCount }} offene {{ monthRequestCount === 1 ? 'Anfrage wartet' : 'Anfragen warten' }}</strong> auf Ihre Antwort.</p>
+      <button type="button" (click)="showNextRequest()">Ansehen</button>
+    </div>
+
     <div class="summary-grid">
       <article class="summary-card">
         <span class="summary-icon summary-icon--blue"
@@ -236,6 +263,12 @@
           >
             +
           </button>
+        </div>
+        <div class="quick-dates" role="group" aria-label="Schnellauswahl Tag">
+          <button type="button" [class.is-active]="isQuickDate(0)" (click)="setQuickDate(0)">Heute</button>
+          <button type="button" [class.is-active]="isQuickDate(1)" (click)="setQuickDate(1)">Morgen</button>
+          <button type="button" [class.is-active]="isQuickDate(2)" (click)="setQuickDate(2)">Übermorgen</button>
+          <button type="button" [class.is-active]="isQuickDate(7)" (click)="setQuickDate(7)">In 7 Tagen</button>
         </div>
         <div class="agenda-loading" *ngIf="isLoading">Termine werden geladen…</div>
         <div class="empty-agenda" *ngIf="!isLoading && reservations.length === 0">
