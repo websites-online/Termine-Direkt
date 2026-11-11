@@ -1609,7 +1609,7 @@
   .company-workspace .workspace-main > .value-teaser { order: 5; margin-top: 4px; }
   .company-workspace .workspace-main > .push-card { order: 6; }
   .company-workspace .calendar-layout { display: flex; flex-direction: column; gap: 12px; }
-  .company-workspace .calendar-layout > .agenda-card { order: -1; min-height: 0; }
+  .company-workspace .calendar-layout > .agenda-card { order: 1; min-height: 0; }
   .company-workspace .empty-agenda { padding: 14px 8px 8px; }
   .company-workspace .empty-icon { width: 40px; height: 40px; }
   .company-workspace .workspace-header p:not(.eyebrow) { display: none; }
