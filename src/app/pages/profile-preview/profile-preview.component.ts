@@ -31,6 +31,7 @@ interface PreviewService {
   host: {
     class: 'profile-preview', '[class.has-booking-dock]': 'showBookingDock', '[class.is-restaurant]': 'isRestaurant',
     '[class.has-pro-profile]': 'hasProProfile',
+    '[class.has-hero]': 'gallery.length > 0',
     '[style.--profile-tab-count]': 'tabs.length',
     '[style.--brand-color]': 'booking?.brandColor || company?.brandColor',
     '[style.--brand-rgb]': "booking?.brandColorRgb || '79, 70, 229'",
@@ -172,7 +173,9 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
     } else if (this.booking?.hasSelectedDate) {
       document.querySelector('.profile-preview .booking-shell')?.scrollIntoView({ behavior, block: 'start' });
     } else {
-      window.scrollTo({ top: 0, behavior });
+      const sheet = this.gallery.length && window.matchMedia('(max-width: 760px)').matches
+        ? document.querySelector<HTMLElement>('.profile-preview .profile-sheet') : null;
+      window.scrollTo({ top: sheet ? Math.max(0, sheet.getBoundingClientRect().top + window.scrollY - 6) : 0, behavior });
     }
   }
   async share(): Promise<void> {

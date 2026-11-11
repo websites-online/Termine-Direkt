@@ -28,7 +28,24 @@
       </button>
     </div>
     <div class="profile-gallery-hero-dots" *ngIf="gallery.length > 1" aria-hidden="true"><i *ngFor="let photo of gallery; let index = index" [class.is-active]="index === heroIndex"></i></div>
+    <div class="profile-hero-overlay">
+      <div class="profile-hero-shade" aria-hidden="true"></div>
+      <span class="profile-hero-count" *ngIf="gallery.length > 1" aria-hidden="true">{{ heroIndex + 1 }} / {{ gallery.length }}</span>
+      <button class="profile-icon-button profile-hero-share" type="button" (click)="share()" [attr.aria-label]="isRestaurant ? 'Restaurant teilen' : 'Salon teilen'"><svg><use href="#p-share" /></svg></button>
+      <div class="profile-hero-title">
+        <div class="company-hero-logo">
+          <img *ngIf="booking?.hasCompanyLogo" [src]="company.logoUrl" [alt]="company.name + ' Logo'" (error)="booking?.handleLogoError()" />
+          <span *ngIf="!booking?.hasCompanyLogo">{{ booking?.companyInitials || company.name[0] }}</span>
+        </div>
+        <h1>{{ company.name }}</h1>
+        <p><svg aria-hidden="true"><use href="#p-pin" /></svg>{{ company.address || 'Adresse folgt' }}</p>
+        <p><svg aria-hidden="true"><use href="#p-clock" /></svg>{{ company.hours || 'Öffnungszeiten folgen' }}</p>
+      </div>
+    </div>
   </section>
+
+  <div class="profile-sheet">
+  <div class="profile-sheet-grip" aria-hidden="true"></div>
 
   <header class="company-hero profile-company-header" aria-label="Unternehmensinformationen">
     <div class="company-identity">
@@ -114,6 +131,7 @@
   </div>
 
   <footer class="profile-footer"><span class="profile-logo"><img src="/nextimeNeuesLogo.png" width="1189" height="323" alt="NexTime – Online Booking" loading="lazy" /></span><p>Mehr Zeit für das, was dir guttut.</p><span *ngIf="isLocalDesignPreview">Lokale Designvorschau · Fiktive Profilinformationen</span></footer>
+  </div>
 </main>
 
 <section class="profile-load-state" *ngIf="!company"><p *ngIf="loading">Deine Buchungsseite wird geladen…</p><p *ngIf="!loading">Dieses Unternehmen wurde nicht gefunden.</p></section>
