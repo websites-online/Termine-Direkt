@@ -1366,3 +1366,14 @@
 .stats-grid--kunden > .customers-panel {
   grid-column: 1 / -1;
 }
+
+/* ==== Desktop: kompaktere Statistik ==== */
+@media (min-width: 900px) {
+  .stats-kpi { min-height: 108px; padding: 15px 17px; }
+  .stats-kpi > strong { font-size: 1.9rem; }
+  .value-hero { padding: 18px 22px; gap: 24px; margin-bottom: 12px; }
+  .value-hero__amount { font-size: clamp(2.6rem, 4vw, 3.3rem); }
+  .stats-panel { padding: 18px 20px; }
+  .stats-section { margin-bottom: 20px; }
+  .area-chart { height: clamp(150px, 16vw, 190px); }
+}

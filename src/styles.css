@@ -11,6 +11,13 @@
   box-sizing: border-box;
 }
 
+/* Desktop: alles ein paar Stufen kleiner (rem-basierte Schrift und Abstände) */
+@media (min-width: 900px) {
+  html {
+    font-size: 14px;
+  }
+}
+
 html {
   scroll-behavior: smooth;
   background: var(--bg);

@@ -1842,3 +1842,21 @@
     animation: none;
   }
 }
+
+/* ==== Desktop: kompaktere Blöcke (feste Pixelhöhen verkleinern) ==== */
+@media (min-width: 900px) {
+  .company-workspace .calendar-day { min-height: 0; height: 74px; }
+  .company-workspace .calendar-card .calendar-grid { grid-auto-rows: 74px; }
+  .company-workspace .workspace-card { padding: 18px 20px; }
+  .company-workspace .summary-card { min-height: 0; padding: 13px 16px; }
+  .company-workspace .push-card { padding: 12px 16px; margin-bottom: 14px; }
+  .workspace-header--company { padding: 12px 16px; }
+  .workspace-header--company .company-banner__logo { width: 48px; height: 48px; border-radius: 15px; font-size: 1.05rem; }
+  .workspace-header--company h1 { font-size: 1.5rem; }
+  .company-workspace .agenda-card { min-height: 0; }
+}
+
+@media (min-width: 900px) {
+  .quick-dates { flex-wrap: wrap; }
+  .quick-dates button { padding: 0 11px; min-height: 30px; }
+}
