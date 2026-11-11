@@ -53,3 +53,38 @@
 }}
 @media(prefers-reduced-motion:reduce){.profile-preview.has-hero .profile-sheet,.profile-preview.has-hero .profile-sheet-grip{animation:none}}
 .profile-preview .profile-hero-count svg{width:12px;height:12px}
+
+/* ==== Kompakter Einstieg: Foto-Band + kompletter Kalender auf einem Bildschirm ==== */
+@media(max-width:760px){
+ .profile-preview.has-hero{--sheet-peek:70svh}
+ .profile-preview.has-hero .profile-sheet{padding:0 12px 6px}
+ .profile-preview.has-hero .profile-sheet-grip{top:7px}
+ /* Firmenzeile statt Karte */
+ .profile-preview.has-hero .profile-company-header{margin:14px 0 8px;padding:0;border:0;background:none;box-shadow:none;min-height:0;overflow:visible}
+ .profile-preview.has-hero .profile-company-header .company-hero-mark{display:none}
+ .profile-preview.has-hero .profile-company-header .company-hero-logo{width:40px;height:40px;border-radius:12px;box-shadow:none}
+ .profile-preview.has-hero .profile-company-header .company-identity{gap:10px;align-items:center}
+ .profile-preview.has-hero .profile-company-header h1{margin:0;font-size:18px;line-height:1.15;letter-spacing:-.5px}
+ .profile-preview.has-hero .profile-company-header .company-meta{gap:0;margin-top:1px;font-size:11px;line-height:1.4}
+ .profile-preview.has-hero .profile-company-header .company-meta span{display:flex;gap:5px}
+ .profile-preview.has-hero .profile-company-header .company-meta svg{width:11px;height:11px}
+ /* Willkommens-Text weg, Tabs schlank */
+ .profile-preview.has-hero .profile-welcome{display:none}
+ .profile-preview.has-hero .profile-tab-bar{margin:0 0 8px;padding:3px;border-radius:12px}
+ .profile-preview.has-hero .profile-tab-bar [role=tab]{min-height:36px;padding:6px 4px;flex-direction:row;gap:5px;font-size:11px}
+ .profile-preview.has-hero .profile-tab-bar [role=tab] svg{display:none}
+ /* Buchung kompakt */
+ .profile-preview.has-hero .booking-shell{padding:10px;border-radius:16px}
+ .profile-preview.has-hero .booking-shell app-restaurant-page .booking-location{margin-bottom:8px}
+ .profile-preview.has-hero .booking-shell app-restaurant-page .location-option{min-height:38px;padding:6px 9px}
+ .profile-preview.has-hero .booking-shell app-restaurant-page .location-option small{display:none}
+ .profile-preview.has-hero .booking-shell app-restaurant-page .booking-flow{margin-bottom:8px;gap:8px}
+ .profile-preview.has-hero .booking-shell app-restaurant-page .flow-step{min-height:24px;padding:3px 9px}
+ .profile-preview.has-hero .booking-shell app-restaurant-page .demo-grid.flow-ready>.calendar-card>h2{display:none}
+ .profile-preview.has-hero .booking-shell app-restaurant-page .demo-grid.flow-ready>.calendar-card{gap:6px}
+ .profile-preview.has-hero .booking-shell app-restaurant-page .calendar-card .calendar-header{min-height:34px;padding:2px 4px}
+ .profile-preview.has-hero .booking-shell app-restaurant-page .calendar-card .month-nav{width:28px;height:28px}
+ .profile-preview.has-hero .booking-shell app-restaurant-page .calendar-card .calendar-grid{gap:4px}
+ .profile-preview.has-hero .booking-shell app-restaurant-page .calendar-card .day{height:34px;font-size:12px}
+ .profile-preview.has-hero .profile-booking-footnote{display:none}
+}
