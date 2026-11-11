@@ -32,15 +32,6 @@
       <div class="profile-hero-shade" aria-hidden="true"></div>
       <span class="profile-hero-count" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>{{ gallery.length > 1 ? (heroIndex + 1) + ' / ' + gallery.length : 'Vergrößern' }}</span>
       <button class="profile-icon-button profile-hero-share" type="button" (click)="share()" [attr.aria-label]="isRestaurant ? 'Restaurant teilen' : 'Salon teilen'"><svg><use href="#p-share" /></svg></button>
-      <div class="profile-hero-title">
-        <div class="company-hero-logo">
-          <img *ngIf="booking?.hasCompanyLogo" [src]="company.logoUrl" [alt]="company.name + ' Logo'" (error)="booking?.handleLogoError()" />
-          <span *ngIf="!booking?.hasCompanyLogo">{{ booking?.companyInitials || company.name[0] }}</span>
-        </div>
-        <h1>{{ company.name }}</h1>
-        <p><svg aria-hidden="true"><use href="#p-pin" /></svg>{{ company.address || 'Adresse folgt' }}</p>
-        <p><svg aria-hidden="true"><use href="#p-clock" /></svg>{{ company.hours || 'Öffnungszeiten folgen' }}</p>
-      </div>
     </div>
   </section>
 
