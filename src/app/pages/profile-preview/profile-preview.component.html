@@ -21,22 +21,16 @@
 
 <main class="profile-main" *ngIf="company as company">
   <section class="profile-gallery-hero" *ngIf="gallery.length" aria-label="Fotos von {{ company.name }}">
-    <div class="profile-gallery-hero-track" #heroTrack (scroll)="onHeroScroll(heroTrack)">
+    <div class="profile-gallery-hero-track" #heroTrack (scroll)="onHeroScroll(heroTrack)" (pointerdown)="pauseHero()">
       <button type="button" class="profile-gallery-hero-slide" *ngFor="let photo of gallery; let index = index"
         (click)="openGallery(index)" [attr.aria-label]="'Foto ' + (index + 1) + ' von ' + gallery.length + ' vergrößern'">
         <img [src]="photo.src" [alt]="photo.alt" [attr.loading]="index === 0 ? 'eager' : 'lazy'" [attr.fetchpriority]="index === 0 ? 'high' : null" decoding="async" />
       </button>
     </div>
     <div class="profile-gallery-hero-dots" *ngIf="gallery.length > 1" aria-hidden="true"><i *ngFor="let photo of gallery; let index = index" [class.is-active]="index === heroIndex"></i></div>
-    <div class="profile-hero-overlay">
-      <div class="profile-hero-shade" aria-hidden="true"></div>
-      <span class="profile-hero-count" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>{{ gallery.length > 1 ? (heroIndex + 1) + ' / ' + gallery.length : 'Vergrößern' }}</span>
-      <button class="profile-icon-button profile-hero-share" type="button" (click)="share()" [attr.aria-label]="isRestaurant ? 'Restaurant teilen' : 'Salon teilen'"><svg><use href="#p-share" /></svg></button>
-    </div>
   </section>
 
   <div class="profile-sheet">
-  <div class="profile-sheet-grip" aria-hidden="true"></div>
 
   <header class="company-hero profile-company-header" aria-label="Unternehmensinformationen">
     <div class="company-identity">

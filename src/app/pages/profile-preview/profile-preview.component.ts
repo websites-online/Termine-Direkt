@@ -58,6 +58,9 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
   get bookingLabel(): string { return this.isRestaurant ? 'Tisch reservieren' : 'Termin anfragen'; }
   get mapUrl(): string { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(this.company?.address || ''); }
   @ViewChild(RestaurantPageComponent) booking?: RestaurantPageComponent;
+  @ViewChild('heroTrack') heroTrackRef?: ElementRef<HTMLElement>;
+  private heroTimer?: ReturnType<typeof setInterval>;
+  private heroPausedUntil = 0;
   @ViewChild('galleryDialog') galleryDialog?: ElementRef<HTMLDialogElement>;
   @ViewChild('selectionDialog') selectionDialog?: ElementRef<HTMLDialogElement>;
   activeTab: ProfileTab = 'booking';
@@ -87,6 +90,7 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
   price(value: number): string { return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value); }
 
   ngOnInit(): void {
+    if (typeof window !== 'undefined') this.heroTimer = setInterval(() => this.advanceHero(), 4500);
     this.subscription.add(this.route.paramMap.pipe(switchMap(params => {
       this.company = undefined;
       this.loading = true;
@@ -133,6 +137,17 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
   get currentImage() { return this.gallery[this.galleryIndex]; }
   get showBookingDock() { return this.activeTab !== 'booking'; }
 
+  pauseHero(): void { this.heroPausedUntil = Date.now() + 12000; }
+  private advanceHero(): void {
+    const track = this.heroTrackRef?.nativeElement;
+    if (!track || this.gallery.length < 2 || this.reducedMotion || document.hidden || Date.now() < this.heroPausedUntil || this.galleryDialog?.nativeElement.open) return;
+    const slides = track.children;
+    const next = (this.heroIndex + 1) % this.gallery.length;
+    const target = slides[next] as HTMLElement | undefined;
+    if (!target) return;
+    track.scrollTo({ left: target.offsetLeft - (slides[0] as HTMLElement).offsetLeft, behavior: 'smooth' });
+  }
+
   onHeroScroll(track: HTMLElement): void {
     const slide = track.firstElementChild instanceof HTMLElement ? track.firstElementChild.offsetWidth : track.clientWidth;
     this.heroIndex = Math.min(this.gallery.length - 1, Math.max(0, Math.round(track.scrollLeft / Math.max(1, slide + 10))));
@@ -173,9 +188,7 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
     } else if (this.booking?.hasSelectedDate) {
       document.querySelector('.profile-preview .booking-shell')?.scrollIntoView({ behavior, block: 'start' });
     } else {
-      const sheet = this.gallery.length && window.matchMedia('(max-width: 760px)').matches
-        ? document.querySelector<HTMLElement>('.profile-preview .profile-sheet') : null;
-      window.scrollTo({ top: sheet ? Math.max(0, sheet.getBoundingClientRect().top + window.scrollY - 6) : 0, behavior });
+      window.scrollTo({ top: 0, behavior });
     }
   }
   async share(): Promise<void> {
@@ -227,5 +240,5 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
     this.toastTimer = setTimeout(() => this.toast = '', 3600);
   }
   private get reducedMotion(): boolean { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
-  ngOnDestroy(): void { clearTimeout(this.toastTimer); this.subscription.unsubscribe(); }
+  ngOnDestroy(): void { clearTimeout(this.toastTimer); clearInterval(this.heroTimer); this.subscription.unsubscribe(); }
 }
