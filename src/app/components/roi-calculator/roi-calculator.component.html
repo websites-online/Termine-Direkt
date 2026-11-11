@@ -1,0 +1,97 @@
+<section class="section roi" id="rechner">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Lohnt sich NexTime für Sie?</h2>
+      <p class="section-lead">
+        Rechnen Sie in wenigen Sekunden nach – mit Ihren eigenen Zahlen. Schon wenige zusätzliche Buchungen im
+        Monat decken die Kosten.
+      </p>
+    </div>
+
+    <div class="roi-grid">
+      <div class="card roi-inputs">
+        <div class="roi-presets" role="group" aria-label="Branche wählen">
+          <span>Schnellwahl</span>
+          @for (preset of presets; track preset.label) {
+            <button type="button" [class.is-active]="ticket === preset.ticket" (click)="setPreset(preset.ticket)">
+              {{ preset.label }}
+            </button>
+          }
+        </div>
+
+        <div class="roi-field">
+          <div class="roi-field__head">
+            <label for="roi-extra">Zusätzliche Buchungen pro Monat</label>
+            <output class="roi-value">{{ extra }}</output>
+          </div>
+          <input id="roi-extra" type="range" min="1" max="100" step="1" [(ngModel)]="extra"
+            [style.--fill]="fill(extra, 1, 100)" />
+          <p class="roi-hint">Termine oder Reservierungen, die über Ihren NexTime-Link und Google zusätzlich eingehen.</p>
+        </div>
+
+        <div class="roi-field">
+          <div class="roi-field__head">
+            <label for="roi-ticket">Ø Umsatz pro Termin</label>
+            <output class="roi-value">{{ ticket }} €</output>
+          </div>
+          <input id="roi-ticket" type="range" min="10" max="150" step="5" [(ngModel)]="ticket"
+            [style.--fill]="fill(ticket, 10, 150)" />
+          <p class="roi-hint">Was ein Kunde im Schnitt bei Ihnen ausgibt – Schnitt, Behandlung oder Essen.</p>
+        </div>
+
+        <div class="roi-plan" role="group" aria-label="Tarif wählen">
+          @for (item of plans; track item.id) {
+            <button type="button" [class.is-active]="plan === item.id" (click)="plan = item.id">
+              <strong>{{ item.label }}</strong>
+              <span>{{ euro(item.price, 2) }} / Monat</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="card roi-result" [class.is-negative]="!paysOff">
+        <span class="roi-eyebrow">Ihr geschätzter Mehrumsatz</span>
+        <div class="roi-amount"><strong [countUp]="revenue" countFormat="currency">0 €</strong><small>pro Monat</small></div>
+
+        <div class="roi-bars" aria-hidden="true">
+          <div class="roi-bar">
+            <span>NexTime kostet</span>
+            <div><i class="roi-bar__cost" [style.width.%]="costBar"></i></div>
+            <b>{{ euro(price, 2) }}</b>
+          </div>
+          <div class="roi-bar">
+            <span>Mehrumsatz</span>
+            <div><i class="roi-bar__gain" style="width: 100%"></i></div>
+            <b>{{ euro(revenue) }}</b>
+          </div>
+        </div>
+
+        <div class="roi-summary">
+          <div>
+            <span>Bleibt übrig</span>
+            <strong [class.is-negative]="!paysOff">{{ euro(net) }}</strong>
+          </div>
+          <div>
+            <span>Rendite</span>
+            <strong>{{ paysOff ? roi.toString().replace('.', ',') + '×' : '–' }}</strong>
+          </div>
+        </div>
+
+        <p class="roi-break">
+          @if (paysOff) {
+            Schon <b>{{ breakEven }} {{ breakEven === 1 ? 'zusätzlicher Termin' : 'zusätzliche Termine' }}</b> im Monat reichen, damit sich NexTime rechnet.
+          } @else {
+            Erst ab <b>{{ breakEven }} zusätzlichen Terminen</b> im Monat rechnet sich NexTime – erhöhen Sie die Buchungen, um das Ergebnis zu sehen.
+          }
+        </p>
+
+        <a class="btn btn-primary roi-cta" href="#contact">Kostenlos testen</a>
+      </div>
+    </div>
+
+    <p class="roi-note">
+      Beispielrechnung mit Ihren Annahmen, keine Garantie. Wie viele zusätzliche Buchungen entstehen, hängt von Ihrem
+      Betrieb ab.
+    </p>
+  </div>
+</section>
