@@ -17,12 +17,6 @@ export class RoiCalculatorComponent {
     { id: 'starter', label: 'Starter', price: 19.99 },
     { id: 'pro', label: 'Pro', price: 24.99 },
   ];
-  readonly presets = [
-    { label: 'Friseur', ticket: 35 },
-    { label: 'Barber', ticket: 28 },
-    { label: 'Kosmetik', ticket: 60 },
-    { label: 'Restaurant', ticket: 60 },
-  ];
 
   extra = 15;
   ticket = 35;
@@ -52,10 +46,6 @@ export class RoiCalculatorComponent {
     return this.net > 0;
   }
 
-  get costBar(): number {
-    return Math.max(4, Math.min(100, (this.price / Math.max(this.revenue, this.price)) * 100));
-  }
-
   fill(value: number, min: number, max: number): string {
     return `${((value - min) / (max - min)) * 100}%`;
   }
@@ -67,9 +57,5 @@ export class RoiCalculatorComponent {
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
     }).format(value);
-  }
-
-  setPreset(ticket: number): void {
-    this.ticket = ticket;
   }
 }
