@@ -29,6 +29,7 @@ export class CompanyStatsComponent implements OnInit {
   readonly ticketPresets = [20, 35, 50, 80];
   avgTicket = 35;
   activePoint = -1;
+  chartMode: 'revenue' | 'count' = 'revenue';
 
   session: CompanySession | null = null;
   period: CompanyStatsPeriod = 30;
@@ -254,6 +255,9 @@ export class CompanyStatsComponent implements OnInit {
 
   get revenueSeries(): number[] {
     const stats = this.stats;
+    if (stats && this.chartMode === 'count') {
+      return stats.trend.map((point) => point.count);
+    }
     if (!stats || stats.total === 0) {
       return (stats?.trend || []).map(() => 0);
     }
@@ -310,8 +314,16 @@ export class CompanyStatsComponent implements OnInit {
     return `${this.chartLine} L${points[points.length - 1].x} ${base} L${points[0].x} ${base} Z`;
   }
 
+  chartValueLabel(value: number): string {
+    return this.chartMode === 'count' ? `${Math.round(value)} ${this.stats?.eventLabel || ''}` : this.euro(value);
+  }
+
   get chartMaxLabel(): string {
-    return this.euro(this.chartMax);
+    return this.chartValueLabel(this.chartMax);
+  }
+
+  scrollToSection(id: string): void {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   get periodShort(): string {
@@ -322,7 +334,7 @@ export class CompanyStatsComponent implements OnInit {
     const usable = this.chartH - this.padTop - this.padBottom;
     return [0, 0.5, 1].map((ratio) => ({
       y: this.padTop + usable - ratio * usable,
-      label: this.euro(this.chartMax * ratio),
+      label: this.chartValueLabel(this.chartMax * ratio),
     }));
   }
 

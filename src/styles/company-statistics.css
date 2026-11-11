@@ -1148,3 +1148,221 @@
 .stats-footnote--estimate strong {
   color: #3f4b60;
 }
+
+/* ==========================================================================
+   Statistik besser geordnet: Abschnitte, Schnell-Navigation, Umschalter
+   ========================================================================== */
+.stats-subnav {
+  position: sticky;
+  top: 8px;
+  z-index: 20;
+  display: flex;
+  gap: 6px;
+  margin: 0 0 16px;
+  padding: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border: 1px solid #e5e9f1;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 6px 18px rgba(23, 32, 51, 0.06);
+}
+
+.stats-subnav::-webkit-scrollbar {
+  display: none;
+}
+
+.stats-subnav button {
+  flex: 1 0 auto;
+  min-height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #5b6780;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.stats-subnav button:hover {
+  background: #eef0ff;
+  color: #4338ca;
+}
+
+.stats-section {
+  scroll-margin-top: 72px;
+  margin-bottom: 26px;
+}
+
+.stats-section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin: 0 2px 12px;
+}
+
+.stats-section__head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  color: #172033;
+}
+
+.stats-section__head p {
+  margin: 0;
+  color: #8a94a7;
+  font-size: 0.8rem;
+}
+
+.stats-grid--zeiten,
+.stats-grid--kunden {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+@media (min-width: 1000px) {
+  .stats-grid--zeiten,
+  .stats-grid--kunden {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+/* Umschalter Umsatz | Anzahl */
+.chart-toggle {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 12px;
+  background: #f1f3f8;
+}
+
+.chart-toggle button {
+  min-height: 34px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #66738a;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.chart-toggle button.is-active {
+  background: #fff;
+  color: #4338ca;
+  box-shadow: 0 2px 8px rgba(23, 32, 51, 0.1);
+}
+
+.chart-range {
+  margin: 10px 0 0;
+  color: #8a94a7;
+  font-size: 0.72rem;
+}
+
+.chart-panel .chart-xaxis {
+  margin-top: 4px;
+}
+
+/* Durchschnittswert einklappbar */
+.ticket-details {
+  margin-top: 16px;
+  max-width: 420px;
+}
+
+.ticket-details > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  list-style: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ticket-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ticket-details > summary:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.ticket-details > summary i {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #fff;
+  color: #4338ca;
+  font-style: normal;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.ticket-details[open] > summary {
+  margin-bottom: 10px;
+}
+
+.ticket-details .ticket-control {
+  margin-top: 0;
+  animation: ticket-open 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes ticket-open {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@media (max-width: 760px) {
+  .stats-section {
+    margin-bottom: 20px;
+  }
+
+  .value-hero {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .value-hero__amount {
+    font-size: clamp(2.2rem, 11vw, 3rem);
+  }
+
+  .stats-kpi {
+    min-height: 104px;
+    padding: 13px;
+  }
+
+  .chart-toggle button {
+    padding: 0 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticket-details .ticket-control {
+    animation: none;
+  }
+}
+
+/* Der Trichter braucht die volle Breite */
+.stats-grid--kunden > .conversion-panel,
+.stats-grid--kunden > .customers-panel {
+  grid-column: 1 / -1;
+}
