@@ -116,27 +116,6 @@
       <span class="push-card__loading" *ngIf="pushState === 'loading'">Wird geprüft…</span>
     </article>
 
-    <section class="value-hero value-hero--compact" *ngIf="isPro && revenue" aria-label="Geschätzter Umsatz durch NexTime">
-      <div>
-        <span class="eyebrow">Ihr Mehrwert · letzte 30 Tage</span>
-        <strong class="value-hero__amount" [countUp]="revenue.amount" countFormat="currency">0 €</strong>
-        <p class="value-hero__sub">
-          <span class="trend-chip" [class.trend-chip--down]="revenue.changeNegative">{{ revenue.changeLabel }}</span>
-          <span>{{ revenue.bookings }} Termine × {{ euro(avgTicket) }} · Schätzung</span>
-        </p>
-      </div>
-      <a class="value-hero__link" routerLink="/unternehmen/statistik">Details &amp; Durchschnittswert anpassen <span aria-hidden="true">→</span></a>
-    </section>
-    <div class="value-hero-skeleton" *ngIf="isPro && revenueLoading && !revenue" aria-hidden="true"></div>
-    <section class="value-teaser" *ngIf="!isPro">
-      <div>
-        <span class="eyebrow">In PRO enthalten</span>
-        <h2>Sehen Sie, wie viel Umsatz Ihnen NexTime bringt.</h2>
-        <p>Geschätzter Umsatz aus Ihren Buchungen, Statistik zu Ihren stärksten Tagen und Stammkunden.</p>
-      </div>
-      <a routerLink="/" fragment="contact">PRO anfragen</a>
-    </section>
-
     <div class="request-banner" *ngIf="monthRequestCount > 0">
       <span class="request-banner__dot" aria-hidden="true"></span>
       <p><strong>{{ monthRequestCount }} offene {{ monthRequestCount === 1 ? 'Anfrage wartet' : 'Anfragen warten' }}</strong> auf Ihre Antwort.</p>
@@ -163,28 +142,28 @@
           <span>Offene Anfragen</span><strong>{{ selectedRequestCount }}</strong>
         </div>
       </article>
-      <article class="summary-card">
-        <span class="summary-icon summary-icon--green"
-          ><svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="9"></circle>
-            <path d="M12 7v5l3 2"></path></svg
-        ></span>
+      <a class="summary-card summary-card--revenue" *ngIf="isPro" routerLink="/unternehmen/statistik" aria-label="Geschätzter Umsatz durch NexTime – Details in der Statistik">
+        <span class="summary-icon summary-icon--money">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17l5-5 4 4 7-8"></path><path d="M15 8h5v5"></path></svg>
+        </span>
         <div>
-          <span>Nächster Termin</span
-          ><strong class="summary-value--text">{{ nextReservationLabel }}</strong>
+          <span>Durch NexTime eingenommen · 30 Tage</span>
+          <strong *ngIf="revenue" [countUp]="revenue.amount" countFormat="currency">0 €</strong>
+          <strong *ngIf="!revenue" class="summary-value--text">{{ revenueLoading ? 'Wird berechnet …' : '–' }}</strong>
+          <small *ngIf="revenue">geschätzt · {{ revenue.changeLabel }}</small>
         </div>
-      </article>
-      <article class="summary-card">
-        <span class="summary-icon summary-icon--orange"
-          ><svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 2v4M18 2v4M3 9h18"></path>
-            <rect x="3" y="4" width="18" height="18" rx="2"></rect>
-            <path d="M9 14h6"></path></svg
-        ></span>
+        <span class="summary-card__arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="summary-card summary-card--revenue summary-card--locked" *ngIf="!isPro" routerLink="/" fragment="contact">
+        <span class="summary-icon summary-icon--money">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17l5-5 4 4 7-8"></path><path d="M15 8h5v5"></path></svg>
+        </span>
         <div>
-          <span>Belegte Zeitslots</span><strong>{{ occupiedSlotCount }}</strong>
+          <span>Umsatz durch NexTime</span>
+          <strong class="summary-value--text">Mit PRO sehen, was Ihre Buchungen einbringen</strong>
         </div>
-      </article>
+        <span class="summary-card__arrow" aria-hidden="true">→</span>
+      </a>
     </div>
 
     <div class="calendar-layout" [class.calendar-layout--employee]="employeeCalendarEnabled">

@@ -1632,3 +1632,73 @@
   .company-workspace .workspace-card { padding: 14px; border-radius: 16px; }
   .company-workspace .card-heading { margin-bottom: 10px; }
 }
+
+/* ==== Umsatz-Teaser-Kachel (gemeinsame, volle Breite) ==== */
+.summary-card--revenue {
+  grid-column: 1 / -1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: #fff;
+  border: 0;
+  background: linear-gradient(135deg, #4f46e5, #6d5ef0 70%, #5b4de0);
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.22);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.summary-card--revenue:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(79, 70, 229, 0.3);
+}
+
+.summary-card--revenue > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.summary-card--revenue span:not(.summary-icon):not(.summary-card__arrow) {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.summary-card--revenue strong {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-card--revenue small {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.72rem;
+}
+
+.summary-card--revenue .summary-icon--money {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.summary-card__arrow {
+  font-size: 1.2rem;
+  font-weight: 700;
+  opacity: 0.85;
+  transition: transform 0.25s ease;
+}
+
+.summary-card--revenue:hover .summary-card__arrow {
+  transform: translateX(3px);
+}
+
+@media (min-width: 761px) {
+  .summary-card--revenue {
+    grid-column: span 2;
+  }
+}
+
+/* Die ursprüngliche Handy-Regel blendet Kacheln ab der dritten aus – die Umsatz-Kachel soll sichtbar bleiben */
+@media (max-width: 760px) {
+  .company-workspace .summary-card.summary-card--revenue { display: flex; grid-column: 1 / -1; }
+}
+
+.company-workspace .summary-card--revenue .summary-card__arrow { color: #fff; opacity: 0.9; font-size: 1.1rem; }
