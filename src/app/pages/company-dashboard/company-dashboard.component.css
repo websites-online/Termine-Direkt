@@ -1597,6 +1597,21 @@
 
 /* ==== Handy: Dashboard kompakter, mehr auf einen Blick ==== */
 @media (max-width: 760px) {
+  /* Reihenfolge: Offenes zuerst, dann Tagesplan + Kalender, Umsatz danach */
+  .company-workspace .workspace-main { display: flex; flex-direction: column; width: 100%; min-width: 0; }
+  .company-workspace .workspace-main > * { order: 0; align-self: stretch; margin-left: 0; margin-right: 0; width: auto; max-width: none; }
+  .company-workspace .workspace-main > .notice { order: 1; }
+  .company-workspace .workspace-main > .request-banner { order: 2; }
+  .company-workspace .workspace-main > .summary-grid { order: 3; }
+  .company-workspace .workspace-main > .calendar-layout { order: 4; }
+  .company-workspace .workspace-main > .value-hero,
+  .company-workspace .workspace-main > .value-hero-skeleton,
+  .company-workspace .workspace-main > .value-teaser { order: 5; margin-top: 4px; }
+  .company-workspace .workspace-main > .push-card { order: 6; }
+  .company-workspace .calendar-layout { display: flex; flex-direction: column; gap: 12px; }
+  .company-workspace .calendar-layout > .agenda-card { order: -1; min-height: 0; }
+  .company-workspace .empty-agenda { padding: 14px 8px 8px; }
+  .company-workspace .empty-icon { width: 40px; height: 40px; }
   .company-workspace .workspace-header p:not(.eyebrow) { display: none; }
   .company-workspace .workspace-header { margin-bottom: 12px; }
   .company-workspace .workspace-header h1 { font-size: 1.45rem; }
