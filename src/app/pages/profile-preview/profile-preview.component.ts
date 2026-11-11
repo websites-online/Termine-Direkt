@@ -23,7 +23,7 @@ interface PreviewService {
   templateUrl: './profile-preview.component.html',
   styleUrls: [
     './profile-preview.component.css', './profile-preview-navigation.css',
-    './profile-preview-services.css', './profile-preview-menu.css', './profile-preview-photos.css', './profile-preview-about.css', './profile-preview-overlays.css',
+    './profile-preview-services.css', './profile-preview-menu.css', './profile-preview-photos.css', './profile-preview-hero.css', './profile-preview-about.css', './profile-preview-overlays.css',
     './profile-preview-booking.css', './profile-preview-fields.css', './profile-preview-responsive.css',
     './profile-preview-success.css',
   ],
