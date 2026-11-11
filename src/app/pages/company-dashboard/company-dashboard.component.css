@@ -1411,3 +1411,452 @@
     display: none;
   }
 }
+
+/* ==== Mehrwert-Karte, Anfragen-Hinweis, Schnellauswahl (Dashboard) ==== */
+.value-hero--compact {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+
+@media (min-width: 760px) {
+  .value-hero--compact {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+.value-hero--compact .value-hero__amount {
+  font-size: clamp(2.1rem, 7vw, 3rem);
+}
+
+.value-hero__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.25s ease;
+}
+
+.value-hero__link:hover {
+  background: rgba(255, 255, 255, 0.26);
+  transform: translateY(-1px);
+}
+
+.value-hero-skeleton {
+  height: 118px;
+  margin-bottom: 16px;
+  border-radius: 18px;
+  background: linear-gradient(100deg, #eceffd 30%, #f7f8ff 50%, #eceffd 70%);
+  background-size: 300% 100%;
+  animation: dash-shimmer 1.3s linear infinite;
+}
+
+@keyframes dash-shimmer {
+  to {
+    background-position: -150% 0;
+  }
+}
+
+.value-teaser {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  border: 1px solid #dcdffc;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f3f2ff, #eef6ff);
+}
+
+.value-teaser h2 {
+  margin: 4px 0 2px;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  color: #172033;
+}
+
+.value-teaser p {
+  margin: 0;
+  color: #66738a;
+  font-size: 0.84rem;
+}
+
+.value-teaser a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 20px;
+  border-radius: 12px;
+  background: #4f46e5;
+  color: #fff;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.request-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 11px 14px;
+  border: 1px solid #ddd6fe;
+  border-radius: 14px;
+  background: #f5f3ff;
+  color: #4c1d95;
+  font-size: 0.86rem;
+}
+
+.request-banner p {
+  margin: 0;
+  flex: 1;
+}
+
+.request-banner__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #8b5cf6;
+  box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.55);
+  animation: dash-pulse 2s infinite;
+}
+
+@keyframes dash-pulse {
+  70% {
+    box-shadow: 0 0 0 8px rgba(139, 92, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+  }
+}
+
+.request-banner button {
+  min-height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: #7c3aed;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.quick-dates {
+  display: flex;
+  gap: 6px;
+  margin: -4px 0 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.quick-dates::-webkit-scrollbar {
+  display: none;
+}
+
+.quick-dates button {
+  flex: none;
+  min-height: 32px;
+  padding: 0 13px;
+  border: 1px solid #e3e7f1;
+  border-radius: 999px;
+  background: #fff;
+  color: #5b6780;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.quick-dates button.is-active {
+  background: #eef0ff;
+  border-color: #c7caf9;
+  color: #4338ca;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .request-banner__dot,
+  .value-hero-skeleton {
+    animation: none;
+  }
+}
+
+/* ==== Handy: Dashboard kompakter, mehr auf einen Blick ==== */
+@media (max-width: 760px) {
+  /* Reihenfolge: Offenes zuerst, dann Tagesplan + Kalender, Umsatz danach */
+  .company-workspace .workspace-main { display: flex; flex-direction: column; width: 100%; min-width: 0; }
+  .company-workspace .workspace-main > * { order: 0; align-self: stretch; margin-left: 0; margin-right: 0; width: auto; max-width: none; }
+  .company-workspace .workspace-main > .notice { order: 1; }
+  .company-workspace .workspace-main > .request-banner { order: 2; }
+  .company-workspace .workspace-main > .summary-grid { order: 3; }
+  .company-workspace .workspace-main > .calendar-layout { order: 4; }
+  .company-workspace .workspace-main > .value-hero,
+  .company-workspace .workspace-main > .value-hero-skeleton,
+  .company-workspace .workspace-main > .value-teaser { order: 5; margin-top: 4px; }
+  .company-workspace .workspace-main > .push-card { order: 6; }
+  .company-workspace .calendar-layout { display: flex; flex-direction: column; gap: 12px; }
+  .company-workspace .calendar-layout > .agenda-card { order: 1; min-height: 0; }
+  .company-workspace .empty-agenda { padding: 14px 8px 8px; }
+  .company-workspace .empty-icon { width: 40px; height: 40px; }
+  .company-workspace .workspace-header p:not(.eyebrow) { display: none; }
+  .company-workspace .workspace-header { margin-bottom: 12px; }
+  .company-workspace .workspace-header h1 { font-size: 1.45rem; }
+  .company-workspace .push-card { padding: 10px 12px; margin-bottom: 10px; gap: 10px; }
+  .company-workspace .push-card__copy p { display: none; }
+  .company-workspace .push-card__icon { width: 34px; height: 34px; }
+  .company-workspace .value-hero--compact { padding: 14px 16px; gap: 10px; margin-bottom: 10px; border-radius: 16px; }
+  .company-workspace .value-hero--compact .value-hero__amount { font-size: 2.2rem; }
+  .company-workspace .value-hero--compact .value-hero__sub { margin-top: 4px; font-size: 0.76rem; }
+  .company-workspace .value-hero__link { min-height: 36px; font-size: 0.76rem; }
+  .company-workspace .request-banner { padding: 9px 12px; margin-bottom: 10px; }
+  .company-workspace .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+  .company-workspace .summary-card { min-height: 0; padding: 10px 12px; gap: 10px; border-radius: 14px; }
+  .company-workspace .summary-icon { width: 32px; height: 32px; border-radius: 10px; flex: none; }
+  .company-workspace .summary-card span { font-size: 0.7rem; }
+  .company-workspace .summary-card strong { font-size: 1.15rem; }
+  .company-workspace .summary-card strong.summary-value--text { font-size: 0.8rem; }
+  .company-workspace .workspace-card { padding: 14px; border-radius: 16px; }
+  .company-workspace .card-heading { margin-bottom: 10px; }
+}
+
+/* ==== Umsatz-Teaser-Kachel (gemeinsame, volle Breite) ==== */
+.summary-card--revenue {
+  grid-column: 1 / -1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: #fff;
+  border: 0;
+  background: linear-gradient(135deg, #4f46e5, #6d5ef0 70%, #5b4de0);
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.22);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.summary-card--revenue:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(79, 70, 229, 0.3);
+}
+
+.summary-card--revenue > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.summary-card--revenue span:not(.summary-icon):not(.summary-card__arrow) {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.summary-card--revenue strong {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-card--revenue small {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.72rem;
+}
+
+.summary-card--revenue .summary-icon--money {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.summary-card__arrow {
+  font-size: 1.2rem;
+  font-weight: 700;
+  opacity: 0.85;
+  transition: transform 0.25s ease;
+}
+
+.summary-card--revenue:hover .summary-card__arrow {
+  transform: translateX(3px);
+}
+
+@media (min-width: 761px) {
+  .summary-card--revenue {
+    grid-column: span 2;
+  }
+}
+
+/* Die ursprüngliche Handy-Regel blendet Kacheln ab der dritten aus – die Umsatz-Kachel soll sichtbar bleiben */
+@media (max-width: 760px) {
+  .company-workspace .summary-card.summary-card--revenue { display: flex; grid-column: 1 / -1; }
+}
+
+.company-workspace .summary-card--revenue .summary-card__arrow { color: #fff; opacity: 0.9; font-size: 1.1rem; }
+
+/* ==== Persönlicher Kopfbereich für das Unternehmen ==== */
+.workspace-header--company {
+  --co: #4f46e5;
+  position: relative;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--co) 18%, #e5e9f1);
+  border-radius: 20px;
+  background:
+    radial-gradient(420px 160px at 0% 0%, color-mix(in srgb, var(--co) 14%, transparent), transparent 70%),
+    linear-gradient(135deg, color-mix(in srgb, var(--co) 7%, #fff), #fff 70%);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--co) 8%, transparent);
+  animation: banner-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.company-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.company-banner__logo {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  flex: none;
+  overflow: hidden;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--co), color-mix(in srgb, var(--co) 70%, #000));
+  color: #fff;
+  font-size: 1.25rem;
+  letter-spacing: 0.02em;
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--co) 32%, transparent), inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+.company-banner__logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #fff;
+}
+
+.company-banner__copy {
+  min-width: 0;
+}
+
+.workspace-header--company .eyebrow {
+  margin: 0;
+  color: color-mix(in srgb, var(--co) 70%, #55607a);
+}
+
+.workspace-header--company h1 {
+  margin: 2px 0 6px;
+  font-size: clamp(1.4rem, 4vw, 1.9rem);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.company-banner__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.company-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #e3e7f1;
+  background: rgba(255, 255, 255, 0.85);
+  color: #5b6780;
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.company-tag svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.company-tag--pro {
+  border-color: transparent;
+  background: linear-gradient(135deg, #4f46e5, #7c6cf5);
+  color: #fff;
+}
+
+.company-tag--pro svg {
+  fill: currentColor;
+  stroke: none;
+}
+
+@media (max-width: 760px) {
+  .company-workspace .workspace-header--company {
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    border-radius: 18px;
+  }
+
+  .company-workspace .workspace-header--company > .company-banner {
+    padding-right: 0;
+    width: 100%;
+  }
+
+  .company-workspace .workspace-header--company .company-banner__logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 15px;
+    font-size: 1rem;
+  }
+
+  .company-workspace .workspace-header--company h1 {
+    font-size: 1.3rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-header--company {
+    animation: none;
+  }
+}
+
+/* ==== Desktop: kompaktere Blöcke (feste Pixelhöhen verkleinern) ==== */
+@media (min-width: 900px) {
+  .company-workspace .calendar-day { min-height: 0; height: 74px; }
+  .company-workspace .calendar-card .calendar-grid { grid-auto-rows: 74px; }
+  .company-workspace .workspace-card { padding: 18px 20px; }
+  .company-workspace .summary-card { min-height: 0; padding: 13px 16px; }
+  .company-workspace .push-card { padding: 12px 16px; margin-bottom: 14px; }
+  .workspace-header--company { padding: 12px 16px; }
+  .workspace-header--company .company-banner__logo { width: 48px; height: 48px; border-radius: 15px; font-size: 1.05rem; }
+  .workspace-header--company h1 { font-size: 1.5rem; }
+  .company-workspace .agenda-card { min-height: 0; }
+}
+
+@media (min-width: 900px) {
+  .quick-dates { flex-wrap: wrap; }
+  .quick-dates button { padding: 0 11px; min-height: 30px; }
+}

@@ -15,6 +15,9 @@ import {
 import { SALON_SERVICES } from '../../shared/salon-services';
 import { CompanyEmployee } from '../../shared/salon-services';
 import { hasMobileService } from '../../shared/booking-location';
+import { CompanyStatsService } from '../../services/company-stats.service';
+import { CountUpDirective } from '../../shared/count-up.directive';
+import { RevenueEstimate, estimateRevenue, formatEuro, readAvgTicket } from '../../shared/revenue-estimate';
 
 interface CalendarDay {
   date: string;
@@ -30,11 +33,16 @@ interface CalendarDay {
 @Component({
   selector: 'app-company-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, HttpClientModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, HttpClientModule, CountUpDirective],
   templateUrl: './company-dashboard.component.html',
 })
 export class CompanyDashboardComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
+  private readonly statsService = inject(CompanyStatsService);
+  revenue: RevenueEstimate | null = null;
+  revenueLoading = false;
+  avgTicket = 35;
+  private revenueRequested = false;
   session: CompanySession | null = null;
   company: Company | null = null;
   reservations: CompanyReservation[] = [];
@@ -133,6 +141,7 @@ export class CompanyDashboardComponent implements OnInit {
     this.loadCompanyDetails();
     this.loadReservations();
     this.maybeInitializePush(this.session?.planTier);
+    this.maybeLoadRevenue();
     if (this.route.snapshot.queryParamMap.get('action') === 'termin') {
       this.openEntryPanel('appointment');
       this.router.navigate([], {
@@ -142,6 +151,65 @@ export class CompanyDashboardComponent implements OnInit {
         replaceUrl: true,
       });
     }
+  }
+
+  logoFailed = false;
+
+  get companyLogoUrl(): string {
+    return this.company?.logoUrl || '';
+  }
+
+  get todayLabel(): string {
+    return new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date());
+  }
+
+  get isPro(): boolean {
+    return this.session?.planTier === 'pro' || this.company?.planTier === 'pro';
+  }
+
+  euro(value: number): string {
+    return formatEuro(value);
+  }
+
+  /** Geschätzten Umsatz der letzten 30 Tage laden (nur Pro) – gleiche Rechnung wie in der Statistik. */
+  private maybeLoadRevenue(): void {
+    if (this.revenueRequested || !this.isPro) {
+      return;
+    }
+    this.revenueRequested = true;
+    this.revenueLoading = true;
+    this.avgTicket = readAvgTicket(this.session?.slug, this.isSalon);
+    this.statsService.getStats(30).subscribe({
+      next: (stats) => {
+        this.revenue = estimateRevenue(stats, this.avgTicket);
+        this.revenueLoading = false;
+      },
+      error: () => {
+        this.revenue = null;
+        this.revenueLoading = false;
+      },
+    });
+  }
+
+  /** Offene Anfragen im sichtbaren Kalendermonat. */
+  get monthRequestCount(): number {
+    return this.calendarReservations.filter((item) => item.isRequest).length;
+  }
+
+  showNextRequest(): void {
+    const today = this.getToday();
+    const dates = this.calendarReservations
+      .filter((item) => item.isRequest)
+      .map((item) => item.date)
+      .sort();
+    const target = dates.find((date) => date >= today) || dates[0];
+    if (target) {
+      this.onDateChange(target);
+    }
+  }
+
+  isQuickDate(offsetDays: number): boolean {
+    return this.selectedDate === this.getDateOffset(offsetDays);
   }
 
   async enablePush(): Promise<void> {
@@ -861,6 +929,7 @@ export class CompanyDashboardComponent implements OnInit {
       next: (company) => {
         this.company = company;
         this.maybeInitializePush(company?.planTier);
+        this.maybeLoadRevenue();
         this.refreshSelectedDate();
         this.buildCalendarDays();
       },

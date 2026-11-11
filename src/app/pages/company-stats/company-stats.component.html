@@ -62,6 +62,14 @@
       </label>
     </header>
 
+
+    <nav class="stats-subnav" aria-label="Abschnitte" *ngIf="!isLoading && stats">
+      <button type="button" (click)="scrollToSection('ueberblick')">Überblick</button>
+      <button type="button" (click)="scrollToSection('verlauf')">Verlauf</button>
+      <button type="button" (click)="scrollToSection('zeiten')">Zeiten</button>
+      <button type="button" (click)="scrollToSection('kunden')">Kunden</button>
+    </nav>
+
     <div class="stats-loading" *ngIf="isLoading">
       <span></span><span></span><span></span><span></span>
     </div>
@@ -88,6 +96,58 @@
     </article>
 
     <ng-container *ngIf="!isLoading && stats">
+      <!-- Mehrwert: geschätzter Umsatz -->
+      <div class="stats-section" id="ueberblick">
+        <div class="stats-section__head"><h2>Überblick</h2><p>Was NexTime Ihnen eingebracht hat</p></div>
+      <section class="value-hero" aria-label="Geschätzter Umsatz">
+        <div class="value-hero__main">
+          <span class="eyebrow">Ihr Mehrwert · {{ periodShort }}</span>
+          <h2>Geschätzter Umsatz durch NexTime</h2>
+          <strong class="value-hero__amount" [countUp]="estimatedRevenue" countFormat="currency">0 €</strong>
+          <p class="value-hero__sub">
+            <span class="trend-chip" [class.trend-chip--down]="revenueChangeNegative">{{ revenueChangeLabel }}</span>
+            <span>{{ revenueBookings }} {{ stats.eventKind === 'request' ? 'angenommene Anfragen' : 'Buchungen' }} × {{ euro(avgTicket) }}</span>
+          </p>
+
+          <details class="ticket-details">
+            <summary><span>Ø {{ euro(avgTicket) }} pro {{ isSalon ? 'Termin' : 'Reservierung' }}</span><i>anpassen</i></summary>
+          <div class="ticket-control">
+            <div class="ticket-control__head">
+              <label for="avg-ticket">{{ ticketLabel }}</label>
+              <span class="ticket-control__badge">Schätzung</span>
+            </div>
+            <div class="ticket-stepper">
+              <button type="button" (click)="adjustTicket(-5)" aria-label="5 Euro weniger">−</button>
+              <div class="ticket-input">
+                <input id="avg-ticket" type="number" inputmode="numeric" min="1" max="2000"
+                  [ngModel]="avgTicket" (ngModelChange)="setTicket($event)" />
+                <span>€</span>
+              </div>
+              <button type="button" (click)="adjustTicket(5)" aria-label="5 Euro mehr">+</button>
+            </div>
+            <div class="ticket-presets">
+              <button type="button" *ngFor="let preset of ticketPresets" [class.is-active]="avgTicket === preset" (click)="setTicket(preset)">{{ preset }} €</button>
+            </div>
+            <p class="ticket-control__hint">{{ ticketHint }}</p>
+          </div>
+          </details>
+        </div>
+
+        <div class="value-hero__side">
+          <div class="roi-card">
+            <span>NexTime-Rendite</span>
+            <strong *ngIf="roiFactor >= 1">{{ roiFactor.toString().replace('.', ',') }}×</strong>
+            <strong *ngIf="roiFactor < 1">–</strong>
+            <p *ngIf="roiFactor >= 1">Ihr Pro-Abo (24,99 € / Monat) hat sich im Zeitraum rechnerisch {{ roiFactor.toString().replace('.', ',') }}-fach bezahlt gemacht.</p>
+            <p *ngIf="roiFactor < 1">Sobald Buchungen eingehen, sehen Sie hier, wie schnell sich Ihr Abo bezahlt macht.</p>
+          </div>
+          <div class="roi-mini">
+            <div><span>pro Tag</span><strong>{{ euro(revenuePerDay) }}</strong></div>
+            <div><span>pro Termin</span><strong>{{ euro(avgTicket) }}</strong></div>
+          </div>
+        </div>
+      </section>
+
       <section class="stats-kpi-grid" aria-label="Kennzahlen">
         <article class="stats-kpi stats-kpi--primary">
           <div class="kpi-heading">
@@ -136,90 +196,57 @@
           <small>Im Durchschnitt im Voraus</small>
         </article>
       </section>
-
-      <section class="stats-panel conversion-panel">
+      </div>
+      <div class="stats-section" id="verlauf">
+        <div class="stats-section__head"><h2>Verlauf</h2><p>Wie sich Ihr Geschäft entwickelt</p></div>
+      <!-- Umsatz-Kurve -->
+      <section class="stats-panel chart-panel">
         <div class="stats-panel-heading">
           <div>
-            <p class="eyebrow">Conversion</p>
-            <h2>Vom Besuch bis zum bestätigten Termin</h2>
+            <p class="eyebrow">Verlauf</p>
+            <h2>{{ chartMode === 'revenue' ? 'Geschätzter Umsatz' : stats.eventLabel }} im Zeitverlauf</h2>
           </div>
-          <span>Nach Eingangsdatum ausgewertet</span>
+          <div class="chart-toggle" role="group" aria-label="Darstellung wählen">
+            <button type="button" [class.is-active]="chartMode === 'revenue'" (click)="chartMode = 'revenue'; clearChart()">Umsatz</button>
+            <button type="button" [class.is-active]="chartMode === 'count'" (click)="chartMode = 'count'; clearChart()">{{ stats.eventLabel }}</button>
+          </div>
         </div>
-        <div class="conversion-funnel" *ngIf="stats.conversion.trackingAvailable">
-          <article class="conversion-step">
-            <span>01</span>
-            <strong>{{ stats.conversion.pageViews }}</strong>
-            <small>Buchungsseite besucht</small>
-          </article>
-          <div class="conversion-rate">
-            <b>{{ formatRate(stats.conversion.viewToStartRate) }}</b>
-            <span>gehen weiter</span>
+        <div class="area-chart" (pointerleave)="clearChart()">
+          <svg #chartEl [attr.viewBox]="'0 0 ' + chartW + ' ' + chartH" preserveAspectRatio="none"
+            (pointermove)="onChartMove($event, chartEl)" (pointerdown)="onChartMove($event, chartEl)"
+            role="img" [attr.aria-label]="'Verlauf im Zeitraum'">
+            <defs>
+              <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#5b6cff" stop-opacity="0.45" />
+                <stop offset="1" stop-color="#5b6cff" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+            <g class="chart-grid">
+              <line *ngFor="let line of chartGrid" x1="0" [attr.y1]="line.y" [attr.x2]="chartW" [attr.y2]="line.y" />
+            </g>
+            <path class="chart-area" [attr.d]="chartArea" fill="url(#areaFill)" />
+            <path class="chart-line" [attr.d]="chartLine" pathLength="1" />
+            <g *ngIf="activePoint >= 0 && chartPoints[activePoint] as point">
+              <line class="chart-cursor" [attr.x1]="point.x" y1="0" [attr.x2]="point.x" [attr.y2]="chartH" />
+              <circle class="chart-dot" [attr.cx]="point.x" [attr.cy]="point.y" r="6" />
+            </g>
+          </svg>
+          <span class="chart-max">{{ chartMaxLabel }}</span>
+          <div class="chart-tooltip" *ngIf="activePoint >= 0 && chartPoints[activePoint] as tip"
+            [style.left.%]="(tip.x / chartW) * 100" [class.is-right]="tip.x > chartW * 0.7">
+            <small>{{ tip.label }}</small>
+            <strong>{{ chartValueLabel(tip.value) }}</strong>
           </div>
-          <article class="conversion-step">
-            <span>02</span>
-            <strong>{{ stats.conversion.bookingStarts }}</strong>
-            <small>Buchung begonnen</small>
-          </article>
-          <div class="conversion-rate">
-            <b>{{ formatRate(stats.conversion.startToSubmissionRate) }}</b>
-            <span>senden ab</span>
-          </div>
-          <article class="conversion-step">
-            <span>03</span>
-            <strong>{{ stats.conversion.submissions }}</strong>
-            <small>{{
-              stats.eventKind === 'request' ? 'Anfrage gesendet' : 'Buchung gesendet'
-            }}</small>
-          </article>
-          <div class="conversion-rate">
-            <b>{{ formatRate(stats.conversion.completionRate) }}</b>
-            <span>{{ stats.eventKind === 'request' ? 'angenommen' : 'bestätigt' }}</span>
-          </div>
-          <article class="conversion-step conversion-step--success">
-            <span>04</span>
-            <strong>{{ stats.conversion.completions }}</strong>
-            <small>{{
-              stats.eventKind === 'request' ? 'Anfragen angenommen' : 'Buchungen bestätigt'
-            }}</small>
-          </article>
         </div>
-        <p class="conversion-note" *ngIf="stats.conversion.trackingAvailable">
-          Seitenbesuche und begonnene Buchungen werden anonym und ohne Kundendaten erfasst.
-          Eigenaufrufe im eingeloggten Unternehmens- oder Adminbereich werden nicht gezählt.
-        </p>
-        <p class="stats-empty" *ngIf="!stats.conversion.trackingAvailable">
-          Das Conversion-Tracking wird gerade eingerichtet. Buchungen und Anfragen bleiben davon
-          unberührt.
-        </p>
+        <p class="chart-range">{{ formatDate(stats.from) }} – {{ formatDate(stats.to) }}</p>
+        <div class="chart-xaxis">
+          <span *ngFor="let label of chartLabels">{{ label }}</span>
+        </div>
       </section>
-
-      <section class="stats-grid stats-grid--hero">
-        <article class="stats-panel trend-panel">
-          <div class="stats-panel-heading">
-            <div>
-              <p class="eyebrow">Entwicklung</p>
-              <h2>{{ stats.eventLabel }} im Zeitverlauf</h2>
-            </div>
-            <span>{{ formatDate(stats.from) }} – {{ formatDate(stats.to) }}</span>
-          </div>
-          <div
-            class="trend-chart"
-            [style.grid-template-columns]="'repeat(' + stats.trend.length + ', minmax(0, 1fr))'"
-            [attr.aria-label]="stats.eventLabel + ' im Zeitverlauf'"
-          >
-            <div class="trend-column" *ngFor="let point of stats.trend">
-              <span class="trend-value">{{ point.count }}</span>
-              <div class="trend-track">
-                <i
-                  [style.height]="barHeight(point.count)"
-                  [title]="point.fullLabel + ': ' + point.count"
-                ></i>
-              </div>
-              <small>{{ point.label }}</small>
-            </div>
-          </div>
-        </article>
-
+      </div>
+      <div class="stats-section" id="zeiten">
+        <div class="stats-section__head"><h2>Wann wird gebucht?</h2><p>Ihre stärksten Tage und Zeiten</p></div>
+      <div class="stats-grid stats-grid--zeiten">
         <article class="stats-panel insight-panel">
           <span class="insight-icon">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -236,9 +263,6 @@
             <span>{{ stats.strongestPhase.count }} {{ stats.eventLabel.toLowerCase() }}</span>
           </div>
         </article>
-      </section>
-
-      <section class="stats-grid stats-grid--details">
         <article class="stats-panel">
           <div class="stats-panel-heading">
             <div>
@@ -292,6 +316,66 @@
           </div>
         </article>
 
+      </div>
+      </div>
+      <div class="stats-section" id="kunden">
+        <div class="stats-section__head"><h2>Kunden &amp; Conversion</h2><p>Vom Besuch zur Buchung und Ihre Stammkunden</p></div>
+      <div class="stats-grid stats-grid--kunden">
+      <article class="stats-panel conversion-panel">
+        <div class="stats-panel-heading">
+          <div>
+            <p class="eyebrow">Conversion</p>
+            <h2>Vom Besuch bis zum bestätigten Termin</h2>
+          </div>
+          <span>Nach Eingangsdatum ausgewertet</span>
+        </div>
+        <div class="conversion-funnel" *ngIf="stats.conversion.trackingAvailable">
+          <article class="conversion-step">
+            <span>01</span>
+            <strong>{{ stats.conversion.pageViews }}</strong>
+            <small>Buchungsseite besucht</small>
+          </article>
+          <div class="conversion-rate">
+            <b>{{ formatRate(stats.conversion.viewToStartRate) }}</b>
+            <span>gehen weiter</span>
+          </div>
+          <article class="conversion-step">
+            <span>02</span>
+            <strong>{{ stats.conversion.bookingStarts }}</strong>
+            <small>Buchung begonnen</small>
+          </article>
+          <div class="conversion-rate">
+            <b>{{ formatRate(stats.conversion.startToSubmissionRate) }}</b>
+            <span>senden ab</span>
+          </div>
+          <article class="conversion-step">
+            <span>03</span>
+            <strong>{{ stats.conversion.submissions }}</strong>
+            <small>{{
+              stats.eventKind === 'request' ? 'Anfrage gesendet' : 'Buchung gesendet'
+            }}</small>
+          </article>
+          <div class="conversion-rate">
+            <b>{{ formatRate(stats.conversion.completionRate) }}</b>
+            <span>{{ stats.eventKind === 'request' ? 'angenommen' : 'bestätigt' }}</span>
+          </div>
+          <article class="conversion-step conversion-step--success">
+            <span>04</span>
+            <strong>{{ stats.conversion.completions }}</strong>
+            <small>{{
+              stats.eventKind === 'request' ? 'Anfragen angenommen' : 'Buchungen bestätigt'
+            }}</small>
+          </article>
+        </div>
+        <p class="conversion-note" *ngIf="stats.conversion.trackingAvailable">
+          Seitenbesuche und begonnene Buchungen werden anonym und ohne Kundendaten erfasst.
+          Eigenaufrufe im eingeloggten Unternehmens- oder Adminbereich werden nicht gezählt.
+        </p>
+        <p class="stats-empty" *ngIf="!stats.conversion.trackingAvailable">
+          Das Conversion-Tracking wird gerade eingerichtet. Buchungen und Anfragen bleiben davon
+          unberührt.
+        </p>
+      </article>
         <article class="stats-panel customers-panel">
           <div class="stats-panel-heading">
             <div>
@@ -317,8 +401,11 @@
             Noch keine Kundendaten in diesem Zeitraum.
           </p>
         </article>
-      </section>
+      </div>
+      </div>
 
+
+      <p class="stats-footnote stats-footnote--estimate">Der Umsatz ist eine <strong>Schätzung</strong>: Anzahl Termine × Ihr eingestellter Durchschnittswert. Tatsächliche Preise kennt NexTime nicht.</p>
       <p class="stats-footnote">
         Manuell eingetragene Termine und Sperrzeiten werden nicht gezählt. Die Auswertung basiert
         ausschließlich auf

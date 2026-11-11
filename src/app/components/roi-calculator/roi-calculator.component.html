@@ -1,0 +1,52 @@
+<section class="section roi" id="rechner">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Die Investition, die sich auszahlt.</h2>
+      <p class="section-lead">Berechnen Sie in Sekunden, was NexTime Ihrem Betrieb einbringt.</p>
+    </div>
+
+    <div class="roi-grid">
+      <div class="card roi-inputs">
+        <div class="roi-field">
+          <div class="roi-field__head">
+            <label for="roi-extra">Zusätzliche Buchungen / Monat</label>
+            <output class="roi-value">{{ extra }}</output>
+          </div>
+          <input id="roi-extra" type="range" min="1" max="100" step="1" [(ngModel)]="extra"
+            [style.--fill]="fill(extra, 1, 100)" />
+        </div>
+
+        <div class="roi-field">
+          <div class="roi-field__head">
+            <label for="roi-ticket">Ø Umsatz / Termin</label>
+            <output class="roi-value">{{ ticket }} €</output>
+          </div>
+          <input id="roi-ticket" type="range" min="10" max="150" step="5" [(ngModel)]="ticket"
+            [style.--fill]="fill(ticket, 10, 150)" />
+        </div>
+      </div>
+
+      <div class="card roi-result" [class.is-negative]="!paysOff">
+        <div class="roi-amount"><strong [countUp]="revenue" countFormat="currency">0 €</strong><small>/ Monat</small></div>
+
+        <div class="roi-summary">
+          <div><span>Kosten</span><strong>{{ euro(price, 2) }}</strong></div>
+          <div><span>Übrig</span><strong [class.is-negative]="!paysOff">{{ euro(net) }}</strong></div>
+          <div><span>Rendite</span><strong>{{ paysOff ? roi.toString().replace('.', ',') + '×' : '–' }}</strong></div>
+        </div>
+
+        <p class="roi-break">
+          @if (paysOff) {
+            Bereits ab <b>{{ breakEven }}</b> {{ breakEven === 1 ? 'zusätzlichen Termin' : 'zusätzlichen Terminen' }} pro Monat profitabel.
+          } @else {
+            Profitabel ab <b>{{ breakEven }}</b> zusätzlichen Terminen pro Monat.
+          }
+        </p>
+
+        <a class="btn btn-primary roi-cta" href="#contact">Kostenlos testen</a>
+      </div>
+    </div>
+
+    <p class="roi-note">Schätzung, keine Garantie.</p>
+  </div>
+</section>

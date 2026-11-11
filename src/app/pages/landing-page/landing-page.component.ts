@@ -2,7 +2,7 @@ import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
-import { BenefitsComponent } from '../../components/benefits/benefits.component';
+import { RoiCalculatorComponent } from '../../components/roi-calculator/roi-calculator.component';
 import { HowItWorksComponent } from '../../components/how-it-works/how-it-works.component';
 import { PricingComponent } from '../../components/pricing/pricing.component';
 import { FaqComponent } from '../../components/faq/faq.component';
@@ -15,7 +15,7 @@ import { ContactFormComponent } from '../../components/contact-form/contact-form
   imports: [
     CommonModule,
     RouterModule,
-    BenefitsComponent,
+    RoiCalculatorComponent,
     HowItWorksComponent,
     PricingComponent,
     FaqComponent,

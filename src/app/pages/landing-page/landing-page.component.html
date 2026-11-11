@@ -13,6 +13,7 @@
         </a>
         <nav class="nav">
           <a routerLink="/demo-unternehmen">Demo</a>
+          <a href="#rechner">Rechner</a>
           <a href="#pricing">Preise</a>
           <a href="#contact">Kontakt</a>
           <a routerLink="/unternehmen/login">Unternehmenslogin</a>
@@ -113,7 +114,7 @@
       <div class="section-band band-light section-interactive stage-benefits">
         <div class="section-stage">
           <div class="depth-wrap depth-left">
-            <app-benefits></app-benefits>
+            <app-roi-calculator></app-roi-calculator>
           </div>
         </div>
       </div>
@@ -152,6 +153,7 @@
 
   <div class="nav-panel" [class.open]="isNavOpen" (click)="closeNav()">
     <a routerLink="/demo-unternehmen" (click)="$event.stopPropagation(); closeNav()">Demo</a>
+    <a href="#rechner" (click)="$event.stopPropagation(); closeNav()">Rechner</a>
     <a href="#pricing" (click)="$event.stopPropagation(); closeNav()">Preise</a>
     <a href="#contact" (click)="$event.stopPropagation(); closeNav()">Kontakt</a>
     <a routerLink="/unternehmen/login" (click)="$event.stopPropagation(); closeNav()"

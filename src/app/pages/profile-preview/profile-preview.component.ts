@@ -23,7 +23,7 @@ interface PreviewService {
   templateUrl: './profile-preview.component.html',
   styleUrls: [
     './profile-preview.component.css', './profile-preview-navigation.css',
-    './profile-preview-services.css', './profile-preview-menu.css', './profile-preview-photos.css', './profile-preview-about.css', './profile-preview-overlays.css',
+    './profile-preview-services.css', './profile-preview-menu.css', './profile-preview-photos.css', './profile-preview-hero.css', './profile-preview-about.css', './profile-preview-overlays.css',
     './profile-preview-booking.css', './profile-preview-fields.css', './profile-preview-responsive.css',
     './profile-preview-success.css',
   ],
@@ -31,6 +31,7 @@ interface PreviewService {
   host: {
     class: 'profile-preview', '[class.has-booking-dock]': 'showBookingDock', '[class.is-restaurant]': 'isRestaurant',
     '[class.has-pro-profile]': 'hasProProfile',
+    '[class.has-hero]': 'gallery.length > 0',
     '[style.--profile-tab-count]': 'tabs.length',
     '[style.--brand-color]': 'booking?.brandColor || company?.brandColor',
     '[style.--brand-rgb]': "booking?.brandColorRgb || '79, 70, 229'",
@@ -57,12 +58,16 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
   get bookingLabel(): string { return this.isRestaurant ? 'Tisch reservieren' : 'Termin anfragen'; }
   get mapUrl(): string { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(this.company?.address || ''); }
   @ViewChild(RestaurantPageComponent) booking?: RestaurantPageComponent;
+  @ViewChild('heroTrack') heroTrackRef?: ElementRef<HTMLElement>;
+  private heroTimer?: ReturnType<typeof setInterval>;
+  private heroPausedUntil = 0;
   @ViewChild('galleryDialog') galleryDialog?: ElementRef<HTMLDialogElement>;
   @ViewChild('selectionDialog') selectionDialog?: ElementRef<HTMLDialogElement>;
   activeTab: ProfileTab = 'booking';
   serviceCategory = 'all';
   selectionKind: SelectionKind = 'service';
   galleryIndex = 0;
+  heroIndex = 0;
   toast = '';
   private toastTimer?: ReturnType<typeof setTimeout>;
   private lastBookingStep?: 'date' | 'details';
@@ -85,6 +90,7 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
   price(value: number): string { return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value); }
 
   ngOnInit(): void {
+    if (typeof window !== 'undefined') this.heroTimer = setInterval(() => this.advanceHero(), 4500);
     this.subscription.add(this.route.paramMap.pipe(switchMap(params => {
       this.company = undefined;
       this.loading = true;
@@ -130,6 +136,22 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
   get selectedService() { return this.services.find(service => service.value === this.booking?.bookingForm.controls.service.value); }
   get currentImage() { return this.gallery[this.galleryIndex]; }
   get showBookingDock() { return this.activeTab !== 'booking'; }
+
+  pauseHero(): void { this.heroPausedUntil = Date.now() + 12000; }
+  private advanceHero(): void {
+    const track = this.heroTrackRef?.nativeElement;
+    if (!track || this.gallery.length < 2 || this.reducedMotion || document.hidden || Date.now() < this.heroPausedUntil || this.galleryDialog?.nativeElement.open) return;
+    const slides = track.children;
+    const next = (this.heroIndex + 1) % this.gallery.length;
+    const target = slides[next] as HTMLElement | undefined;
+    if (!target) return;
+    track.scrollTo({ left: target.offsetLeft - (slides[0] as HTMLElement).offsetLeft, behavior: 'smooth' });
+  }
+
+  onHeroScroll(track: HTMLElement): void {
+    const slide = track.firstElementChild instanceof HTMLElement ? track.firstElementChild.offsetWidth : track.clientWidth;
+    this.heroIndex = Math.min(this.gallery.length - 1, Math.max(0, Math.round(track.scrollLeft / Math.max(1, slide + 10))));
+  }
 
   setTab(tab: ProfileTab): void {
     if (!this.tabs.some(item => item.id === tab)) return;
@@ -218,5 +240,5 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
     this.toastTimer = setTimeout(() => this.toast = '', 3600);
   }
   private get reducedMotion(): boolean { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
-  ngOnDestroy(): void { clearTimeout(this.toastTimer); this.subscription.unsubscribe(); }
+  ngOnDestroy(): void { clearTimeout(this.toastTimer); clearInterval(this.heroTimer); this.subscription.unsubscribe(); }
 }
