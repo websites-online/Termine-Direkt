@@ -26,14 +26,6 @@
 .roi-field input[type='range']:active::-webkit-slider-thumb { transform: scale(1.15); }
 .roi-field input[type='range']:focus-visible { box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2); }
 
-.roi-plan { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.roi-plan b { font-weight: 800; margin-left: 6px; color: var(--primary-600); }
-.roi-plan button {
-  display: flex; align-items: center; justify-content: center; padding: 12px 14px; border-radius: 12px; font-weight: 600; font-size: 0.9rem; border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.8); font: inherit; text-align: left; cursor: pointer; color: var(--text);
-  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
-}
-.roi-plan button.is-active { border-color: rgba(37, 99, 235, 0.55); background: rgba(37, 99, 235, 0.07); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
 
 /* Ergebnis */
 .roi-result {
@@ -60,3 +52,5 @@
 
 .roi-note { margin: 12px 4px 0; text-align: center; color: var(--muted); font-size: 0.74rem; }
 
+
+.roi-inputs { align-content: center; gap: 30px; }

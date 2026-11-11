@@ -1,7 +1,8 @@
 <section class="section roi" id="rechner">
   <div class="container">
     <div class="section-header">
-      <h2 class="section-title">Lohnt sich NexTime?</h2>
+      <h2 class="section-title">Die Investition, die sich auszahlt.</h2>
+      <p class="section-lead">Berechnen Sie in Sekunden, was NexTime Ihrem Betrieb einbringt.</p>
     </div>
 
     <div class="roi-grid">
@@ -23,14 +24,6 @@
           <input id="roi-ticket" type="range" min="10" max="150" step="5" [(ngModel)]="ticket"
             [style.--fill]="fill(ticket, 10, 150)" />
         </div>
-
-        <div class="roi-plan" role="group" aria-label="Tarif wählen">
-          @for (item of plans; track item.id) {
-            <button type="button" [class.is-active]="plan === item.id" (click)="plan = item.id">
-              {{ item.label }} <b>{{ euro(item.price, 2) }}</b>
-            </button>
-          }
-        </div>
       </div>
 
       <div class="card roi-result" [class.is-negative]="!paysOff">
@@ -44,9 +37,9 @@
 
         <p class="roi-break">
           @if (paysOff) {
-            Ab <b>{{ breakEven }}</b> {{ breakEven === 1 ? 'Termin' : 'Terminen' }} / Monat im Plus
+            Bereits ab <b>{{ breakEven }}</b> {{ breakEven === 1 ? 'zusätzlichen Termin' : 'zusätzlichen Terminen' }} pro Monat profitabel.
           } @else {
-            Im Plus ab <b>{{ breakEven }}</b> Terminen / Monat
+            Profitabel ab <b>{{ breakEven }}</b> zusätzlichen Terminen pro Monat.
           }
         </p>
 

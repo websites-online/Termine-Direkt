@@ -2,8 +2,6 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CountUpDirective } from '../../shared/count-up.directive';
 
-type PlanId = 'starter' | 'pro';
-
 /** „Lohnt sich NexTime?“ – Rechner für die Startseite. Alle Werte sind Annahmen des Besuchers. */
 @Component({
   selector: 'app-roi-calculator',
@@ -13,18 +11,11 @@ type PlanId = 'starter' | 'pro';
   styleUrl: './roi-calculator.component.css',
 })
 export class RoiCalculatorComponent {
-  readonly plans: Array<{ id: PlanId; label: string; price: number }> = [
-    { id: 'starter', label: 'Starter', price: 19.99 },
-    { id: 'pro', label: 'Pro', price: 24.99 },
-  ];
+  /** Kalkuliert wird immer mit dem Starter-Tarif. */
+  readonly price = 19.99;
 
   extra = 15;
   ticket = 35;
-  plan: PlanId = 'pro';
-
-  get price(): number {
-    return this.plans.find((item) => item.id === this.plan)?.price ?? 24.99;
-  }
 
   get revenue(): number {
     return this.extra * this.ticket;
