@@ -46,11 +46,26 @@
   </aside>
 
   <main class="workspace-main">
-    <header class="workspace-header">
-      <div>
-        <p class="eyebrow">Übersicht</p>
-        <h1>{{ greeting }}, {{ companyName }}.</h1>
-        <p>Hier sehen Sie alle Termine und freien Zeiten auf einen Blick.</p>
+    <header class="workspace-header workspace-header--company" [style.--co]="company?.brandColor || '#4f46e5'">
+      <div class="company-banner">
+        <span class="company-banner__logo">
+          <img *ngIf="companyLogoUrl && !logoFailed" [src]="companyLogoUrl" [alt]="companyName + ' Logo'" (error)="logoFailed = true" />
+          <b *ngIf="!companyLogoUrl || logoFailed">{{ companyInitials }}</b>
+        </span>
+        <div class="company-banner__copy">
+          <p class="eyebrow">{{ greeting }} · {{ todayLabel }}</p>
+          <h1>{{ companyName }}</h1>
+          <div class="company-banner__tags">
+            <span class="company-tag company-tag--pro" *ngIf="isPro">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.5 5.1L20 9l-4 3.9.9 5.5L12 15.8 7.1 18.4 8 12.9 4 9l5.5-.9z"></path></svg>PRO
+            </span>
+            <span class="company-tag">
+              <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="isSalon"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="m8.5 7.5 12 12m-12-3 12-12"></path></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isSalon"><path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v18M20 21V3c-4 3-5 8 0 10"></path></svg>
+              {{ isSalon ? 'Friseursalon' : 'Restaurant' }}
+            </span>
+          </div>
+        </div>
       </div>
       <div class="header-actions">
         <button

@@ -1702,3 +1702,143 @@
 }
 
 .company-workspace .summary-card--revenue .summary-card__arrow { color: #fff; opacity: 0.9; font-size: 1.1rem; }
+
+/* ==== Persönlicher Kopfbereich für das Unternehmen ==== */
+.workspace-header--company {
+  --co: #4f46e5;
+  position: relative;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--co) 18%, #e5e9f1);
+  border-radius: 20px;
+  background:
+    radial-gradient(420px 160px at 0% 0%, color-mix(in srgb, var(--co) 14%, transparent), transparent 70%),
+    linear-gradient(135deg, color-mix(in srgb, var(--co) 7%, #fff), #fff 70%);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--co) 8%, transparent);
+  animation: banner-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.company-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.company-banner__logo {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  flex: none;
+  overflow: hidden;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--co), color-mix(in srgb, var(--co) 70%, #000));
+  color: #fff;
+  font-size: 1.25rem;
+  letter-spacing: 0.02em;
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--co) 32%, transparent), inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+.company-banner__logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #fff;
+}
+
+.company-banner__copy {
+  min-width: 0;
+}
+
+.workspace-header--company .eyebrow {
+  margin: 0;
+  color: color-mix(in srgb, var(--co) 70%, #55607a);
+}
+
+.workspace-header--company h1 {
+  margin: 2px 0 6px;
+  font-size: clamp(1.4rem, 4vw, 1.9rem);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.company-banner__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.company-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #e3e7f1;
+  background: rgba(255, 255, 255, 0.85);
+  color: #5b6780;
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.company-tag svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.company-tag--pro {
+  border-color: transparent;
+  background: linear-gradient(135deg, #4f46e5, #7c6cf5);
+  color: #fff;
+}
+
+.company-tag--pro svg {
+  fill: currentColor;
+  stroke: none;
+}
+
+@media (max-width: 760px) {
+  .company-workspace .workspace-header--company {
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    border-radius: 18px;
+  }
+
+  .company-workspace .workspace-header--company > .company-banner {
+    padding-right: 0;
+    width: 100%;
+  }
+
+  .company-workspace .workspace-header--company .company-banner__logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 15px;
+    font-size: 1rem;
+  }
+
+  .company-workspace .workspace-header--company h1 {
+    font-size: 1.3rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-header--company {
+    animation: none;
+  }
+}

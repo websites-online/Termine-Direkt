@@ -153,6 +153,16 @@ export class CompanyDashboardComponent implements OnInit {
     }
   }
 
+  logoFailed = false;
+
+  get companyLogoUrl(): string {
+    return this.company?.logoUrl || '';
+  }
+
+  get todayLabel(): string {
+    return new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date());
+  }
+
   get isPro(): boolean {
     return this.session?.planTier === 'pro' || this.company?.planTier === 'pro';
   }
