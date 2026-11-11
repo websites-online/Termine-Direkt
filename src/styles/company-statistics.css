@@ -1377,3 +1377,47 @@
   .stats-section { margin-bottom: 20px; }
   .area-chart { height: clamp(150px, 16vw, 190px); }
 }
+
+/* ==== Handy: Statistik mit kleinerer Schrift ==== */
+@media (max-width: 760px) {
+  .statistics-workspace .workspace-header h1 { font-size: 1.4rem; }
+  .statistics-workspace .workspace-header p:not(.eyebrow) { font-size: 0.82rem; }
+  .statistics-workspace .eyebrow { font-size: 0.6rem; }
+  .stats-period-select select { font-size: 0.9rem; min-height: 38px; }
+  .stats-subnav button { min-height: 32px; font-size: 0.76rem; padding: 0 13px; }
+  .stats-section__head h2 { font-size: 1rem; }
+  .stats-section__head p { font-size: 0.74rem; }
+  .value-hero h2 { font-size: 0.82rem; }
+  .value-hero__amount { font-size: clamp(1.9rem, 9.5vw, 2.5rem); }
+  .value-hero__sub { font-size: 0.74rem; }
+  .trend-chip { font-size: 0.68rem; padding: 3px 8px; }
+  .ticket-details > summary { font-size: 0.76rem; min-height: 34px; }
+  .roi-card strong { font-size: 1.9rem; }
+  .roi-card p { font-size: 0.74rem; }
+  .roi-mini span { font-size: 0.64rem; }
+  .roi-mini strong { font-size: 0.95rem; }
+  .stats-kpi { min-height: 90px; padding: 11px 12px; }
+  .stats-kpi > strong { font-size: 1.35rem; }
+  .kpi-heading { font-size: 0.66rem; }
+  .stats-kpi small { font-size: 0.62rem; }
+  .stats-panel { padding: 14px; }
+  .stats-panel-heading h2 { font-size: 0.92rem; }
+  .stats-panel-heading .eyebrow { font-size: 0.58rem; }
+  .chart-toggle button { font-size: 0.74rem; min-height: 30px; }
+  .chart-max, .chart-xaxis, .chart-range { font-size: 0.62rem; }
+  .insight-panel h2 { font-size: 1.15rem; }
+  .insight-panel p:not(.eyebrow) { font-size: 0.76rem; }
+  .horizontal-row { font-size: 0.72rem; }
+  .phase-list span, .customer-name { font-size: 0.78rem; }
+  .phase-list b { font-size: 1rem; }
+  .conversion-step strong { font-size: 1.3rem; }
+  .conversion-step small, .conversion-rate { font-size: 0.68rem; }
+  .conversion-note, .stats-footnote { font-size: 0.66rem; }
+}
+
+@media (max-width: 760px) {
+  .stats-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .roi-card { padding: 12px 14px; }
+  .value-hero { padding: 14px; gap: 10px; }
+  .roi-mini > div { padding: 9px 12px; }
+}
