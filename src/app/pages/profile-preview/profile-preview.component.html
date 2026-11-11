@@ -20,6 +20,16 @@
 </svg>
 
 <main class="profile-main" *ngIf="company as company">
+  <section class="profile-gallery-hero" *ngIf="gallery.length" aria-label="Fotos von {{ company.name }}">
+    <div class="profile-gallery-hero-track" #heroTrack (scroll)="onHeroScroll(heroTrack)">
+      <button type="button" class="profile-gallery-hero-slide" *ngFor="let photo of gallery; let index = index"
+        (click)="openGallery(index)" [attr.aria-label]="'Foto ' + (index + 1) + ' von ' + gallery.length + ' vergrößern'">
+        <img [src]="photo.src" [alt]="photo.alt" [attr.loading]="index === 0 ? 'eager' : 'lazy'" [attr.fetchpriority]="index === 0 ? 'high' : null" decoding="async" />
+      </button>
+    </div>
+    <div class="profile-gallery-hero-dots" *ngIf="gallery.length > 1" aria-hidden="true"><i *ngFor="let photo of gallery; let index = index" [class.is-active]="index === heroIndex"></i></div>
+  </section>
+
   <header class="company-hero profile-company-header" aria-label="Unternehmensinformationen">
     <div class="company-identity">
       <div class="company-hero-logo">
@@ -44,10 +54,6 @@
       <h2 id="profile-welcome-title">{{ profile.welcomeTitle || 'Schön, dass du da bist.' }}</h2>
       <p *ngIf="profile.welcomeSubtitle">{{ profile.welcomeSubtitle }}</p>
     </div>
-    <button type="button" class="profile-welcome-photo" *ngIf="gallery.length" (click)="setTab('photos')" [attr.aria-label]="isRestaurant ? 'Restaurantfotos ansehen' : 'Salonfotos ansehen'">
-      <img [src]="gallery[0].src" alt="" width="152" height="152" decoding="async" />
-      <span aria-hidden="true"><svg><use href="#p-grid" /></svg></span>
-    </button>
   </section>
 
   <nav class="profile-tab-bar" *ngIf="hasProProfile" aria-label="Profilbereiche"><div role="tablist" aria-label="Unternehmensinformationen"><button *ngFor="let tab of tabs; let index = index" type="button" role="tab" [id]="'profile-tab-' + tab.id" [attr.aria-controls]="'profile-panel-' + tab.id" [attr.aria-selected]="activeTab === tab.id" [attr.tabindex]="activeTab === tab.id ? 0 : -1" [class.is-active]="activeTab === tab.id" (click)="setTab(tab.id)" (keydown)="onTabKey($event, index)"><svg><use [attr.href]="'#p-' + tab.icon" /></svg>{{ tab.label }}</button></div><span class="profile-tabs-note"><span></span>Persönlich. Unkompliziert.</span></nav>

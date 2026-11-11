@@ -800,3 +800,351 @@
     text-align: left;
   }
 }
+
+/* ==========================================================================
+   Mehrwert: geschätzter Umsatz (im bisherigen hellen Stil)
+   ========================================================================== */
+.value-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  margin-bottom: 14px;
+  padding: 22px;
+  border: 1px solid #dcdffc;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #4f46e5, #635bdf 60%, #4338ca);
+  color: #fff;
+  box-shadow: 0 18px 40px rgba(79, 70, 229, 0.18);
+}
+
+@media (min-width: 1000px) {
+  .value-hero {
+    grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
+    gap: 30px;
+  }
+}
+
+.value-hero .eyebrow {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.value-hero h2 {
+  margin: 8px 0 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.value-hero__amount {
+  display: block;
+  margin-top: 4px;
+  font-size: clamp(2.6rem, 9vw, 4rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.value-hero__sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.trend-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #0b5d46;
+  background: #b6f0dc;
+}
+
+.trend-chip--down {
+  color: #8a1c1c;
+  background: #fecaca;
+}
+
+.ticket-control {
+  display: grid;
+  gap: 10px;
+  max-width: 420px;
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ticket-control__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ticket-control__head label {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.ticket-control__badge {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4338ca;
+  background: #fff;
+}
+
+.ticket-stepper {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 8px;
+}
+
+.ticket-stepper button {
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ticket-stepper button:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.ticket-input {
+  position: relative;
+}
+
+.ticket-input input {
+  width: 100%;
+  height: 44px;
+  padding: 0 34px 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  background: #fff;
+  color: #172033;
+  font: inherit;
+  font-size: 1.15rem;
+  font-weight: 800;
+  text-align: center;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.ticket-input input::-webkit-outer-spin-button,
+.ticket-input input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.ticket-input span {
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #8a94a7;
+  font-weight: 700;
+}
+
+.ticket-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ticket-presets button {
+  min-height: 32px;
+  padding: 0 13px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ticket-presets button.is-active {
+  color: #4338ca;
+  background: #fff;
+}
+
+.ticket-control__hint {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.value-hero__side {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.roi-card {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #fff;
+  color: #172033;
+}
+
+.roi-card > span {
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0f9d7a;
+}
+
+.roi-card strong {
+  font-size: 2.4rem;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.roi-card p {
+  margin: 0;
+  color: #66738a;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.roi-mini {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.roi-mini div {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.roi-mini span {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.roi-mini strong {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+/* Umsatz-Kurve */
+.chart-panel {
+  margin-bottom: 14px;
+}
+
+.area-chart {
+  position: relative;
+  height: clamp(150px, 26vw, 220px);
+  touch-action: pan-y;
+}
+
+.area-chart svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  cursor: crosshair;
+}
+
+.chart-grid line {
+  stroke: #e5e9f1;
+  stroke-dasharray: 3 5;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-line {
+  fill: none;
+  stroke: #4f46e5;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-cursor {
+  stroke: #c7cbe0;
+  stroke-dasharray: 4 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-dot {
+  fill: #fff;
+  stroke: #4f46e5;
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-max {
+  position: absolute;
+  left: 0;
+  top: -2px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  color: #8a94a7;
+  background: #f1f3f8;
+}
+
+.chart-tooltip {
+  position: absolute;
+  top: 0;
+  display: grid;
+  padding: 6px 10px;
+  border: 1px solid #e5e9f1;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(23, 32, 51, 0.1);
+  transform: translateX(-50%);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.chart-tooltip.is-right {
+  transform: translateX(-100%);
+}
+
+.chart-tooltip small {
+  font-size: 0.66rem;
+  color: #8a94a7;
+}
+
+.chart-tooltip strong {
+  font-size: 0.9rem;
+  color: #172033;
+}
+
+.chart-xaxis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 0.68rem;
+  color: #8a94a7;
+}
+
+.stats-footnote--estimate strong {
+  color: #3f4b60;
+}

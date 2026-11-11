@@ -63,6 +63,7 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
   serviceCategory = 'all';
   selectionKind: SelectionKind = 'service';
   galleryIndex = 0;
+  heroIndex = 0;
   toast = '';
   private toastTimer?: ReturnType<typeof setTimeout>;
   private lastBookingStep?: 'date' | 'details';
@@ -130,6 +131,11 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
   get selectedService() { return this.services.find(service => service.value === this.booking?.bookingForm.controls.service.value); }
   get currentImage() { return this.gallery[this.galleryIndex]; }
   get showBookingDock() { return this.activeTab !== 'booking'; }
+
+  onHeroScroll(track: HTMLElement): void {
+    const slide = track.firstElementChild instanceof HTMLElement ? track.firstElementChild.offsetWidth : track.clientWidth;
+    this.heroIndex = Math.min(this.gallery.length - 1, Math.max(0, Math.round(track.scrollLeft / Math.max(1, slide + 10))));
+  }
 
   setTab(tab: ProfileTab): void {
     if (!this.tabs.some(item => item.id === tab)) return;
