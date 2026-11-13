@@ -29,7 +29,7 @@
     </div>
     <input #photosInput type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple hidden (change)="upload($event)" />
     <div class="editor-upload-actions"><button type="button" class="editor-add" (click)="photosInput.click()" [disabled]="uploading || disabled || value.photos.length >= 6">{{ uploading ? 'Bilder werden vorbereitet…' : '+ Fotos hochladen' }}</button><button type="button" class="editor-text-button" *ngIf="!value.photos.length" (click)="useExamplePhotos()">Passende Beispielbilder verwenden</button></div>
-    <p class="editor-hint">JPG, PNG oder WebP bis 5 MB. Fotos werden automatisch für die mobile Ansicht verkleinert. Ohne Fotos wird der Reiter ausgeblendet.</p>
+    <p class="editor-hint">JPG, PNG oder WebP bis 5 MB. Verwende möglichst die Originaldatei für scharfe Fotos. Ohne Fotos wird der Reiter ausgeblendet.</p>
     <p class="editor-error" role="alert" *ngIf="error">{{ error }}</p>
   </div>
   <div class="editor-block">

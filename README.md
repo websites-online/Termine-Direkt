@@ -103,6 +103,14 @@ Profilinhalte; die Unternehmensübersicht lädt keine Galerien mit.
 das Verhalten bei fehlender Migration. Bildquellen und Generierungsprompts stehen
 in `public/media/profile-preview/ASSETS.md`.
 
+Hochgeladene Fotos behalten bis zu 2.400 Pixel an der längsten Kante und erhalten
+bis zu 500.000 Zeichen pro Bild. Größere Dateien werden mit hoher WebP-Qualität
+angepasst; passende kleine Originaldateien bleiben unverändert. Logos behalten
+bis zu 640 Pixel und transparente Hintergründe. Bereits stark verkleinerte Fotos
+müssen aus der Originaldatei erneut hochgeladen werden. Frontend und API gemeinsam
+bereitstellen, damit der gemeinsame Profil-Normalisierer größere Bilder akzeptiert.
+Die Bildverarbeitung prüft `npm test -- --watch=false --browsers=ChromeHeadless --include=src/app/shared/company-image-upload.spec.ts` im Browser.
+
 Restaurantkarten zeigen jeweils eine Kategorie und höchstens acht Positionen pro
 Seite. Der gemeinsame Profil-Normalisierer unterstützt bis zu 300 Positionen;
 Preistexte erhalten auch mehrere Getränkegrößen und ihre jeweiligen Preise.

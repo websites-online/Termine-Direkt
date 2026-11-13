@@ -1,5 +1,5 @@
 import { prepareCompanyImage } from './company-image-upload';
-import { normalizeCompanyProfile, PROFILE_IMAGE_MAX_LENGTH } from './company-profile';
+import { normalizeCompanyProfile, PROFILE_IMAGE_MAX_DIMENSION, PROFILE_IMAGE_MAX_LENGTH } from './company-profile';
 
 function canvas(width: number, height: number): HTMLCanvasElement {
   const result = document.createElement('canvas');
@@ -23,7 +23,7 @@ async function decode(src: string): Promise<HTMLImageElement> {
 }
 
 describe('company image uploads in the browser', () => {
-  const profileOptions = { maxDimension: 1200, maxLength: PROFILE_IMAGE_MAX_LENGTH };
+  const profileOptions = { maxDimension: PROFILE_IMAGE_MAX_DIMENSION, maxLength: PROFILE_IMAGE_MAX_LENGTH };
   let detailedPhoto: HTMLCanvasElement;
   let photoFile: File;
 
@@ -42,7 +42,7 @@ describe('company image uploads in the browser', () => {
 
   it('accepts a photo below 5 MB that exceeded the old compression limit and survives normalization', async () => {
     expect(photoFile.size).toBeLessThan(5 * 1024 * 1024);
-    expect(detailedPhoto.toDataURL('image/webp', .35).length).toBeGreaterThan(PROFILE_IMAGE_MAX_LENGTH);
+    expect(detailedPhoto.toDataURL('image/webp', .35).length).toBeGreaterThan(180_000);
     const src = await prepareCompanyImage(photoFile, profileOptions);
     expect(src.length).toBeLessThanOrEqual(PROFILE_IMAGE_MAX_LENGTH);
     const image = await decode(src);
@@ -50,6 +50,58 @@ describe('company image uploads in the browser', () => {
     expect(image.naturalWidth / image.naturalHeight).toBeCloseTo(1.5, 1);
     expect(normalizeCompanyProfile({ photos: [{ src }] }).photos[0].src).toBe(src);
   }, 15_000);
+
+  it('keeps a detailed gallery photo at its original resolution with little pixel error', async () => {
+    const response = await fetch('/media/profile-preview/restaurant-interior.jpg');
+    expect(response.ok).toBeTrue();
+    const file = new File([await response.blob()], 'restaurant.jpg', { type: 'image/jpeg' });
+    const originalUrl = URL.createObjectURL(file);
+    try {
+      const original = await decode(originalUrl);
+      const src = await prepareCompanyImage(file, profileOptions);
+      const image = await decode(src);
+      expect(image.naturalWidth).toBe(original.naturalWidth);
+      expect(image.naturalHeight).toBe(original.naturalHeight);
+      expect(src.length).toBeLessThanOrEqual(PROFILE_IMAGE_MAX_LENGTH);
+      const output = canvas(original.naturalWidth, original.naturalHeight);
+      const context = output.getContext('2d')!;
+      context.drawImage(original, 0, 0);
+      const before = context.getImageData(0, 0, output.width, output.height).data;
+      context.clearRect(0, 0, output.width, output.height);
+      context.drawImage(image, 0, 0);
+      const after = context.getImageData(0, 0, output.width, output.height).data;
+      let squaredError = 0;
+      for (let i = 0; i < before.length; i++) {
+        if (i % 4 !== 3) squaredError += (before[i] - after[i]) ** 2;
+      }
+      // RGB error stays below 8 levels out of 255, with no loss of resolution.
+      expect(Math.sqrt(squaredError / (output.width * output.height * 3))).toBeLessThan(8);
+      expect(normalizeCompanyProfile({ photos: [{ src }] }).photos[0].src).toBe(src);
+    } finally {
+      URL.revokeObjectURL(originalUrl);
+    }
+  });
+
+  it('preserves the exact bytes of small originals instead of compressing them again', async () => {
+    const original = canvas(640, 320);
+    const context = original.getContext('2d')!;
+    context.fillStyle = '#8351b7';
+    context.fillRect(100, 100, 100, 100);
+    const file = new File([await blob(original)], 'logo.png', { type: 'image/png' });
+    const src = await prepareCompanyImage(file, { maxDimension: 640, maxLength: 500_000 });
+    const result = await fetch(src);
+    expect(await result.arrayBuffer()).toEqual(await file.arrayBuffer());
+    expect((await decode(src)).naturalWidth).toBe(640);
+  });
+
+  it('limits large photos to the gallery resolution without changing their proportions', async () => {
+    const original = canvas(3000, 2000);
+    original.getContext('2d')!.fillRect(100, 100, 2000, 1200);
+    const file = new File([await blob(original)], 'large-photo.png', { type: 'image/png' });
+    const image = await decode(await prepareCompanyImage(file, profileOptions));
+    expect(image.naturalWidth).toBe(2400);
+    expect(image.naturalHeight).toBe(1600);
+  });
 
   it('handles browsers that fall back to PNG encoding', async () => {
     const encode = HTMLCanvasElement.prototype.toDataURL;

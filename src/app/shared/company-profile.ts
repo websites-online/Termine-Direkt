@@ -30,7 +30,9 @@ export interface CompanyProfile {
 const text = (value: unknown, max: number): string =>
   typeof value === 'string' ? value.trim().slice(0, max) : '';
 
-export const PROFILE_IMAGE_MAX_LENGTH = 180_000;
+// Six inline photos leave room for the logo and profile text in the company request.
+export const PROFILE_IMAGE_MAX_LENGTH = 500_000;
+export const PROFILE_IMAGE_MAX_DIMENSION = 2400;
 export const MAX_PROFILE_MENU_ITEMS = 300;
 
 export function profileImageUrl(value: unknown): string {

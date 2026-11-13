@@ -565,7 +565,7 @@ export class AdminDashboardComponent implements OnInit {
     this.logoError = '';
     this.isProcessingLogo = true;
     try {
-      const logoUrl = await prepareCompanyImage(file, { maxDimension: 320, maxLength: 500_000 });
+      const logoUrl = await prepareCompanyImage(file, { maxDimension: 640, maxLength: 500_000 });
       this.companyForm.patchValue({ logoUrl });
       this.companyForm.markAsDirty();
     } catch (error) {

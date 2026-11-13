@@ -3,7 +3,7 @@ import { Component, EventEmitter, forwardRef, inject, Input, OnDestroy, Output }
 import { HttpClient } from '@angular/common/http';
 import { AbstractControl, ControlValueAccessor, FormBuilder, NG_VALIDATORS, NG_VALUE_ACCESSOR, ReactiveFormsModule, ValidationErrors, Validator, Validators } from '@angular/forms';
 import { firstValueFrom, Subscription } from 'rxjs';
-import { CompanyProfile, defaultCompanyProfile, MAX_PROFILE_MENU_ITEMS, normalizeCompanyProfile, PROFILE_IMAGE_MAX_LENGTH, ProfileMenuItem, ProfilePhoto } from '../../shared/company-profile';
+import { CompanyProfile, defaultCompanyProfile, MAX_PROFILE_MENU_ITEMS, normalizeCompanyProfile, PROFILE_IMAGE_MAX_DIMENSION, PROFILE_IMAGE_MAX_LENGTH, ProfileMenuItem, ProfilePhoto } from '../../shared/company-profile';
 import { CompanyImageUploadError, prepareCompanyImage } from '../../shared/company-image-upload';
 import { SalonServiceOption } from '../../shared/salon-services';
 import { exampleCompanyProfile } from '../../shared/profile-preview-fixtures';
@@ -108,7 +108,7 @@ export class CompanyProfileEditorComponent implements ControlValueAccessor, Vali
     try {
       const photos: ProfilePhoto[] = [];
       for (const file of files) photos.push({
-        src: await prepareCompanyImage(file, { maxDimension: 1200, maxLength: PROFILE_IMAGE_MAX_LENGTH }),
+        src: await prepareCompanyImage(file, { maxDimension: PROFILE_IMAGE_MAX_DIMENSION, maxLength: PROFILE_IMAGE_MAX_LENGTH }),
         title: '', alt: file.name.replace(/\.[^.]+$/, ''),
       });
       this.value = { ...this.value, photos: [...this.value.photos, ...photos] };
