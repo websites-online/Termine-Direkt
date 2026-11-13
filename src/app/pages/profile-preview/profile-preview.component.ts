@@ -65,6 +65,8 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
   @ViewChild('selectionDialog') selectionDialog?: ElementRef<HTMLDialogElement>;
   activeTab: ProfileTab = 'booking';
   serviceCategory = 'all';
+  menuPage = 0;
+  readonly menuPageSize = 8;
   selectionKind: SelectionKind = 'service';
   galleryIndex = 0;
   heroIndex = 0;
@@ -87,6 +89,17 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
   hours: { day: string; hours: string }[] = [];
   get gallery() { return this.hasProProfile ? this.profile.photos : []; }
   get filteredMenu() { return this.profile.menu.filter(item => this.serviceCategory === 'all' || item.category === this.serviceCategory); }
+  get visibleMenu() { return this.filteredMenu.slice(this.menuPage * this.menuPageSize, (this.menuPage + 1) * this.menuPageSize); }
+  get menuPageCount(): number { return Math.ceil(this.filteredMenu.length / this.menuPageSize); }
+  selectMenuCategory(event: Event): void {
+    this.serviceCategory = (event.target as HTMLSelectElement).value;
+    this.menuPage = 0;
+  }
+  setMenuPage(page: number): void {
+    if (page < 0 || page >= this.menuPageCount) return;
+    this.menuPage = page;
+    requestAnimationFrame(() => document.getElementById('profile-menu-results')?.scrollIntoView({ block: 'start', behavior: this.reducedMotion ? 'auto' : 'smooth' }));
+  }
   price(value: number): string { return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value); }
 
   ngOnInit(): void {
@@ -96,6 +109,7 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
       this.loading = true;
       this.activeTab = 'booking';
       this.serviceCategory = 'all';
+      this.menuPage = 0;
       return this.companies.getCompany(params.get('slug') || '');
     })).subscribe({
       next: company => {
@@ -119,10 +133,11 @@ export class ProfilePreviewComponent implements OnInit, OnDestroy {
           category: service.audience, icon: 'scissors', tag: '', price: service.price,
         }));
         this.categories = this.isRestaurant
-          ? [{ id: 'all', label: 'Alles entdecken' }, ...Array.from(new Set(this.profile.menu.map(item => item.category))).map(category => ({ id: category, label: category }))]
+          ? Array.from(new Set(this.profile.menu.map(item => item.category))).map(category => ({ id: category, label: category }))
           : [{ id: 'all', label: 'Alle Leistungen' }, ...[
               { id: 'women', label: 'Damen' }, { id: 'men', label: 'Herren' }, { id: 'general', label: 'Für alle' },
             ].filter(category => this.services.some(service => service.category === category.id))];
+        if (this.isRestaurant) this.serviceCategory = this.categories[0]?.id || 'all';
         this.hours = company.hours.split(/[;\n]+/).map(value => value.trim()).filter(Boolean).map(value => {
           const match = value.match(/^(.*?)\s+(\d.*|geschlossen)$/i);
           return match ? { day: match[1], hours: match[2] } : { day: value, hours: '' };

@@ -71,15 +71,28 @@
       <section id="profile-panel-services" *ngIf="hasProProfile" class="profile-tab-panel" role="tabpanel" aria-labelledby="profile-tab-services" [hidden]="activeTab !== 'services'">
         <div class="profile-panel-heading"><div><span class="profile-eyebrow">{{ isRestaurant ? 'FRISCH AUF DEN TISCH' : 'FÜR DICH' }}</span><h2>{{ profile.offeringsTitle || (isRestaurant ? 'Unsere Speisekarte' : 'Unsere Leistungen') }}</h2></div></div>
         <p class="profile-panel-intro" *ngIf="profile.offeringsIntro">{{ profile.offeringsIntro }}</p>
-        <div class="profile-chip-row" *ngIf="categories.length > 1" [attr.aria-label]="isRestaurant ? 'Speisekarte filtern' : 'Leistungen filtern'"><button *ngFor="let category of categories" type="button" [class.is-active]="serviceCategory === category.id" [attr.aria-pressed]="serviceCategory === category.id" (click)="serviceCategory = category.id">{{ category.label }}</button></div>
+        <div class="profile-chip-row" *ngIf="!isRestaurant && categories.length > 1" aria-label="Leistungen filtern"><button *ngFor="let category of categories" type="button" [class.is-active]="serviceCategory === category.id" [attr.aria-pressed]="serviceCategory === category.id" (click)="serviceCategory = category.id">{{ category.label }}</button></div>
         <ng-container *ngIf="isRestaurant; else salonOfferings">
-          <div class="profile-menu-list" *ngIf="profile.menu.length; else emptyMenu">
-            <article class="profile-menu-item" *ngFor="let dish of filteredMenu">
-              <div class="profile-menu-copy"><span class="profile-menu-category">{{ dish.category }}</span><h3>{{ dish.name }}</h3><p *ngIf="dish.description">{{ dish.description }}</p></div>
-              <span class="profile-menu-price" *ngIf="dish.price !== undefined">{{ price(dish.price) }}</span>
-            </article>
-          </div>
+          <ng-container *ngIf="profile.menu.length; else emptyMenu">
+            <div class="profile-menu-toolbar" id="profile-menu-results">
+              <label><span>Kategorie</span><select aria-label="Kategorie der Speisekarte" [value]="serviceCategory" (change)="selectMenuCategory($event)"><option *ngFor="let category of categories" [value]="category.id">{{ category.label }}</option></select></label>
+              <span role="status" aria-live="polite">{{ filteredMenu.length }} Positionen</span>
+            </div>
+            <div class="profile-menu-list">
+              <article class="profile-menu-item" *ngFor="let dish of visibleMenu">
+                <div class="profile-menu-copy"><h3>{{ dish.name }}</h3><p *ngIf="dish.description">{{ dish.description }}</p></div>
+                <span class="profile-menu-price" *ngIf="dish.priceLabel || dish.price !== undefined">{{ dish.priceLabel || price(dish.price ?? 0) }}</span>
+              </article>
+            </div>
+            <nav class="profile-menu-pagination" *ngIf="menuPageCount > 1" aria-label="Seiten der Speisekarte">
+              <button type="button" [disabled]="menuPage === 0" (click)="setMenuPage(menuPage - 1)">Zurück</button>
+              <span role="status" aria-live="polite">Seite {{ menuPage + 1 }} von {{ menuPageCount }}</span>
+              <button type="button" [disabled]="menuPage + 1 >= menuPageCount" (click)="setMenuPage(menuPage + 1)">Weiter</button>
+            </nav>
+          </ng-container>
           <ng-template #emptyMenu><p class="profile-empty-menu">Unsere Speisekarte ergänzen wir hier in Kürze.</p></ng-template>
+          <details class="profile-menu-notes" *ngIf="profile.menuNotes"><summary>Allergene & Hinweise</summary><p>{{ profile.menuNotes }}</p></details>
+          <a class="profile-menu-document" *ngIf="profile.menuDocumentUrl" [href]="profile.menuDocumentUrl" target="_blank" rel="noopener noreferrer">Originalkarte als PDF <span aria-hidden="true">↗</span></a>
         </ng-container>
         <ng-template #salonOfferings><div class="profile-service-list"><button *ngFor="let service of filteredServices" type="button" class="profile-service" (click)="bookService(service.value)"><span class="profile-service-icon"><svg><use [attr.href]="'#p-' + service.icon" /></svg></span><span class="profile-service-copy"><span class="profile-service-title">{{ service.title }}</span><span class="profile-service-description" *ngIf="service.subtitle">{{ service.subtitle }}</span><span class="profile-service-duration" *ngIf="service.duration"><svg><use href="#p-clock" /></svg>{{ service.duration }}<span *ngIf="company.showServicePrices && !booking?.hasMobileService && service.price !== undefined"> · {{ price(service.price) }}</span></span></span><span class="profile-service-add"><svg><use [attr.href]="selectedService?.value === service.value ? '#p-check' : '#p-plus'" /></svg></span></button></div></ng-template>
       </section>

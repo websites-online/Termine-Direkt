@@ -103,6 +103,25 @@ Profilinhalte; die Unternehmensübersicht lädt keine Galerien mit.
 das Verhalten bei fehlender Migration. Bildquellen und Generierungsprompts stehen
 in `public/media/profile-preview/ASSETS.md`.
 
+Restaurantkarten zeigen jeweils eine Kategorie und höchstens acht Positionen pro
+Seite. Der gemeinsame Profil-Normalisierer unterstützt bis zu 300 Positionen;
+Preistexte erhalten auch mehrere Getränkegrößen und ihre jeweiligen Preise.
+Allergene und Hinweise sind aufklappbar, die Original-PDF ist separat verlinkt.
+
+Für **Osteria da Michele** liegt die vom Nutzer bereitgestellte Karte mit 138
+Positionen in 16 Kategorien unter `public/menus/osteria-da-michele.json`; das
+Original liegt unter `public/media/menus/osteria-da-michele.pdf`. Im leeren
+Speisekarten-Editor dieses Unternehmens lädt **Speisekarte von Osteria da Michele
+übernehmen** die vollständige Karte ins Formular. Erst **Änderungen speichern**
+speichert sie. Bestehende Karten werden nicht überschrieben.
+
+Alternativ erzeugt `node scripts/prepare-osteria-menu-import.mjs` den gezielten
+Datenbankimport `docs/data-imports/osteria-da-michele-menu.sql`. Der Import prüft ID,
+Slug, Name und Betriebsart, erhält übrige Profilfelder und lehnt das Überschreiben
+einer abweichenden bestehenden Karte ab. **API und Frontend zuerst gemeinsam
+bereitstellen:** ältere API-Versionen begrenzen Karten noch auf 60 Positionen.
+Das Erzeugen der SQL-Datei führt keine Datenbankänderungen aus.
+
 ## Empfehlungshinweis nach der Buchung
 
 Nach einer erfolgreichen Anfrage oder Buchung steht im Erfolgsfenster ein dezenter
