@@ -132,7 +132,7 @@
                     #logoInput
                     class="visually-hidden"
                     type="file"
-                    accept="image/png,image/jpeg,image/webp"
+                    accept="image/png,image/jpeg,image/webp,.jpg,.jpeg,.png,.webp"
                     (change)="onLogoSelected($event)"
                   />
                   <div class="logo-actions">
@@ -194,7 +194,7 @@
               <span class="section-number">✦</span>
               <div><h2>Profil & Fotos</h2><p>Begrüßung, Vorstellung und {{ companyForm.value.serviceType === 'restaurant' ? 'Speisekarte' : 'Leistungsbeschreibungen' }} der Kundenseite.</p></div>
             </div>
-            <app-company-profile-editor formControlName="profile" [serviceType]="companyForm.value.serviceType || 'restaurant'" [services]="salonServiceSettings" [proFeaturesEnabled]="companyForm.value.planTier === 'pro'" (managePlan)="scrollToSection('zugang')" />
+            <app-company-profile-editor formControlName="profile" [companySlug]="editingSlug || ''" [serviceType]="companyForm.value.serviceType || 'restaurant'" [services]="salonServiceSettings" [proFeaturesEnabled]="companyForm.value.planTier === 'pro'" (managePlan)="scrollToSection('zugang')" />
             <p class="helptext">Die Inhalte werden zusammen mit den Unternehmenseinstellungen gespeichert. Danach kannst du die Kundenseite oben öffnen.</p>
           </section>
 

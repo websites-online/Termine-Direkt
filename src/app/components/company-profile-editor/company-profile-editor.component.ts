@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, forwardRef, Input, OnDestroy, Output } from '@angular/core';
+import { Component, EventEmitter, forwardRef, inject, Input, OnDestroy, Output } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { AbstractControl, ControlValueAccessor, FormBuilder, NG_VALIDATORS, NG_VALUE_ACCESSOR, ReactiveFormsModule, ValidationErrors, Validator, Validators } from '@angular/forms';
-import { Subscription } from 'rxjs';
-import { CompanyProfile, defaultCompanyProfile, normalizeCompanyProfile, ProfileMenuItem, ProfilePhoto } from '../../shared/company-profile';
+import { firstValueFrom, Subscription } from 'rxjs';
+import { CompanyProfile, defaultCompanyProfile, MAX_PROFILE_MENU_ITEMS, normalizeCompanyProfile, PROFILE_IMAGE_MAX_LENGTH, ProfileMenuItem, ProfilePhoto } from '../../shared/company-profile';
+import { CompanyImageUploadError, prepareCompanyImage } from '../../shared/company-image-upload';
 import { SalonServiceOption } from '../../shared/salon-services';
 import { exampleCompanyProfile } from '../../shared/profile-preview-fixtures';
 
@@ -18,6 +20,7 @@ import { exampleCompanyProfile } from '../../shared/profile-preview-fixtures';
 })
 export class CompanyProfileEditorComponent implements ControlValueAccessor, Validator, OnDestroy {
   @Input() serviceType = 'restaurant';
+  @Input() companySlug = '';
   @Input() services: SalonServiceOption[] = [];
   private proEnabled = false;
   @Input() set proFeaturesEnabled(enabled: boolean) {
@@ -29,6 +32,10 @@ export class CompanyProfileEditorComponent implements ControlValueAccessor, Vali
   value: CompanyProfile = defaultCompanyProfile('restaurant');
   disabled = false;
   uploading = false;
+  importingMenu = false;
+  menuError = '';
+  readonly maxMenuItems = MAX_PROFILE_MENU_ITEMS;
+  private readonly http = inject(HttpClient);
   error = '';
   openDishId = '';
   private change: (value: CompanyProfile) => void = () => {};
@@ -41,6 +48,7 @@ export class CompanyProfileEditorComponent implements ControlValueAccessor, Vali
     aboutText: ['', Validators.maxLength(2400)],
     offeringsTitle: ['', Validators.maxLength(100)],
     offeringsIntro: ['', Validators.maxLength(600)],
+    menuNotes: ['', Validators.maxLength(1600)],
   });
   private readonly subscription: Subscription = this.form.valueChanges.subscribe(() => this.publish());
 
@@ -56,7 +64,7 @@ export class CompanyProfileEditorComponent implements ControlValueAccessor, Vali
     disabled ? this.form.disable({ emitEvent: false }) : this.form.enable({ emitEvent: false });
   }
   validate(_control: AbstractControl): ValidationErrors | null {
-    return this.form.invalid || this.menuInvalid || this.uploading ? { companyProfile: true } : null;
+    return this.form.invalid || this.menuInvalid || this.uploading || this.importingMenu ? { companyProfile: true } : null;
   }
   get menuInvalid(): boolean {
     return this.proFeaturesEnabled && this.serviceType === 'restaurant' && this.value.menu.some(item => !item.name.trim() ||
@@ -93,46 +101,25 @@ export class CompanyProfileEditorComponent implements ControlValueAccessor, Vali
     const files = Array.from(input.files || []);
     input.value = '';
     this.error = '';
+    if (!files.length || this.uploading || this.disabled) return;
     if (files.length + this.value.photos.length > 6) { this.error = 'Es sind maximal 6 Fotos möglich.'; return; }
-    if (files.some(file => !['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024)) {
-      this.error = 'Bitte JPG, PNG oder WebP mit höchstens 5 MB pro Bild auswählen.'; return;
-    }
     this.uploading = true;
     this.validatorChanged();
     try {
       const photos: ProfilePhoto[] = [];
-      for (const file of files) photos.push({ src: await this.compress(file), title: '', alt: file.name.replace(/\.[^.]+$/, '') });
+      for (const file of files) photos.push({
+        src: await prepareCompanyImage(file, { maxDimension: 1200, maxLength: PROFILE_IMAGE_MAX_LENGTH }),
+        title: '', alt: file.name.replace(/\.[^.]+$/, ''),
+      });
       this.value = { ...this.value, photos: [...this.value.photos, ...photos] };
       this.publish();
-    } catch { this.error = 'Das Bild konnte nicht verarbeitet werden. Bitte ein anderes Foto wählen.'; }
+    } catch (error) {
+      this.error = error instanceof CompanyImageUploadError ? error.message : 'Das Bild konnte nicht verarbeitet werden. Bitte ein anderes Foto wählen.';
+    }
     finally { this.uploading = false; this.validatorChanged(); }
   }
-  private compress(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const url = URL.createObjectURL(file);
-      const img = new Image();
-      img.onload = () => {
-        const scale = Math.min(1, 1200 / Math.max(img.naturalWidth, img.naturalHeight));
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
-        canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
-        const context = canvas.getContext('2d');
-        if (!context) { URL.revokeObjectURL(url); reject(new Error('Canvas')); return; }
-        context.drawImage(img, 0, 0, canvas.width, canvas.height);
-        URL.revokeObjectURL(url);
-        let image = '';
-        for (const quality of [.82, .68, .5, .35]) {
-          image = canvas.toDataURL('image/webp', quality);
-          if (image.length <= 180_000) { resolve(image); return; }
-        }
-        reject(new Error('Image too large'));
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image')); };
-      img.src = url;
-    });
-  }
   addDish(): void {
-    if (this.value.menu.length >= 60) return;
+    if (this.value.menu.length >= this.maxMenuItems) return;
     this.openDishId = crypto.randomUUID();
     this.value = { ...this.value, menu: [...this.value.menu, { id: this.openDishId, name: '', description: '', category: 'Speisen' }] };
     this.publish();
@@ -144,7 +131,7 @@ export class CompanyProfileEditorComponent implements ControlValueAccessor, Vali
   menuPrice(price: number): string {
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(price);
   }
-  dishText(item: ProfileMenuItem, field: 'name' | 'description' | 'category', event: Event): void {
+  dishText(item: ProfileMenuItem, field: 'name' | 'description' | 'category' | 'priceLabel', event: Event): void {
     item[field] = (event.target as HTMLInputElement).value;
     this.publish();
   }
@@ -160,6 +147,35 @@ export class CompanyProfileEditorComponent implements ControlValueAccessor, Vali
   serviceDescription(key: string, event: Event): void {
     this.value = { ...this.value, serviceDescriptions: { ...this.value.serviceDescriptions, [key]: (event.target as HTMLTextAreaElement).value } };
     this.publish();
+  }
+  get hasPreparedMenu(): boolean {
+    return this.companySlug === 'osteria-da-michele' && this.serviceType === 'restaurant' && !this.value.menu.length;
+  }
+  async importPreparedMenu(): Promise<void> {
+    if (!this.hasPreparedMenu || this.disabled || this.importingMenu) return;
+    this.importingMenu = true;
+    this.menuError = '';
+    this.validatorChanged();
+    try {
+      const data = await firstValueFrom(this.http.get<Record<string, unknown>>('/menus/osteria-da-michele.json'));
+      if (data['companySlug'] !== this.companySlug || !Array.isArray(data['menu']) ||
+          !data['menu'].length || data['menu'].length > this.maxMenuItems) throw new Error('Invalid menu');
+      const profile = normalizeCompanyProfile({
+        ...this.value,
+        menu: data['menu'], menuNotes: data['menuNotes'], menuDocumentUrl: data['menuDocumentUrl'],
+        offeringsTitle: data['offeringsTitle'], offeringsIntro: data['offeringsIntro'],
+      });
+      if (profile.menu.length !== data['menu'].length) throw new Error('Incomplete menu');
+      this.value = profile;
+      this.form.patchValue(profile, { emitEvent: false });
+      this.publish();
+      this.touched();
+    } catch {
+      this.menuError = 'Die vorbereitete Speisekarte konnte nicht geladen werden. Bitte erneut versuchen.';
+    } finally {
+      this.importingMenu = false;
+      this.validatorChanged();
+    }
   }
   ngOnDestroy(): void { this.subscription.unsubscribe(); }
 }

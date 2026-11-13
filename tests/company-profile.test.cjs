@@ -77,6 +77,47 @@ test('real company defaults contain no invented photos, menu or introduction', (
   }
 });
 
+test('the complete Osteria menu survives an authenticated API round trip with sizes and notes', async () => {
+  const { request, state } = setup();
+  const imported = JSON.parse(fs.readFileSync(path.join(root, 'public/menus/osteria-da-michele.json'), 'utf8'));
+  assert.equal(imported.menu.length, 138);
+  assert.equal(new Set(imported.menu.map(item => item.id)).size, 138);
+  assert.equal(imported.menu.filter(item => item.category === 'Pizza').length, 25);
+  assert.equal(imported.menu.find(item => item.id === 'michele-165').price, 19.9);
+  assert.equal(imported.menu.find(item => item.id === 'michele-230').priceLabel, '0,3 l · 3,30 €\n0,5 l · 4,30 €');
+  assert.equal(imported.menu.find(item => item.id === 'michele-298').priceLabel, '0,25 l · 4,80 €\n0,4 l · 6,60 €');
+  const profile = {
+    ...imported, aboutText: 'Existing company introduction.',
+    photos: [{ src: 'https://example.test/existing.jpg', title: 'Existing photo', alt: '' }],
+  };
+  const result = await request('PATCH', {
+    name: state.row.name, address: state.row.address, hours: state.row.hours,
+    email: state.row.email, serviceType: 'restaurant', profile,
+  });
+  assert.equal(result.statusCode, 200);
+  const saved = (await request('GET')).body.profile;
+  assert.deepEqual(saved.menu, imported.menu);
+  assert.equal(saved.menuNotes, imported.menuNotes);
+  assert.equal(saved.menuDocumentUrl, '/media/menus/osteria-da-michele.pdf');
+  assert.equal(saved.photos[0].title, 'Existing photo');
+  assert.equal(saved.aboutText, 'Existing company introduction.');
+});
+
+test('large menus stay bounded and menu documents reject executable or unrelated sources', () => {
+  const { profile } = setup();
+  const normalized = profile.normalizeCompanyProfile({
+    menu: Array.from({ length: 350 }, (_, index) => ({ name: 'Dish '+index, priceLabel: 'x'.repeat(200) })),
+    menuNotes: 'x'.repeat(2000), menuDocumentUrl: 'javascript:alert(1)',
+  });
+  assert.equal(normalized.menu.length, 300);
+  assert.equal(normalized.menu[0].priceLabel.length, 120);
+  assert.equal(normalized.menuNotes.length, 1600);
+  assert.equal(normalized.menuDocumentUrl, undefined);
+  for (const url of ['/media/menus/../secret.pdf', '/media/menus/logo.svg', 'https://example.test/file.html']) {
+    assert.equal(profile.normalizeCompanyProfile({ menuDocumentUrl: url }).menuDocumentUrl, undefined);
+  }
+});
+
 test('profile writes require an authenticated admin before accessing the database', async () => {
   const { request, state } = setup();
   const result = await request('PATCH', { profile: {} }, false);

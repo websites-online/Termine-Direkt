@@ -27,7 +27,7 @@
         </div>
       </article>
     </div>
-    <input #photosInput type="file" accept="image/jpeg,image/png,image/webp" multiple hidden (change)="upload($event)" />
+    <input #photosInput type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple hidden (change)="upload($event)" />
     <div class="editor-upload-actions"><button type="button" class="editor-add" (click)="photosInput.click()" [disabled]="uploading || disabled || value.photos.length >= 6">{{ uploading ? 'Bilder werden vorbereitet…' : '+ Fotos hochladen' }}</button><button type="button" class="editor-text-button" *ngIf="!value.photos.length" (click)="useExamplePhotos()">Passende Beispielbilder verwenden</button></div>
     <p class="editor-hint">JPG, PNG oder WebP bis 5 MB. Fotos werden automatisch für die mobile Ansicht verkleinert. Ohne Fotos wird der Reiter ausgeblendet.</p>
     <p class="editor-error" role="alert" *ngIf="error">{{ error }}</p>
@@ -36,17 +36,21 @@
     <div class="editor-heading"><div><h3>{{ serviceType === 'restaurant' ? 'Speisekarte' : 'Leistungen' }}</h3><p>{{ serviceType === 'restaurant' ? 'Gerichte nach Kategorie mit optionalen Preisen.' : 'Beschreibungen ergänzen die Leistungen aus dem Bereich „Angebot“.' }}</p></div></div>
     <div class="editor-fields"><label><span>Überschrift</span><input formControlName="offeringsTitle" maxlength="100" [placeholder]="serviceType === 'restaurant' ? 'Unsere Speisekarte' : 'Unsere Leistungen'" /></label><label><span>Einleitung</span><textarea formControlName="offeringsIntro" rows="2" maxlength="600" placeholder="Ein kurzer Einblick in dein Angebot."></textarea></label></div>
     <ng-container *ngIf="serviceType === 'restaurant'; else salonDescriptions">
+      <button type="button" class="editor-add" *ngIf="hasPreparedMenu" (click)="importPreparedMenu()" [disabled]="disabled || importingMenu">{{ importingMenu ? 'Speisekarte wird übernommen…' : 'Speisekarte von Osteria da Michele übernehmen' }}</button>
+      <p class="editor-error" role="alert" *ngIf="menuError">{{ menuError }}</p>
       <details class="editor-dish" *ngFor="let dish of value.menu; let index = index" [open]="openDishId === dish.id" (toggle)="dishToggle(dish.id, $event)">
-        <summary><span><strong>{{ dish.name || 'Neues Gericht' }}</strong><small>{{ dish.category }}</small></span><span class="editor-dish-summary-price">{{ dish.price !== undefined ? menuPrice(dish.price) : '' }}<span aria-hidden="true">⌄</span></span></summary>
+        <summary><span><strong>{{ dish.name || 'Neues Gericht' }}</strong><small>{{ dish.category }}</small></span><span class="editor-dish-summary-price">{{ dish.priceLabel || (dish.price !== undefined ? menuPrice(dish.price) : '') }}<span aria-hidden="true">⌄</span></span></summary>
         <div class="editor-dish-fields">
         <div class="editor-dish-top"><strong>Gericht {{ index + 1 }}</strong><button type="button" class="editor-remove" (click)="removeDish(index)" [attr.aria-label]="'Gericht ' + (index + 1) + ' entfernen'">Entfernen</button></div>
         <label><span>Name*</span><input [value]="dish.name" (input)="dishText(dish, 'name', $event)" maxlength="120" placeholder="z. B. Pappardelle al Pomodoro" /></label>
         <div class="editor-fields"><label><span>Kategorie</span><input [value]="dish.category" (input)="dishText(dish, 'category', $event)" maxlength="60" placeholder="z. B. Pasta" /></label><label><span>Preis in € (optional)</span><input type="number" min="0" max="10000" step="0.01" inputmode="decimal" [value]="dish.price ?? ''" (input)="dishPrice(dish, $event)" placeholder="16,50" /></label></div>
         <label><span>Beschreibung</span><textarea [value]="dish.description" (input)="dishText(dish, 'description', $event)" maxlength="600" rows="2" placeholder="Zutaten oder eine kurze Beschreibung."></textarea></label>
+        <label><span>Preisanzeige mit Mengen (optional)</span><textarea [value]="dish.priceLabel || ''" (input)="dishText(dish, 'priceLabel', $event)" maxlength="120" rows="2" placeholder="z. B. 0,3 l · 3,30 € und 0,5 l · 4,30 €"></textarea><small>Ersetzt die einfache Preisanzeige, zum Beispiel bei mehreren Größen.</small></label>
         </div>
       </details>
       <p class="editor-error" *ngIf="menuInvalid">Bitte jedem Gericht einen Namen und gegebenenfalls einen gültigen Preis geben.</p>
-      <button type="button" class="editor-add" (click)="addDish()" [disabled]="value.menu.length >= 60">+ Gericht hinzufügen</button>
+      <button type="button" class="editor-add" (click)="addDish()" [disabled]="disabled || importingMenu || value.menu.length >= maxMenuItems">+ Gericht hinzufügen</button>
+      <label><span>Allergene & Hinweise (optional)</span><textarea formControlName="menuNotes" rows="3" maxlength="1600" placeholder="Kennzeichnungen, Größen oder Hinweise zur Speisekarte."></textarea></label>
       <p class="editor-hint">Ohne Preis bleibt die Preisanzeige beim Gericht leer. Die Speisekarte verändert die Tischreservierung nicht.</p>
     </ng-container>
     <ng-template #salonDescriptions><label class="editor-service-description" *ngFor="let service of services"><span>{{ service.label || 'Neue Leistung' }}</span><textarea [value]="value.serviceDescriptions[service.value] || ''" (input)="serviceDescription(service.value, $event)" maxlength="600" rows="2" placeholder="Optionale Beschreibung dieser Leistung."></textarea></label></ng-template>

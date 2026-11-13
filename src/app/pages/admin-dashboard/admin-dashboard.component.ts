@@ -19,6 +19,7 @@ import {
 
 import { CompanyProfileEditorComponent } from '../../components/company-profile-editor/company-profile-editor.component';
 import { CompanyProfile, defaultCompanyProfile } from '../../shared/company-profile';
+import { CompanyImageUploadError, prepareCompanyImage } from '../../shared/company-image-upload';
 
 type SalonServiceSetting = SalonServiceOption;
 
@@ -557,27 +558,18 @@ export class AdminDashboardComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
-    if (!file) {
+    if (!file || this.isProcessingLogo) {
       return;
     }
 
     this.logoError = '';
-    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
-      this.logoError = 'Bitte ein PNG-, JPG- oder WebP-Bild auswählen.';
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      this.logoError = 'Das Logo darf maximal 5 MB groß sein.';
-      return;
-    }
-
     this.isProcessingLogo = true;
     try {
-      const logoUrl = await this.compressLogo(file);
+      const logoUrl = await prepareCompanyImage(file, { maxDimension: 320, maxLength: 500_000 });
       this.companyForm.patchValue({ logoUrl });
       this.companyForm.markAsDirty();
-    } catch {
-      this.logoError = 'Das Logo konnte nicht verarbeitet werden. Bitte ein anderes Bild wählen.';
+    } catch (error) {
+      this.logoError = error instanceof CompanyImageUploadError ? error.message : 'Das Logo konnte nicht verarbeitet werden. Bitte ein anderes Bild wählen.';
     } finally {
       this.isProcessingLogo = false;
     }
@@ -587,39 +579,6 @@ export class AdminDashboardComponent implements OnInit {
     this.companyForm.patchValue({ logoUrl: '' });
     this.companyForm.markAsDirty();
     this.logoError = '';
-  }
-
-  private compressLogo(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const objectUrl = URL.createObjectURL(file);
-      const image = new Image();
-      image.onload = () => {
-        const maxDimension = 320;
-        const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-        const context = canvas.getContext('2d');
-        if (!context) {
-          URL.revokeObjectURL(objectUrl);
-          reject(new Error('Canvas unavailable'));
-          return;
-        }
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        URL.revokeObjectURL(objectUrl);
-        const compressed = canvas.toDataURL('image/webp', 0.86);
-        if (compressed.length > 500_000) {
-          reject(new Error('Compressed logo is too large'));
-          return;
-        }
-        resolve(compressed);
-      };
-      image.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error('Invalid image'));
-      };
-      image.src = objectUrl;
-    });
   }
 
   private createRandomPin(): string {
