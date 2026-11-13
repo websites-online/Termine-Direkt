@@ -3,7 +3,7 @@ const IMAGE_ERROR = 'Das Bild konnte nicht gelesen werden. Bitte als JPG, PNG od
 
 export class CompanyImageUploadError extends Error {}
 
-/** Decode locally and keep shrinking until the image fits the stored profile. */
+/** Keep small originals intact; otherwise resize with high-quality compression. */
 export async function prepareCompanyImage(
   file: File,
   options: { maxDimension: number; maxLength: number },
@@ -33,6 +33,15 @@ export async function prepareCompanyImage(
     if (!image.naturalWidth || !image.naturalHeight) throw new CompanyImageUploadError(IMAGE_ERROR);
 
     const scale = Math.min(1, options.maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+    if (scale === 1 && ['image/png', 'image/jpeg', 'image/webp'].includes(type) &&
+        Math.ceil(file.size / 3) * 4 + `data:${type};base64,`.length <= options.maxLength) {
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new CompanyImageUploadError(IMAGE_ERROR));
+        reader.readAsDataURL(file);
+      });
+    }
     let width = Math.max(1, Math.round(image.naturalWidth * scale));
     let height = Math.max(1, Math.round(image.naturalHeight * scale));
     const canvas = document.createElement('canvas');
@@ -42,9 +51,11 @@ export async function prepareCompanyImage(
     while (true) {
       canvas.width = width;
       canvas.height = height;
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'high';
       context.drawImage(image, 0, 0, width, height);
       let smallestLength = Infinity;
-      for (const quality of [.86, .72, .56, .4]) {
+      for (const quality of [.94, .9, .86]) {
         const result = canvas.toDataURL('image/webp', quality);
         if (/^data:image\/(?:png|jpeg|webp);base64,/.test(result) && result.length <= options.maxLength) return result;
         smallestLength = Math.min(smallestLength, result.length);
@@ -53,7 +64,7 @@ export async function prepareCompanyImage(
       }
       const dimension = Math.max(width, height);
       if (dimension <= 160) break;
-      const nextScale = Math.min(.75, Math.sqrt(options.maxLength / smallestLength) * .9);
+      const nextScale = Math.min(.9, Math.sqrt(options.maxLength / smallestLength) * .95);
       const reduction = Math.max(160, Math.floor(dimension * nextScale)) / dimension;
       width = Math.max(1, Math.floor(width * reduction));
       height = Math.max(1, Math.floor(height * reduction));

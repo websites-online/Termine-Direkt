@@ -59,7 +59,7 @@ test('profile normalizer bounds uploads and rejects executable image sources', (
   const normalized = profile.normalizeCompanyProfile({ aboutText: 'x'.repeat(3000), photos: [
     { src: 'javascript:alert(1)' }, { src: 'data:image/svg+xml;base64,AAAA' },
     { src: 'https://example.test/photo.jpg', title: 'A photo' },
-    { src: 'data:image/webp;base64,' + 'A'.repeat(180000) },
+    { src: 'data:image/webp;base64,' + 'A'.repeat(profile.PROFILE_IMAGE_MAX_LENGTH) },
   ], menu: [{ name: 'Pasta', category: 'Primi', price: 12.345 }, { name: '', price: 2 }] });
   assert.equal(normalized.aboutText.length, 2400);
   assert.equal(normalized.photos.length, 1);
@@ -141,6 +141,24 @@ test('saved profile survives the public API round trip; legacy edits preserve it
   response = await request('PATCH', base);
   assert.equal(response.body.profile.aboutTitle, 'Hi, ich bin Arsel.');
   assert.equal(Object.hasOwn(state.writes.at(-1), 'public_profile'), false);
+});
+
+test('six larger gallery photos and a logo survive saving and public reads within the request budget', async () => {
+  const { request, state, profile } = setup();
+  const prefix = 'data:image/webp;base64,';
+  const src = prefix + 'A'.repeat(Math.floor((profile.PROFILE_IMAGE_MAX_LENGTH - prefix.length) / 4) * 4);
+  const photos = Array.from({ length: 6 }, (_, i) => ({ src, title: `Foto ${i + 1}`, alt: 'Galerie' }));
+  const payload = {
+    name: state.row.name, address: state.row.address, hours: state.row.hours,
+    email: state.row.email, logoUrl: src, profile: { photos },
+  };
+  assert.ok(src.length > 180_000);
+  assert.ok(Buffer.byteLength(JSON.stringify(payload)) < 4 * 1024 * 1024);
+  const saved = await request('PATCH', payload);
+  assert.equal(saved.statusCode, 200);
+  const result = await request('GET');
+  assert.deepEqual(result.body.profile.photos, photos);
+  assert.equal(result.body.logoUrl, src);
 });
 
 test('a missing profile migration reports failure without silently saving other fields', async () => {
